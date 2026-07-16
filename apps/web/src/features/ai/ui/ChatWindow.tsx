@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Input } from "@/shared/components/Input";
-import { Button } from "@/shared/components/Button";
-import { cn } from "@/shared/utils/cn";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ChatMessage } from "../types";
 
 export interface ChatWindowProps {

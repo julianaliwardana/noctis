@@ -7,7 +7,7 @@ import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles } from 
 import { AuthGuard } from "@/features/auth/ui/AuthGuard";
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/lib/utils";
 
 type Tone = "primary" | "tasks" | "habits" | "finance" | "passwords";
 

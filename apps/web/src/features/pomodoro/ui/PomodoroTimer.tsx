@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/shared/components/Button";
+import { Button } from "@/shared/components/ui/button";
 
 const FOCUS_MINUTES = 25;
 const TOTAL_SECONDS = FOCUS_MINUTES * 60;

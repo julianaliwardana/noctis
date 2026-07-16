@@ -1,5 +1,5 @@
 import { formatCurrency, formatDate } from "@noctis/utils";
-import { EmptyState } from "@/shared/components/EmptyState";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import type { ExpenseDto } from "../api/finance.api";
 
 function dayKey(date: string): string {
@@ -13,7 +13,14 @@ export interface TransactionListProps {
 
 export function TransactionList({ expenses, onDelete }: TransactionListProps) {
   if (expenses.length === 0) {
-    return <EmptyState title="No transactions yet" description="Add your first expense or income above." />;
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No transactions yet</EmptyTitle>
+          <EmptyDescription>Add your first expense or income above.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
   }
 
   const groups = new Map<string, ExpenseDto[]>();

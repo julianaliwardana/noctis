@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Input } from "@/shared/components/Input";
+import { Input } from "@/shared/components/ui/input";
 
 export interface HabitFormProps {
   onAdd: (name: string) => void;

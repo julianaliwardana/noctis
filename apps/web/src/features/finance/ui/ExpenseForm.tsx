@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Input } from "@/shared/components/Input";
-import { Button } from "@/shared/components/Button";
-import { cn } from "@/shared/utils/cn";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { CreateExpenseInput } from "../api/finance.api";
 
 const CATEGORIES = ["Food", "Transport", "Bills", "Shopping", "Health", "Other"];
@@ -76,7 +76,12 @@ export function ExpenseForm({ onAdd }: ExpenseFormProps) {
             Income
           </button>
         </div>
-        <Button type="submit" size="sm" tone="finance" className="ml-auto">
+        <Button
+          type="submit"
+          size="sm"
+          className="ml-auto"
+          style={{ ["--color-primary" as string]: "var(--color-finance)" }}
+        >
           Add expense
         </Button>
       </div>

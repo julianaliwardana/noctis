@@ -1,7 +1,7 @@
 "use client";
 
 import { useHabitLogs } from "../hooks/useHabitLogs";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/lib/utils";
 import type { HabitDto } from "../api/habits.api";
 
 export interface HabitCardProps {

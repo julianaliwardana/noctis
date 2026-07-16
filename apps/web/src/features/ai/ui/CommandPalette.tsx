@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal } from "@/shared/components/Modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { ChatWindow } from "./ChatWindow";
 import { useChat } from "../hooks/useChat";
 
@@ -22,8 +22,13 @@ export function CommandPalette() {
   }, []);
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} title="Ask Noctis" className="flex h-[70vh] max-w-lg flex-col">
-      <ChatWindow messages={messages} sending={sending} onSend={send} />
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="flex h-[70vh] max-w-lg flex-col sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Ask Noctis</DialogTitle>
+        </DialogHeader>
+        <ChatWindow messages={messages} sending={sending} onSend={send} />
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Input } from "@/shared/components/Input";
-import { Button } from "@/shared/components/Button";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
 import type { AddPasswordInput } from "../store/passwordsStore";
 
 export interface PasswordFormProps {
@@ -47,7 +47,7 @@ export function PasswordForm({ onAdd }: PasswordFormProps) {
           aria-label="Password"
           className="flex-1"
         />
-        <Button type="submit" tone="passwords">
+        <Button type="submit" style={{ ["--color-primary" as string]: "var(--color-passwords)" }}>
           Save
         </Button>
       </div>

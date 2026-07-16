@@ -1,4 +1,4 @@
-import { EmptyState } from "@/shared/components/EmptyState";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { HabitCard } from "./HabitCard";
 import type { HabitDto } from "../api/habits.api";
 
@@ -10,10 +10,12 @@ export interface HabitListProps {
 export function HabitList({ habits, onLog }: HabitListProps) {
   if (habits.length === 0) {
     return (
-      <EmptyState
-        title="No habits yet"
-        description="Add your first habit above — log it once a day to start a streak."
-      />
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No habits yet</EmptyTitle>
+          <EmptyDescription>Add your first habit above — log it once a day to start a streak.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

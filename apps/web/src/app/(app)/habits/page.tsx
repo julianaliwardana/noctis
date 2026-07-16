@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/shared/components/Card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { HabitForm } from "@/features/habits/ui/HabitForm";
 import { HabitList } from "@/features/habits/ui/HabitList";
 import { useHabits } from "@/features/habits/hooks/useHabits";
@@ -16,7 +16,9 @@ export default function HabitsPage() {
       </div>
 
       <Card>
-        <HabitForm onAdd={(name) => addHabit({ name })} />
+        <CardContent>
+          <HabitForm onAdd={(name) => addHabit({ name })} />
+        </CardContent>
       </Card>
 
       {loading ? (

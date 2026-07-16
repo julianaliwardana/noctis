@@ -1,7 +1,7 @@
 "use client";
 
-import { Card } from "@/shared/components/Card";
-import { EmptyState } from "@/shared/components/EmptyState";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { VaultGate } from "@/features/passwords/ui/VaultGate";
 import { PasswordForm } from "@/features/passwords/ui/PasswordForm";
 import { PasswordEntry } from "@/features/passwords/ui/PasswordEntry";
@@ -24,15 +24,22 @@ export default function PasswordsPage() {
       </div>
 
       <Card>
-        <PasswordForm onAdd={(input) => addEntry(vaultKey, input)} />
+        <CardContent>
+          <PasswordForm onAdd={(input) => addEntry(vaultKey, input)} />
+        </CardContent>
       </Card>
 
       {loading ? (
         <p className="text-sm text-[var(--color-text-muted)]">Loading vault…</p>
       ) : entries.length === 0 ? (
-        <EmptyState title="Vault is empty" description="Save your first password above." />
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>Vault is empty</EmptyTitle>
+            <EmptyDescription>Save your first password above.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
-        <Card className="p-0">
+        <Card className="gap-0 py-0">
           {entries.map((entry) => (
             <PasswordEntry key={entry.id} entry={entry} vaultKey={vaultKey} onDelete={removeEntry} />
           ))}

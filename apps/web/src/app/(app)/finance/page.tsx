@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/shared/components/Card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { SummaryBar } from "@/features/finance/ui/SummaryBar";
 import { ExpenseForm } from "@/features/finance/ui/ExpenseForm";
 import { TransactionList } from "@/features/finance/ui/TransactionList";
@@ -20,7 +20,9 @@ export default function FinancePage() {
       {summary && <SummaryBar summary={summary} />}
 
       <Card>
-        <ExpenseForm onAdd={addExpense} />
+        <CardContent>
+          <ExpenseForm onAdd={addExpense} />
+        </CardContent>
       </Card>
 
       <CategoryBreakdown expenses={expenses} />
