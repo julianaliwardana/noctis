@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/features/auth/ui/AuthGuard";
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
@@ -17,95 +18,16 @@ interface NavItem {
   icon: ReactNode;
 }
 
-const iconProps = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 1.75,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  className: "h-full w-full",
-};
+const iconProps = { strokeWidth: 1.75, className: "h-full w-full" };
 
 const navItems: NavItem[] = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    tone: "primary",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
-        <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
-        <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
-        <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/tasks",
-    label: "Tasks",
-    tone: "tasks",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
-        <path d="M8 12.5l2.5 2.5L16 9.5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/habits",
-    label: "Habits",
-    tone: "habits",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M12 3c1 3-3 4.5-3 8.5a3 3 0 0 0 6 0c0-1.5-1-2-1-3.5 2 1.2 3 3.6 3 6a5 5 0 0 1-10 0C7 9.5 10 6.5 12 3z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/pomodoro",
-    label: "Pomodoro",
-    tone: "primary",
-    icon: (
-      <svg {...iconProps}>
-        <circle cx="12" cy="12" r="8.5" />
-        <path d="M12 7.5v5l3.2 2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/finance",
-    label: "Finance",
-    tone: "finance",
-    icon: (
-      <svg {...iconProps}>
-        <line x1="6" y1="20" x2="6" y2="12" />
-        <line x1="12" y1="20" x2="12" y2="5.5" />
-        <line x1="18" y1="20" x2="18" y2="14.5" />
-      </svg>
-    ),
-  },
-  {
-    href: "/passwords",
-    label: "Passwords",
-    tone: "passwords",
-    icon: (
-      <svg {...iconProps}>
-        <rect x="5" y="11" width="14" height="9" rx="2" />
-        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-      </svg>
-    ),
-  },
-  {
-    href: "/ai",
-    label: "AI Chat",
-    tone: "primary",
-    icon: (
-      <svg {...iconProps}>
-        <path d="M12 3.5l1.7 4.8 4.8 1.7-4.8 1.7L12 16.5l-1.7-4.8-4.8-1.7 4.8-1.7L12 3.5z" />
-      </svg>
-    ),
-  },
+  { href: "/dashboard", label: "Dashboard", tone: "primary", icon: <LayoutGrid {...iconProps} /> },
+  { href: "/tasks", label: "Tasks", tone: "tasks", icon: <ListChecks {...iconProps} /> },
+  { href: "/habits", label: "Habits", tone: "habits", icon: <Flame {...iconProps} /> },
+  { href: "/pomodoro", label: "Pomodoro", tone: "primary", icon: <Timer {...iconProps} /> },
+  { href: "/finance", label: "Finance", tone: "finance", icon: <BarChart3 {...iconProps} /> },
+  { href: "/passwords", label: "Passwords", tone: "passwords", icon: <Lock {...iconProps} /> },
+  { href: "/ai", label: "AI Chat", tone: "primary", icon: <Sparkles {...iconProps} /> },
 ];
 
 const toneVar: Record<Tone, string> = {
