@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Repeat } from "lucide-react";
 import { formatDate } from "@noctis/utils";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/lib/utils";
 import type { TaskDto } from "../api/tasks.api";
 
 export interface TaskCardProps {
@@ -51,11 +52,18 @@ export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
         >
           {task.title}
           {task.recurrence && (
-            <span className="ml-1.5 text-[var(--color-text-muted)]" aria-label="Recurring task">
-              ↻
-            </span>
+            <Repeat
+              className="ml-1.5 inline h-3 w-3 text-[var(--color-text-muted)]"
+              strokeWidth={2}
+              aria-label="Recurring task"
+            />
           )}
         </p>
+        {task.notes && (
+          <p className={cn("truncate text-xs text-[var(--color-text-muted)]", done && "opacity-50")}>
+            {task.notes}
+          </p>
+        )}
         {task.dueAt && (
           <p
             className={cn(

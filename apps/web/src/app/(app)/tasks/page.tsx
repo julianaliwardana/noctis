@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/shared/components/Card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { TaskForm } from "@/features/tasks/ui/TaskForm";
 import { TaskList } from "@/features/tasks/ui/TaskList";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
@@ -17,7 +17,9 @@ export default function TasksPage() {
       </div>
 
       <Card>
-        <TaskForm onAdd={(title) => addTask({ title })} />
+        <CardContent>
+          <TaskForm onAdd={addTask} />
+        </CardContent>
       </Card>
 
       {loading ? (

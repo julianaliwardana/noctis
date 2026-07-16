@@ -1,4 +1,4 @@
-import { EmptyState } from "@/shared/components/EmptyState";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { TaskCard } from "./TaskCard";
 import type { TaskDto } from "../api/tasks.api";
 
@@ -50,10 +50,14 @@ export function TaskList({ tasks, onComplete, onDelete }: TaskListProps) {
 
   if (active.length === 0) {
     return (
-      <EmptyState
-        title="Nothing on your list"
-        description="Add your first task above — it'll show up here, grouped by when it's due."
-      />
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Nothing on your list</EmptyTitle>
+          <EmptyDescription>
+            Add your first task above — it&apos;ll show up here, grouped by when it&apos;s due.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
