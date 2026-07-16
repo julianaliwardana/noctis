@@ -1,0 +1,22 @@
+{
+  "name": "noctis",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "db:push": "pnpm --filter @noctis/db exec prisma db push",
+    "db:migrate": "pnpm --filter @noctis/db exec prisma migrate dev",
+    "db:studio": "pnpm --filter @noctis/db exec prisma studio",
+    "ai:dev": "pnpm --filter @noctis/agent run dev",
+    "lint": "pnpm -r run lint",
+    "type-check": "pnpm -r run type-check"
+  },
+  "pnpm": {
+    "overrides": {
+      "ioredis": "5.10.1"
+    },
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
+  }
+}

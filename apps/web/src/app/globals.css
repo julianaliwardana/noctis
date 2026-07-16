@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #fafaf9;
+  --color-surface: #ffffff;
+  --color-text: #1a1b1e;
+  --color-text-muted: #6b6f76;
+  --color-border: #e4e4e0;
+  --color-primary: #0f8b8d;
+  --color-primary-fg: #ffffff;
+  --color-tasks: #c77d2e;
+  --color-habits: #4b8b5f;
+  --color-finance: #3b6ea5;
+  --color-passwords: #8b3a4a;
+
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #14161c;
+    --color-surface: #1c1f27;
+    --color-text: #e8e9ed;
+    --color-text-muted: #9498a2;
+    --color-border: #2a2e38;
+    --color-primary: #14a3a5;
+    --color-primary-fg: #0a1414;
+    --color-tasks: #d89552;
+    --color-habits: #63a878;
+    --color-finance: #5b8fc7;
+    --color-passwords: #b0596a;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+  --color-primary: var(--color-primary);
+  --color-primary-fg: var(--color-primary-fg);
+  --color-tasks: var(--color-tasks);
+  --color-habits: var(--color-habits);
+  --color-finance: var(--color-finance);
+  --color-passwords: var(--color-passwords);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, -8%) scale(1.15); }
+  100% { transform: translate(-5%, 5%) scale(0.95); }
+}

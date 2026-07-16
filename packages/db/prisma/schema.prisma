@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String             @id @default(cuid())
+  email            String             @unique
+  passwordHash     String
+  createdAt        DateTime           @default(now())
+  tasks            Task[]
+  habits           Habit[]
+  expenses         Expense[]
+  passwords        Password[]
+  nudges           Nudge[]
+  pomodoroSessions PomodoroSession[]
+  pushSubscription PushSubscription?
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  title       String
+  notes       String?
+  dueAt       DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  recurrence  String?
+  createdAt   DateTime  @default(now())
+}
+
+model Habit {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  name      String
+  frequency String     @default("daily")
+  streak    Int        @default(0)
+  logs      HabitLog[]
+  createdAt DateTime   @default(now())
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id])
+  date      DateTime
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  title    String
+  amount   Float
+  category String
+  type     String   @default("expense")
+  date     DateTime @default(now())
+}
+
+model Password {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  siteName   String
+  siteUrl    String?
+  username   String
+  ciphertext String
+  iv         String
+  createdAt  DateTime @default(now())
+}
+
+model Nudge {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+  title   String
+  message String
+  type    String
+  read    Boolean  @default(false)
+  sentAt  DateTime @default(now())
+}
+
+model PomodoroSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  startedAt DateTime
+  endedAt   DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model PushSubscription {
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id])
+  subscription String
+}
