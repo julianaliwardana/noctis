@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import ColorBends from "@/components/ColorBends";
+import ColorBends from "@/shared/components/ColorBends";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
