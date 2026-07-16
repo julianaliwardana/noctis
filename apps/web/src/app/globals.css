@@ -13,7 +13,7 @@
   --color-finance: #3b6ea5;
   --color-passwords: #8b3a4a;
 
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-inter);
   --font-body: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 }
