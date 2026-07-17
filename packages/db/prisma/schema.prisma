@@ -35,21 +35,26 @@ model Task {
 }
 
 model Habit {
-  id        String     @id @default(cuid())
-  userId    String
-  user      User       @relation(fields: [userId], references: [id])
-  name      String
-  frequency String     @default("daily")
-  streak    Int        @default(0)
-  logs      HabitLog[]
-  createdAt DateTime   @default(now())
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  name          String
+  note          String?
+  daysOfWeek    Int[]      @default([0, 1, 2, 3, 4, 5, 6])
+  endDate       DateTime?
+  color         String     @default("#4b8b5f")
+  streak        Int        @default(0)
+  longestStreak Int        @default(0)
+  logs          HabitLog[]
+  createdAt     DateTime   @default(now())
 }
 
 model HabitLog {
   id        String   @id @default(cuid())
   habitId   String
-  habit     Habit    @relation(fields: [habitId], references: [id])
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
   date      DateTime
+  note      String?
   createdAt DateTime @default(now())
 }
 
