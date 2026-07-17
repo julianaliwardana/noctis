@@ -23,8 +23,12 @@ export interface Habit {
   id: string;
   userId: string;
   name: string;
-  frequency: string;
+  note: string | null;
+  daysOfWeek: number[];
+  endDate: Date | null;
+  color: string;
   streak: number;
+  longestStreak: number;
   createdAt: Date;
 }
 
@@ -32,6 +36,7 @@ export interface HabitLog {
   id: string;
   habitId: string;
   date: Date;
+  note: string | null;
   createdAt: Date;
 }
 

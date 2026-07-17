@@ -8,8 +8,10 @@ interface HabitsState {
   loading: boolean;
   fetchHabits: () => Promise<void>;
   addHabit: (input: CreateHabitInput) => Promise<void>;
-  logHabit: (id: string) => Promise<void>;
+  logHabit: (id: string, note?: string) => Promise<void>;
   fetchLogs: (id: string) => Promise<void>;
+  updateColor: (id: string, color: string) => Promise<void>;
+  deleteHabit: (id: string) => Promise<void>;
 }
 
 export const useHabitsStore = create<HabitsState>((set, get) => ({
@@ -28,8 +30,8 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
     set({ habits: [habit, ...get().habits] });
   },
 
-  logHabit: async (id) => {
-    const updated = await habitsApi.logHabit(id);
+  logHabit: async (id, note) => {
+    const updated = await habitsApi.logHabit(id, note);
     set({ habits: get().habits.map((habit) => (habit.id === id ? updated : habit)) });
     await get().fetchLogs(id);
   },
@@ -37,5 +39,16 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
   fetchLogs: async (id) => {
     const logs = await habitsApi.fetchHabitLogs(id);
     set({ logs: { ...get().logs, [id]: logs } });
+  },
+
+  updateColor: async (id, color) => {
+    const updated = await habitsApi.updateHabitColor(id, color);
+    set({ habits: get().habits.map((habit) => (habit.id === id ? updated : habit)) });
+  },
+
+  deleteHabit: async (id) => {
+    await habitsApi.deleteHabit(id);
+    const { [id]: _removed, ...logs } = get().logs;
+    set({ habits: get().habits.filter((habit) => habit.id !== id), logs });
   },
 }));
