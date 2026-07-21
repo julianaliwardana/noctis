@@ -12,7 +12,7 @@ export default function PomodoroPage() {
 
   return (
     <div
-      className="relative -m-4 min-h-[calc(100dvh-3.5rem)] overflow-hidden bg-cover bg-center md:-m-8 md:min-h-dvh"
+      className="relative -mx-4 -mt-4 -mb-20 h-[calc(100dvh-3.5rem)] overflow-hidden bg-cover bg-center md:-m-8 md:h-dvh"
       style={{ background }}
     >
       <div className="absolute inset-0 bg-black/40" aria-hidden />

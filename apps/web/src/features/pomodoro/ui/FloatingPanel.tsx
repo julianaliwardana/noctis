@@ -17,16 +17,26 @@ export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anc
   const posRef = useRef(initial);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Place on mount and keep inside the container on resize: a right-anchored panel
+  // re-glues to the right edge, any panel gets clamped back into view.
   useEffect(() => {
-    if (!anchorRight) return;
-    const el = panelRef.current;
-    const parent = el?.offsetParent as HTMLElement | null;
-    if (!el || !parent) return;
-    const x = Math.max(0, parent.clientWidth - el.offsetWidth - initial.x);
-    posRef.current = { x, y: initial.y };
-    setPos({ x, y: initial.y });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchorRight]);
+    function reposition(): void {
+      const el = panelRef.current;
+      const parent = el?.offsetParent as HTMLElement | null;
+      if (!el || !parent) return;
+      const maxX = Math.max(0, parent.clientWidth - el.offsetWidth);
+      const maxY = Math.max(0, parent.clientHeight - el.offsetHeight);
+      setPos((p) => {
+        const x = anchorRight ? Math.max(0, parent.clientWidth - el.offsetWidth - initial.x) : Math.min(p.x, maxX);
+        const y = Math.min(p.y, maxY);
+        posRef.current = { x, y };
+        return { x, y };
+      });
+    }
+    reposition();
+    window.addEventListener("resize", reposition);
+    return () => window.removeEventListener("resize", reposition);
+  }, [anchorRight, initial.x]);
 
   function onPointerDown(e: PointerEvent<HTMLDivElement>): void {
     const el = panelRef.current;
@@ -62,14 +72,14 @@ export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anc
   return (
     <div
       ref={panelRef}
-      className="absolute z-20 w-80 overflow-hidden rounded-2xl border border-white/15 bg-black/30 text-[var(--color-text)] shadow-2xl backdrop-blur-xl"
+      className="absolute z-20 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/15 bg-black/30 text-[var(--color-text)] shadow-2xl backdrop-blur-xl"
       style={{ left: pos.x, top: pos.y }}
     >
       <div
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="flex cursor-grab items-center gap-2 px-3 py-2 active:cursor-grabbing"
+        className="flex touch-none select-none items-center gap-2 px-3 py-2 cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4 text-white/50" />
         <span className="text-sm font-medium text-white/90">{title}</span>
