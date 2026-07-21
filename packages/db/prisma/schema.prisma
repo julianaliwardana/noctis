@@ -99,6 +99,7 @@ model PomodoroSession {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id])
+  phase     String    @default("focus")
   startedAt DateTime
   endedAt   DateTime?
   createdAt DateTime  @default(now())
