@@ -5,7 +5,8 @@ export interface YouTubeResult {
 }
 
 // YouTube's public web-client key. Used only for the keyless InnerTube fallback.
-const INNERTUBE_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+// Set via INNERTUBE_KEY env var.
+const INNERTUBE_KEY = process.env.INNERTUBE_KEY;
 const MAX_RESULTS = 20;
 
 export async function searchYouTube(query: string): Promise<YouTubeResult[]> {
@@ -58,6 +59,7 @@ interface InnerTubeResponse {
 
 // could change it. Set YOUTUBE_API_KEY to use the sanctioned Data API instead.
 async function searchViaInnerTube(query: string): Promise<YouTubeResult[]> {
+  if (!INNERTUBE_KEY) throw new Error("Set YOUTUBE_API_KEY or INNERTUBE_KEY to enable YouTube search");
   const res = await fetch(`https://www.youtube.com/youtubei/v1/search?key=${INNERTUBE_KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
