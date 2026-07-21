@@ -14,6 +14,7 @@ import { pomodoroModule } from "./modules/pomodoro/pomodoro.module";
 import { notificationsRoutes } from "./modules/notifications/notifications.router";
 import { userRoutes } from "./modules/user/user.router";
 import { aiModule } from "./modules/ai/ai.module";
+import { youtubeModule } from "./modules/youtube/youtube.module";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
@@ -33,6 +34,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(notificationsRoutes, { prefix: "/notifications" });
   await app.register(userRoutes, { prefix: "/user" });
   await app.register(aiModule, { prefix: "/ai" });
+  await app.register(youtubeModule, { prefix: "/youtube" });
 
   return app;
 }
