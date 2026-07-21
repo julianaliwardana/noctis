@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles } from "lucide-react";
+import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles, UserRound } from "lucide-react";
 import { AuthGuard } from "@/features/auth/ui/AuthGuard";
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
@@ -50,11 +50,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-dvh flex-col md:flex-row">
         <aside className="hidden shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)]/70 backdrop-blur-xl md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:flex-col md:p-4">
           <div className="mb-6 flex items-center gap-2 px-2">
-            <span
-              className="h-6 w-6 rounded-lg"
-              style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-finance))" }}
-              aria-hidden
-            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="https://cdn.julianwardana.dev/Noctis/noctis.png" alt="Noctis" className="h-6 w-6 rounded-lg" />
             <p className="font-[family-name:var(--font-display)] text-lg text-[var(--color-text)]">
               Noctis
             </p>
@@ -99,22 +96,47 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="mt-2 border-t border-[var(--color-border)] pt-2">
+            <Link
+              href="/profile"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                isActive("/profile")
+                  ? "text-[var(--color-text)]"
+                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-border)]/30 hover:text-[var(--color-text)]",
+              )}
+            >
+              <UserRound strokeWidth={1.75} className="h-5 w-5 shrink-0" />
+              Profile
+            </Link>
             <SignOutButton />
           </div>
         </aside>
 
         <div className="flex flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 md:hidden">
-            <p className="font-[family-name:var(--font-display)] text-lg text-[var(--color-text)]">
-              Noctis
-            </p>
-            <Link
-              href="/ai"
-              aria-label="Open AI chat"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-            >
-              ✦
-            </Link>
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://cdn.julianwardana.dev/Noctis/noctis.png" alt="Noctis" className="h-6 w-6 rounded-lg" />
+              <p className="font-[family-name:var(--font-display)] text-lg text-[var(--color-text)]">
+                Noctis
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile"
+                aria-label="Profile"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-border)]/30 hover:text-[var(--color-text)]"
+              >
+                <UserRound strokeWidth={1.75} className="h-5 w-5" />
+              </Link>
+              <Link
+                href="/ai"
+                aria-label="Open AI chat"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
+              >
+                ✦
+              </Link>
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-8 md:pb-8">{children}</main>

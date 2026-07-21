@@ -6,9 +6,12 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
+import { useUser } from "@/features/auth/hooks/useUser";
 
 export default function DashboardPage() {
   const { tasks, completeTask } = useTasks();
+  const { user } = useUser();
+  const greetingName = user?.name || user?.email;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -24,7 +27,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">
-          Good day
+          {greetingName ? `Hi, ${greetingName}` : "Good day"}
         </h1>
         <p className="text-sm text-[var(--color-text-muted)]">{formatDate(new Date())}</p>
       </div>

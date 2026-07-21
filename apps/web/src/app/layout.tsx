@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   title: "Noctis",
   description: "Tasks, habits, finance, passwords, and an AI assistant — one calm daily instrument.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "https://cdn.julianwardana.dev/Noctis/noctis.ico",
+  },
 };
 
 export const viewport: Viewport = {
