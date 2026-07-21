@@ -26,15 +26,14 @@ export default function PomodoroPage() {
         />
       </div>
 
-      {/* Draggable, collapsible music + background widget */}
+      {/* Draggable, collapsible music widget (top-left) */}
       <FloatingPanel title="Music" initial={{ x: 24, y: 24 }}>
-        <div className="flex flex-col gap-4">
-          <MusicPanel />
-          <div className="border-t border-white/10 pt-3">
-            <p className="mb-2 text-sm font-medium text-white/90">Background</p>
-            <BackgroundPicker value={background} onChange={setBackground} />
-          </div>
-        </div>
+        <MusicPanel />
+      </FloatingPanel>
+
+      {/* Draggable, collapsible background widget (top-right) */}
+      <FloatingPanel title="Background" initial={{ x: 24, y: 24 }} anchorRight>
+        <BackgroundPicker value={background} onChange={setBackground} />
       </FloatingPanel>
     </div>
   );

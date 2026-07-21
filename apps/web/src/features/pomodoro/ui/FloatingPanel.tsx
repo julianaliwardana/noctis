@@ -1,20 +1,32 @@
 "use client";
 
-import { useRef, useState, type ReactNode, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type PointerEvent } from "react";
 import { GripVertical, Minus, Plus } from "lucide-react";
 
 export interface FloatingPanelProps {
   title: string;
   children: ReactNode;
   initial?: { x: number; y: number };
+  anchorRight?: boolean;
 }
 
-export function FloatingPanel({ title, children, initial = { x: 24, y: 24 } }: FloatingPanelProps) {
+export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anchorRight = false }: FloatingPanelProps) {
   const [pos, setPos] = useState(initial);
   const [collapsed, setCollapsed] = useState(false);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const posRef = useRef(initial);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!anchorRight) return;
+    const el = panelRef.current;
+    const parent = el?.offsetParent as HTMLElement | null;
+    if (!el || !parent) return;
+    const x = Math.max(0, parent.clientWidth - el.offsetWidth - initial.x);
+    posRef.current = { x, y: initial.y };
+    setPos({ x, y: initial.y });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchorRight]);
 
   function onPointerDown(e: PointerEvent<HTMLDivElement>): void {
     const el = panelRef.current;
@@ -24,7 +36,6 @@ export function FloatingPanel({ title, children, initial = { x: 24, y: 24 } }: F
     (e.target as Element).setPointerCapture(e.pointerId);
   }
 
-  // Write position straight to the DOM during the drag — re-rendering on every
   // pointermove reconciles the whole panel (iframe + animated bars) and janks.
   function onPointerMove(e: PointerEvent<HTMLDivElement>): void {
     const drag = dragRef.current;

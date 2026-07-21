@@ -12,3 +12,13 @@ export function recordSession(
     body: JSON.stringify({ phase, startedAt, endedAt }),
   });
 }
+
+export interface YouTubeResult {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+}
+
+export function searchYouTube(query: string): Promise<YouTubeResult[]> {
+  return apiFetch<YouTubeResult[]>(`/youtube/search?q=${encodeURIComponent(query)}`);
+}
