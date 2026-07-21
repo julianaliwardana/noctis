@@ -150,7 +150,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   href={item.href}
                   className={cn(
                     "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] transition-colors",
-                    active ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)]",
+                    active ? `text-[${toneVar[item.tone]}]` : "text-[var(--color-text-muted)]",
                   )}
                 >
                   <span

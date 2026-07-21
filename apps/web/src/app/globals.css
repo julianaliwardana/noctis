@@ -14,7 +14,7 @@
   --color-primary-fg: #ffffff;
   --color-tasks: #c77d2e;
   --color-habits: #4b8b5f;
-  --color-finance: #3b6ea5;
+  --color-finance: #faeb20;
   --color-passwords: #8b3a4a;
 
   --font-display: var(--font-inter);
@@ -65,7 +65,7 @@
     --color-primary-fg: #0a1414;
     --color-tasks: #d89552;
     --color-habits: #63a878;
-    --color-finance: #5b8fc7;
+    --color-finance: #faeb20;
     --color-passwords: #b0596a;
   }
 }
