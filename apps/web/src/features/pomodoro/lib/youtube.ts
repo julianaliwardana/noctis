@@ -7,6 +7,7 @@ export interface YTPlayer {
   mute(): void;
   unMute(): void;
   setVolume(v: number): void;
+  seekTo(seconds: number, allowSeekAhead?: boolean): void;
   loadVideoById(id: string): void;
   cuePlaylist(arg: { listType: string; list: string; index?: number }): void;
   getPlaylist(): string[] | null;

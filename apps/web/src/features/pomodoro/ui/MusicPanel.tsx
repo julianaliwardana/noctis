@@ -39,11 +39,15 @@ export function MusicPanel({ onNowPlaying }: { onNowPlaying?: (title: string | n
 
   const playerRef = useRef<YTPlayer | null>(null);
 
+  const [loop, setLoop] = useState<"off" | "all" | "one">("off");
+
   // into refs the player's event handlers can read without stale closures.
   const queueRef = useRef<string[]>([]);
   const indexRef = useRef(0);
+  const loopRef = useRef<"off" | "all" | "one">("off");
   queueRef.current = queue;
   indexRef.current = queueIndex;
+  loopRef.current = loop;
 
   const toastTimer = useRef<number | undefined>(undefined);
   function showToast(msg: string, kind: "ok" | "err"): void {
@@ -60,10 +64,19 @@ export function MusicPanel({ onNowPlaying }: { onNowPlaying?: (title: string | n
     setPlaying(true);
   }
 
-  // Play the next queued track, if any (used on track-end and on playback error).
-  function advance(): void {
+  function replay(): void {
+    playerRef.current?.seekTo(0, true);
+    playerRef.current?.playVideo();
+    setPlaying(true);
+  }
+
+  function advance(fromError = false): void {
+    const len = queueRef.current.length;
+    if (len === 0) return;
+    if (!fromError && loopRef.current === "one") return replay();
     const next = indexRef.current + 1;
-    if (next < queueRef.current.length) playIndex(next);
+    if (next < len) return playIndex(next);
+    if (loopRef.current !== "off") return len === 1 ? replay() : playIndex(0);
   }
 
   useEffect(() => {
@@ -82,7 +95,7 @@ export function MusicPanel({ onNowPlaying }: { onNowPlaying?: (title: string | n
             if (e.data === 0) advance();
             else setPlaying(e.data === 1);
           },
-          onError: advance,
+          onError: () => advance(true),
         },
       });
     });
@@ -295,10 +308,12 @@ export function MusicPanel({ onNowPlaying }: { onNowPlaying?: (title: string | n
           ready={ready}
           canPrev={queueIndex > 0}
           canNext={queueIndex < queue.length - 1}
+          loop={loop}
           onPrev={() => playIndex(queueIndex - 1)}
           onToggle={togglePlay}
           onNext={() => playIndex(queueIndex + 1)}
           onReset={resetPlayer}
+          onCycleLoop={() => setLoop((l) => (l === "off" ? "all" : l === "all" ? "one" : "off"))}
         />
 
         <div className="flex flex-col items-center gap-2">
