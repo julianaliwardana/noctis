@@ -132,6 +132,13 @@ reverse-engineering. Ground-truth sources:
   `musicResponsiveListItemRenderer` parsing.
 - `zerodytrash/YouTube-Internal-Clients` — the `clientName`/`clientVersion`/key combos.
 
+## Testing
+
+```bash
+# from apps/api
+npx tsx --test src/modules/youtube/youtube.service.test.ts
+```
+
 Covers `parseMusicItem` against a minimal song renderer (the piece most likely to
 break when YouTube changes its response). The network fetches are intentionally not
 mocked — they hit the live, undocumented API and are verified manually.
