@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState, type ReactNode, type PointerEvent } from "react";
 import { GripVertical, Minus, Plus } from "lucide-react";
+import { Marquee } from "@/shared/components/Marquee";
 
 export interface FloatingPanelProps {
   title: string;
   children: ReactNode;
   initial?: { x: number; y: number };
   anchorRight?: boolean;
+  /** Scrolls in the header while collapsed (e.g. the now-playing track). */
+  marquee?: string | null;
 }
 
-export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anchorRight = false }: FloatingPanelProps) {
+export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anchorRight = false, marquee }: FloatingPanelProps) {
   const [pos, setPos] = useState(initial);
   const [collapsed, setCollapsed] = useState(false);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
@@ -81,8 +84,11 @@ export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anc
         onPointerUp={onPointerUp}
         className="flex touch-none select-none items-center gap-2 px-3 py-2 cursor-grab active:cursor-grabbing"
       >
-        <GripVertical className="h-4 w-4 text-white/50" />
-        <span className="text-sm font-medium text-white/90">{title}</span>
+        <GripVertical className="h-4 w-4 shrink-0 text-white/50" />
+        <span className="shrink-0 text-sm font-medium text-white/90">{title}</span>
+        {collapsed && marquee && (
+          <Marquee text={marquee} className="min-w-0 flex-1 text-xs text-white/60" />
+        )}
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}

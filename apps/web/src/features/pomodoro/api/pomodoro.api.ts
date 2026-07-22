@@ -17,8 +17,15 @@ export interface YouTubeResult {
   videoId: string;
   title: string;
   thumbnail: string;
+  artist?: string;
+  album?: string;
+  duration?: string;
 }
 
-export function searchYouTube(query: string): Promise<YouTubeResult[]> {
-  return apiFetch<YouTubeResult[]>(`/youtube/search?q=${encodeURIComponent(query)}`);
+export type SearchSource = "video" | "music";
+
+export function searchYouTube(query: string, source: SearchSource = "video"): Promise<YouTubeResult[]> {
+  return apiFetch<YouTubeResult[]>(
+    `/youtube/search?q=${encodeURIComponent(query)}&source=${source}`,
+  );
 }

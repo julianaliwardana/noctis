@@ -145,6 +145,12 @@ body {
   50% { transform: scale(1.015); }
 }
 
+/* Two identical copies translated -50% = seamless infinite right-to-left loop. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 .thin-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;

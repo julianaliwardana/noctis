@@ -9,6 +9,7 @@ import { recordSession } from "@/features/pomodoro/api/pomodoro.api";
 
 export default function PomodoroPage() {
   const [background, setBackground] = useState(SCENES[0]!.css);
+  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
 
   return (
     <div
@@ -27,8 +28,8 @@ export default function PomodoroPage() {
       </div>
 
       {/* Draggable, collapsible music widget (top-left) */}
-      <FloatingPanel title="Music" initial={{ x: 24, y: 24 }}>
-        <MusicPanel />
+      <FloatingPanel title="Music" initial={{ x: 24, y: 24 }} marquee={nowPlaying}>
+        <MusicPanel onNowPlaying={setNowPlaying} />
       </FloatingPanel>
 
       {/* Draggable, collapsible background widget (top-right) */}

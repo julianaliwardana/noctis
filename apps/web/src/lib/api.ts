@@ -1,6 +1,6 @@
 import { clearToken, getToken } from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export class ApiError extends Error {
   status: number;

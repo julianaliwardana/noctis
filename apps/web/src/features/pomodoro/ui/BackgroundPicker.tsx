@@ -18,7 +18,7 @@ export const SCENES: Scene[] = [
   { key: "midnight", label: "Midnight", css: "linear-gradient(160deg, #1a2038, #0c0f1c)" },
 ];
 
-const CDN = "https://cdn.julianwardana.dev/Noctis";
+const CDN = process.env.NEXT_PUBLIC_CDN_URL;
 
 export const TEMPLATES: { key: string; label: string; url: string }[] = [
   { key: "taki-tachibana-lofi", label: "Taki & Tachibana", url: `${CDN}/taki-tachibana-lofi.jpg` },
