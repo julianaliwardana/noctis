@@ -1,89 +1,43 @@
-import { db } from "@noctis/db";
-import { formatCurrency, safeParseJSON } from "@noctis/utils";
+import { safeParseJSON } from "@noctis/utils";
 import { gatherContext } from "./context";
 import { systemPrompt, chatPrompt } from "./prompts";
 import { createProvider } from "./llm";
+import * as tools from "./tools";
+import type { ChatResult } from "./tools";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+export type { ChatResult } from "./tools";
 
-function isConsecutiveDay(previous: Date, current: Date): boolean {
-  const previousDay = new Date(previous);
-  previousDay.setHours(0, 0, 0, 0);
-  const currentDay = new Date(current);
-  currentDay.setHours(0, 0, 0, 0);
-  return currentDay.getTime() - previousDay.getTime() === DAY_MS;
-}
-
-async function getSpendForPeriod(userId: string, period: "today" | "week" | "month"): Promise<number> {
-  const now = new Date();
-  let start: Date;
-
-  if (period === "today") {
-    start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-  } else if (period === "week") {
-    start = new Date(now.getTime() - 7 * DAY_MS);
-  } else {
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
-  }
-
-  const expenses = await db.expense.findMany({
-    where: { userId, type: "expense", date: { gte: start } },
-    select: { amount: true },
-  });
-
-  return expenses.reduce((sum, expense) => sum + expense.amount, 0);
-}
-
-interface ReplyIntent {
-  intent: "REPLY";
-  message: string;
-}
-
-interface CreateTaskIntent {
-  intent: "CREATE_TASK";
-  title: string;
-  dueAt?: string;
-  notes?: string;
-}
-
-interface CompleteTaskIntent {
-  intent: "COMPLETE_TASK";
-  taskId: string;
-}
-
-interface LogHabitIntent {
-  intent: "LOG_HABIT";
-  habitId: string;
-}
-
-interface AddExpenseIntent {
-  intent: "ADD_EXPENSE";
-  title: string;
-  amount: number;
-  category: string;
-}
-
-interface GetSummaryIntent {
-  intent: "GET_SUMMARY";
-  period: "today" | "week" | "month";
-}
-
+/**
+ * Intents are addressed by name, never by id — see tools.resolveByName for why.
+ * Anything the model gets wrong is caught by the guards below and falls back to a plain reply.
+ */
 type ChatIntent =
-  | ReplyIntent
-  | CreateTaskIntent
-  | CompleteTaskIntent
-  | LogHabitIntent
-  | AddExpenseIntent
-  | GetSummaryIntent;
-
-export interface ChatResult {
-  message: string;
-  action?: { type: string; summary: string };
-}
+  | { intent: "REPLY"; message: string }
+  | { intent: "CREATE_TASK"; title: string; dueAt?: string; notes?: string }
+  | { intent: "COMPLETE_TASK"; title: string }
+  | { intent: "DELETE_TASK"; title: string }
+  | { intent: "CREATE_HABIT"; name: string; daysOfWeek?: number[]; color?: string }
+  | { intent: "LOG_HABIT"; name: string }
+  | { intent: "DELETE_HABIT"; name: string }
+  | {
+      intent: "ADD_TRANSACTION";
+      title: string;
+      amount: number;
+      category: string;
+      type?: "income" | "expense";
+      date?: string;
+    }
+  | { intent: "DELETE_TRANSACTION"; title: string }
+  | { intent: "CREATE_CATEGORY"; name: string; color?: string }
+  | { intent: "DELETE_CATEGORY"; name: string }
+  | { intent: "GET_SUMMARY"; period: "today" | "week" | "month" };
 
 function isChatIntent(value: unknown): value is ChatIntent {
   return typeof value === "object" && value !== null && typeof (value as { intent?: unknown }).intent === "string";
+}
+
+function str(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 export async function handleChat(userId: string, message: string): Promise<ChatResult> {
@@ -92,93 +46,51 @@ export async function handleChat(userId: string, message: string): Promise<ChatR
   const raw = await provider.complete(systemPrompt(), chatPrompt(context, message));
   const parsed = safeParseJSON(raw);
 
-  if (!isChatIntent(parsed)) {
-    return { message: raw };
-  }
+  if (!isChatIntent(parsed)) return { message: raw };
 
   switch (parsed.intent) {
-    case "CREATE_TASK": {
-      const task = await db.task.create({
-        data: {
-          userId,
-          title: parsed.title,
-          dueAt: parsed.dueAt ? new Date(parsed.dueAt) : null,
-          notes: parsed.notes,
-        },
-      });
-      return {
-        message: `Added "${task.title}" to your tasks.`,
-        action: { type: "CREATE_TASK", summary: `Created task: ${task.title}` },
-      };
-    }
+    case "CREATE_TASK":
+      return str(parsed.title) === ""
+        ? { message: "What should the task be called?" }
+        : tools.createTask(userId, parsed);
 
-    case "COMPLETE_TASK": {
-      const existingTask = await db.task.findFirst({ where: { id: parsed.taskId, userId } });
-      if (!existingTask) {
-        return { message: "I couldn't find that task." };
-      }
+    case "COMPLETE_TASK":
+      return tools.completeTask(userId, str(parsed.title));
 
-      const task = await db.task.update({
-        where: { id: parsed.taskId },
-        data: { completed: true, completedAt: new Date() },
-      });
-      return {
-        message: `Marked "${task.title}" as done.`,
-        action: { type: "COMPLETE_TASK", summary: `Completed task: ${task.title}` },
-      };
-    }
+    case "DELETE_TASK":
+      return tools.deleteTask(userId, str(parsed.title));
 
-    case "LOG_HABIT": {
-      const habit = await db.habit.findFirst({ where: { id: parsed.habitId, userId } });
-      if (!habit) {
-        return { message: "I couldn't find that habit." };
-      }
+    case "CREATE_HABIT":
+      return str(parsed.name) === ""
+        ? { message: "What should the habit be called?" }
+        : tools.createHabit(userId, parsed);
 
-      const now = new Date();
-      const today = new Date(now);
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+    case "LOG_HABIT":
+      return tools.logHabit(userId, str(parsed.name));
 
-      const existingLog = await db.habitLog.findFirst({
-        where: { habitId: habit.id, date: { gte: today, lt: tomorrow } },
-      });
-      if (existingLog) {
-        return {
-          message: `${habit.name} is already logged for today — ${habit.streak} day streak.`,
-          action: { type: "LOG_HABIT", summary: `Logged habit: ${habit.name}` },
-        };
-      }
+    case "DELETE_HABIT":
+      return tools.deleteHabit(userId, str(parsed.name));
 
-      const latest = await db.habitLog.findFirst({ where: { habitId: habit.id }, orderBy: { date: "desc" } });
-      const nextStreak = latest && isConsecutiveDay(latest.date, now) ? habit.streak + 1 : 1;
+    case "ADD_TRANSACTION":
+      return str(parsed.title) === "" ? { message: "What was that for?" } : tools.addTransaction(userId, parsed);
 
-      await db.habitLog.create({ data: { habitId: habit.id, date: now } });
-      const updated = await db.habit.update({ where: { id: habit.id }, data: { streak: nextStreak } });
+    case "DELETE_TRANSACTION":
+      return tools.deleteTransaction(userId, str(parsed.title));
 
-      return {
-        message: `Logged ${updated.name} — ${updated.streak} day streak.`,
-        action: { type: "LOG_HABIT", summary: `Logged habit: ${updated.name}` },
-      };
-    }
+    case "CREATE_CATEGORY":
+      return tools.createCategory(userId, parsed);
 
-    case "ADD_EXPENSE": {
-      const expense = await db.expense.create({
-        data: { userId, title: parsed.title, amount: parsed.amount, category: parsed.category, type: "expense" },
-      });
-      return {
-        message: `Logged ${expense.title} — ${formatCurrency(expense.amount)}.`,
-        action: { type: "ADD_EXPENSE", summary: `Added expense: ${expense.title}` },
-      };
-    }
+    case "DELETE_CATEGORY":
+      return tools.deleteCategory(userId, str(parsed.name));
 
-    case "GET_SUMMARY": {
-      const spend = await getSpendForPeriod(userId, parsed.period);
-      return { message: `This ${parsed.period}, you've spent ${formatCurrency(spend)} so far.` };
-    }
+    case "GET_SUMMARY":
+      return tools.getSummary(
+        userId,
+        parsed.period === "today" || parsed.period === "week" ? parsed.period : "month",
+      );
 
     case "REPLY":
     default:
-      return { message: parsed.intent === "REPLY" ? parsed.message : raw };
+      return { message: str((parsed as { message?: unknown }).message) || raw };
   }
 }

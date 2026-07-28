@@ -3,4 +3,5 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   actionLabel?: string;
+  failed?: boolean;
 }
