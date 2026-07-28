@@ -38,11 +38,15 @@
   --border: var(--color-border);
   --input: var(--color-border);
   --ring: var(--color-primary);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Categorical chart slots — fixed order, validated for CVD + contrast on both surfaces. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-income: #1baf7a;
+  --chart-expense: #e34948;
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -67,6 +71,16 @@
     --color-habits: #63a878;
     --color-finance: #faeb20;
     --color-passwords: #b0596a;
+
+    /* Same hues, re-stepped for the dark surface — not an automatic flip. */
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
+    --chart-5: #d55181;
+    --chart-6: #008300;
+    --chart-income: #199e70;
+    --chart-expense: #e66767;
   }
 }
 
@@ -96,6 +110,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-6: var(--chart-6);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -149,6 +164,22 @@ body {
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
+}
+
+/* shadcn's Table wraps itself in an overflow-x container we can't reach from JSX. */
+[data-slot="table-container"] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+[data-slot="table-container"]::-webkit-scrollbar {
+  height: 6px;
+}
+[data-slot="table-container"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-slot="table-container"]::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
 }
 
 .thin-scroll {

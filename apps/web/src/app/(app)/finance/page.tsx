@@ -1,14 +1,25 @@
 "use client";
 
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { SummaryBar } from "@/features/finance/ui/SummaryBar";
 import { ExpenseForm } from "@/features/finance/ui/ExpenseForm";
-import { TransactionList } from "@/features/finance/ui/TransactionList";
-import { CategoryBreakdown } from "@/features/finance/ui/CategoryBreakdown";
+import { FinanceCharts } from "@/features/finance/ui/FinanceCharts";
+import { TransactionTable } from "@/features/finance/ui/TransactionTable";
+import { CategoryManager } from "@/features/finance/ui/CategoryManager";
 import { useFinance } from "@/features/finance/hooks/useFinance";
 
 export default function FinancePage() {
-  const { expenses, summary, loading, addExpense, removeExpense } = useFinance();
+  const {
+    expenses,
+    categories,
+    summary,
+    loading,
+    addExpense,
+    removeExpense,
+    addCategory,
+    editCategory,
+    removeCategory,
+  } = useFinance();
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,17 +31,33 @@ export default function FinancePage() {
       {summary && <SummaryBar summary={summary} />}
 
       <Card>
+        <CardHeader>
+          <CardTitle>Add transaction</CardTitle>
+        </CardHeader>
         <CardContent>
-          <ExpenseForm onAdd={addExpense} />
+          <ExpenseForm
+            categories={categories}
+            expenses={expenses}
+            onAdd={addExpense}
+            manageSlot={
+              <CategoryManager
+                categories={categories}
+                expenses={expenses}
+                onAdd={addCategory}
+                onEdit={editCategory}
+                onRemove={removeCategory}
+              />
+            }
+          />
         </CardContent>
       </Card>
 
-      <CategoryBreakdown expenses={expenses} />
+      <FinanceCharts categories={categories} expenses={expenses} />
 
       {loading ? (
         <p className="text-sm text-[var(--color-text-muted)]">Loading transactions…</p>
       ) : (
-        <TransactionList expenses={expenses} onDelete={removeExpense} />
+        <TransactionTable categories={categories} expenses={expenses} onDelete={removeExpense} />
       )}
     </div>
   );
