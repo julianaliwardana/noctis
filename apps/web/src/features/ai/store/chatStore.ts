@@ -30,6 +30,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         id: crypto.randomUUID(),
         role: "assistant",
         content: "I couldn't reach the assistant just now. Try again in a moment.",
+        failed: true,
       };
       set({ messages: [...get().messages, fallback] });
     } finally {

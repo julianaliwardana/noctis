@@ -23,8 +23,8 @@ export function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="flex h-[70vh] max-w-lg flex-col sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex h-[70vh] max-w-xl flex-col sm:max-w-xl">
+        <DialogHeader className="sr-only">
           <DialogTitle>Ask Noctis</DialogTitle>
         </DialogHeader>
         <ChatWindow messages={messages} sending={sending} onSend={send} />
