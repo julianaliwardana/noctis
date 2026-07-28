@@ -22,7 +22,7 @@ export function HabitList({ habits, onLog, onColorChange, onDelete }: HabitListP
   }
 
   return (
-    <div className="grid max-h-[28rem] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-1">
+    <div className="thin-scroll grid max-h-[28rem] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-1">
       {habits.map((habit) => (
         <HabitCard key={habit.id} habit={habit} onLog={onLog} onColorChange={onColorChange} onDelete={onDelete} />
       ))}
