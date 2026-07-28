@@ -18,6 +18,7 @@ model User {
   tasks            Task[]
   habits           Habit[]
   expenses         Expense[]
+  categories       Category[]
   passwords        Password[]
   nudges           Nudge[]
   pomodoroSessions PomodoroSession[]
@@ -59,6 +60,17 @@ model HabitLog {
   date      DateTime
   note      String?
   createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  color     String   @default("#2a78d6")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
 }
 
 model Expense {

@@ -40,6 +40,14 @@ export interface HabitLog {
   createdAt: Date;
 }
 
+export interface Category {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  createdAt: Date;
+}
+
 export interface Expense {
   id: string;
   userId: string;
