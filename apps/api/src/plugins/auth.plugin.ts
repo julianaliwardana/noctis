@@ -4,8 +4,8 @@ import jwt from "@fastify/jwt";
 
 declare module "@fastify/jwt" {
   interface FastifyJWT {
-    payload: { userId: string };
-    user: { userId: string };
+    payload: { userId: string; type: "access" | "refresh" };
+    user: { userId: string; type?: "access" | "refresh" };
   }
 }
 
@@ -29,7 +29,12 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
       try {
         await request.jwtVerify();
       } catch {
-        await reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+
+      // A refresh token must never open a normal route — it only buys a new access token.
+      if (request.user.type !== "access") {
+        return reply.code(401).send({ error: "Unauthorized" });
       }
     },
   );

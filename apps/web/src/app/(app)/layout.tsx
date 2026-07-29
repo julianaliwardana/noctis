@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles, UserRound } from "lucide-react";
 import { AuthGuard } from "@/features/auth/ui/AuthGuard";
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
+import { SessionExpiredDialog } from "@/features/auth/ui/SessionExpiredDialog";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
 import { cn } from "@/lib/utils";
 
@@ -167,6 +168,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         <CommandPalette />
+        <SessionExpiredDialog />
       </div>
     </AuthGuard>
   );

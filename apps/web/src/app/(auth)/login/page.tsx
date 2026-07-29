@@ -8,7 +8,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Field, FieldLabel } from "@/shared/components/ui/field";
 import { Button } from "@/shared/components/ui/button";
 import { login } from "@/features/auth/api/auth.api";
-import { setToken } from "@/lib/auth";
+import { setTokens } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,8 +23,8 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      const { accessToken } = await login(email, password);
-      setToken(accessToken);
+      const { accessToken, refreshToken } = await login(email, password);
+      setTokens(accessToken, refreshToken);
       router.push("/dashboard");
     } catch {
       setError("That email and password don't match our records.");

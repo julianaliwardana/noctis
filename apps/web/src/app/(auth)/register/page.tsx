@@ -8,7 +8,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Field, FieldLabel } from "@/shared/components/ui/field";
 import { Button } from "@/shared/components/ui/button";
 import { register } from "@/features/auth/api/auth.api";
-import { setToken } from "@/lib/auth";
+import { setTokens } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,8 +23,8 @@ export default function RegisterPage() {
     setSubmitting(true);
 
     try {
-      const { accessToken } = await register(email, password);
-      setToken(accessToken);
+      const { accessToken, refreshToken } = await register(email, password);
+      setTokens(accessToken, refreshToken);
       router.push("/dashboard");
     } catch {
       setError("Couldn't create your account — that email may already be in use.");

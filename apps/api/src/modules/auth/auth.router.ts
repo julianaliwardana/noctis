@@ -1,6 +1,12 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
-import { loginDto, registerDto } from "./auth.dto";
-import { createUser, signAccessToken, signRefreshToken, verifyCredentials } from "./auth.service";
+import { loginDto, refreshDto, registerDto } from "./auth.dto";
+import {
+  createUser,
+  signAccessToken,
+  signRefreshToken,
+  verifyCredentials,
+  verifyRefreshToken,
+} from "./auth.service";
 
 const AUTH_RATE_LIMIT = 10;
 const AUTH_RATE_WINDOW_SECONDS = 60;
@@ -46,7 +52,18 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  fastify.post("/refresh", { preHandler: fastify.authenticate }, async (request) => {
-    return { accessToken: signAccessToken(fastify, request.user.userId) };
+  /**
+   * Deliberately not behind `authenticate` — that requires a live access token, which is exactly
+   * what the caller no longer has. The refresh token is verified here instead.
+   */
+  fastify.post("/refresh", { preHandler: authRateLimit }, async (request, reply) => {
+    const body = refreshDto.parse(request.body);
+    const userId = verifyRefreshToken(fastify, body.refreshToken);
+    if (!userId) return reply.code(401).send({ error: "Session expired" });
+
+    const user = await fastify.db.user.findUnique({ where: { id: userId } });
+    if (!user) return reply.code(401).send({ error: "Session expired" });
+
+    return reply.send({ accessToken: signAccessToken(fastify, user.id) });
   });
 };

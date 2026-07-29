@@ -19,9 +19,18 @@ export async function verifyCredentials(email: string, password: string): Promis
 }
 
 export function signAccessToken(app: FastifyInstance, userId: string): string {
-  return app.jwt.sign({ userId }, { expiresIn: "15m" });
+  return app.jwt.sign({ userId, type: "access" }, { expiresIn: "15m" });
 }
 
 export function signRefreshToken(app: FastifyInstance, userId: string): string {
-  return app.jwt.sign({ userId }, { expiresIn: "30d" });
+  return app.jwt.sign({ userId, type: "refresh" }, { expiresIn: "30d" });
+}
+
+export function verifyRefreshToken(app: FastifyInstance, token: string): string | null {
+  try {
+    const payload = app.jwt.verify<{ userId: string; type?: string }>(token);
+    return payload.type === "refresh" ? payload.userId : null;
+  } catch {
+    return null;
+  }
 }

@@ -19,7 +19,9 @@ import { youtubeModule } from "./modules/youtube/youtube.module";
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
 
-  await app.register(cors);
+  // Comma-separated allowlist; without it every origin was reflected back.
+  const origins = (process.env.WEB_ORIGIN ?? "http://localhost:3000").split(",").map((origin) => origin.trim());
+  await app.register(cors, { origin: origins });
   await app.register(helmet);
   await app.register(dbPlugin);
   await app.register(redisPlugin);
