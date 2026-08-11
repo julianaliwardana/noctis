@@ -8,6 +8,9 @@ export function useChat() {
   const send = useChatStore((state) => state.send);
   const deletingId = useChatStore((state) => state.deletingId);
   const resolveDelete = useChatStore((state) => state.resolveDelete);
+  const provider = useChatStore((state) => state.provider);
+  const setProvider = useChatStore((state) => state.setProvider);
+  const cooldownUntil = useChatStore((state) => state.cooldownUntil);
 
-  return { messages, sending, send, deletingId, resolveDelete };
+  return { messages, sending, send, deletingId, resolveDelete, provider, setProvider, cooldownUntil };
 }

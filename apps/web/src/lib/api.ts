@@ -6,11 +6,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export class ApiError extends Error {
   status: number;
+  /** The parsed error body — a 429 carries `retryAfter`, for instance. */
+  data: unknown;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -73,7 +76,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError<{ error?: s
     return new Promise(() => {});
   }
 
-  throw new ApiError(error.response?.data?.error ?? error.message, status ?? 0);
+  throw new ApiError(error.response?.data?.error ?? error.message, status ?? 0, error.response?.data);
 });
 
 export const api = {

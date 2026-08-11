@@ -1,13 +1,18 @@
-import type { LLMProvider } from "./provider";
+import { isProviderName, type LLMProvider, type ProviderName } from "./provider";
 import { createOllamaProvider } from "./ollama.provider";
 import { createGroqProvider } from "./groq.provider";
 import { createClaudeProvider } from "./claude.provider";
 import { createGeminiProvider } from "./gemini.provider";
 
-export function createProvider(): LLMProvider {
-  const provider = process.env.AI_PROVIDER ?? "ollama";
+/** `requested` comes from the user's model picker; AI_PROVIDER is the fallback default. */
+export function createProvider(requested?: string): LLMProvider {
+  const name: ProviderName = isProviderName(requested)
+    ? requested
+    : isProviderName(process.env.AI_PROVIDER)
+      ? process.env.AI_PROVIDER
+      : "ollama";
 
-  switch (provider) {
+  switch (name) {
     case "gemini":
       return createGeminiProvider();
     case "groq":
@@ -15,9 +20,9 @@ export function createProvider(): LLMProvider {
     case "claude":
       return createClaudeProvider();
     case "ollama":
-    default:
       return createOllamaProvider();
   }
 }
 
-export type { LLMProvider } from "./provider";
+export { PROVIDERS, RateLimitError, isProviderName } from "./provider";
+export type { LLMProvider, ProviderName } from "./provider";

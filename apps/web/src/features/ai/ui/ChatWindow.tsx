@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { AlertTriangle, ArrowUp, Mic, Send, Sparkles, Square, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Hourglass, Mic, Send, Sparkles, Square, Trash2 } from "lucide-react";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useTypewriter } from "../hooks/useTypewriter";
-import type { ChatMessage } from "../types";
+import { PROVIDER_OPTIONS, type ChatMessage, type ProviderName } from "../types";
 
 interface AssistantBubbleProps {
   message: ChatMessage;
@@ -85,6 +86,9 @@ export interface ChatWindowProps {
   onSend: (message: string) => void;
   deletingId: string | null;
   onResolveDelete: (messageId: string, confirmed: boolean) => void;
+  provider: ProviderName;
+  onProviderChange: (provider: ProviderName) => void;
+  cooldownUntil: number | null;
 }
 
 const SUGGESTIONS = [
@@ -94,8 +98,40 @@ const SUGGESTIONS = [
   "How much did I spend this month?",
 ];
 
-export function ChatWindow({ messages, sending, onSend, deletingId, onResolveDelete }: ChatWindowProps) {
+/** Seconds left on a rate-limit wait, ticking down to zero and then releasing the composer. */
+function useCooldown(until: number | null): number {
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (until === null) {
+      setRemaining(0);
+      return;
+    }
+
+    function update(): void {
+      setRemaining(Math.max(0, Math.ceil(((until as number) - Date.now()) / 1000)));
+    }
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [until]);
+
+  return remaining;
+}
+
+export function ChatWindow({
+  messages,
+  sending,
+  onSend,
+  deletingId,
+  onResolveDelete,
+  provider,
+  onProviderChange,
+  cooldownUntil,
+}: ChatWindowProps) {
   const [input, setInput] = useState("");
+  const cooldown = useCooldown(cooldownUntil);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -129,7 +165,7 @@ export function ChatWindow({ messages, sending, onSend, deletingId, onResolveDel
 
   function submit(value: string): void {
     const trimmed = value.trim();
-    if (trimmed === "" || sending) return;
+    if (trimmed === "" || sending || cooldown > 0) return;
     onSend(trimmed);
     setInput("");
   }
@@ -225,9 +261,11 @@ export function ChatWindow({ messages, sending, onSend, deletingId, onResolveDel
         </p>
       )}
 
+      {/* Two models is a segmented control, not a dropdown — both choices stay visible, and it
+          lives inside the composer so there is no second bordered strip above it. */}
       <form
         onSubmit={handleSubmit}
-        className="flex items-end gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 focus-within:border-[var(--color-primary)]"
+        className="flex flex-col gap-1.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 focus-within:border-[var(--color-primary)]"
       >
         <Textarea
           ref={textareaRef}
@@ -237,30 +275,62 @@ export function ChatWindow({ messages, sending, onSend, deletingId, onResolveDel
           placeholder="Ask anything, or tell me what to do…"
           aria-label="Message"
           rows={1}
-          className="max-h-40 min-h-8 flex-1 resize-none border-0 bg-transparent px-1.5 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
+          className="max-h-40 min-h-8 resize-none border-0 bg-transparent px-1.5 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
         />
-        {speech.supported && (
-          <Button
-            type="button"
-            variant={speech.listening ? "default" : "ghost"}
-            size="icon"
-            onClick={speech.toggle}
-            aria-label={speech.listening ? "Stop dictation" : "Dictate a message"}
-            aria-pressed={speech.listening}
-            className={cn("shrink-0", speech.listening && "animate-pulse")}
+
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            size="sm"
+            variant="outline"
+            value={provider}
+            onValueChange={(next) => next && onProviderChange(next as ProviderName)}
+            aria-label="Model"
           >
-            {speech.listening ? <Square /> : <Mic />}
-          </Button>
-        )}
-        <Button
-          type="submit"
-          size="icon"
-          disabled={sending || input.trim() === ""}
-          aria-label="Send message"
-          className="shrink-0"
-        >
-          {sending ? <Send /> : <ArrowUp />}
-        </Button>
+            {PROVIDER_OPTIONS.map((option) => (
+              <ToggleGroupItem
+                key={option.value}
+                value={option.value}
+                title={option.hint}
+                className="px-2.5 text-xs data-[state=on]:bg-[var(--color-primary)]/12 data-[state=on]:text-[var(--color-primary)]"
+              >
+                {option.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+
+          {cooldown > 0 && (
+            <p role="status" className="flex items-center gap-1 text-xs text-destructive">
+              <Hourglass className="size-3.5 shrink-0" />
+              {cooldown}s
+            </p>
+          )}
+
+          <div className="ml-auto flex items-center gap-1">
+            {speech.supported && (
+              <Button
+                type="button"
+                variant={speech.listening ? "default" : "ghost"}
+                size="icon"
+                onClick={speech.toggle}
+                aria-label={speech.listening ? "Stop dictation" : "Dictate a message"}
+                aria-pressed={speech.listening}
+                className={cn("size-8 shrink-0", speech.listening && "animate-pulse")}
+              >
+                {speech.listening ? <Square /> : <Mic />}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={sending || cooldown > 0 || input.trim() === ""}
+              aria-label={cooldown > 0 ? `Rate limited, ${cooldown} seconds left` : "Send message"}
+              className="size-8 shrink-0"
+            >
+              {sending ? <Send /> : <ArrowUp />}
+            </Button>
+          </div>
+        </div>
       </form>
     </div>
   );

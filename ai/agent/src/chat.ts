@@ -1,6 +1,6 @@
 import { safeParseJSON } from "@noctis/utils";
 import { gatherContext } from "./context";
-import { systemPrompt, chatPrompt } from "./prompts";
+import { systemPrompt, chatPrompt, type PriorTurn } from "./prompts";
 import { createProvider } from "./llm";
 import * as tools from "./tools";
 import type { ChatResult } from "./tools";
@@ -40,10 +40,16 @@ function str(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-export async function handleChat(userId: string, message: string): Promise<ChatResult> {
+export interface ChatOptions {
+  /** Which model to ask — the user's picker choice, falling back to AI_PROVIDER. */
+  provider?: string;
+  history?: PriorTurn[];
+}
+
+export async function handleChat(userId: string, message: string, options: ChatOptions = {}): Promise<ChatResult> {
   const context = await gatherContext(userId);
-  const provider = createProvider();
-  const raw = await provider.complete(systemPrompt(), chatPrompt(context, message));
+  const provider = createProvider(options.provider);
+  const raw = await provider.complete(systemPrompt(), chatPrompt(context, message, options.history));
   const parsed = safeParseJSON(raw);
 
   if (!isChatIntent(parsed)) return { message: raw };

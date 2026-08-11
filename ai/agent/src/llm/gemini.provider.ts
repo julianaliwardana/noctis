@@ -1,4 +1,4 @@
-import type { LLMProvider } from "./provider";
+import { RateLimitError, type LLMProvider } from "./provider";
 
 interface GeminiResponse {
   candidates?: { content: { parts: { text?: string; thought?: boolean }[] } }[];
@@ -10,10 +10,17 @@ interface GeminiResponse {
  */
 const DEFAULT_MODEL = "gemini-flash-latest";
 
-/** The free tier allows a handful of requests per minute; the API tells us how long to wait. */
-function retryDelayMs(body: string): number {
+/**
+ * A 429 is either the per-minute bucket (worth waiting out) or the per-day allowance — currently
+ * 20 requests/day/model on the free tier. Google reports "retry in ~50s" for both, so the quotaId
+ * in the violation details is the only honest way to tell them apart.
+ */
+function parseQuota(body: string): { retryAfterSeconds: number; daily: boolean } {
   const seconds = /retry in ([\d.]+)s/.exec(body)?.[1];
-  return Math.min(seconds ? Number(seconds) * 1000 + 250 : 3000, 10_000);
+  return {
+    retryAfterSeconds: seconds ? Math.ceil(Number(seconds)) : 60,
+    daily: /PerDay/i.test(body),
+  };
 }
 
 export function createGeminiProvider(): LLMProvider {
@@ -47,9 +54,18 @@ export function createGeminiProvider(): LLMProvider {
       let res = await call(system, user);
 
       if (res.status === 429) {
-        const body = await res.text();
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(body)));
+        const quota = parseQuota(await res.text());
+        if (quota.daily) throw new RateLimitError("gemini", quota.retryAfterSeconds, "day");
+        // Anything longer than a moment belongs in the user's countdown, not in a held-open request.
+        if (quota.retryAfterSeconds > 5) throw new RateLimitError("gemini", quota.retryAfterSeconds, "minute");
+
+        await new Promise((resolve) => setTimeout(resolve, quota.retryAfterSeconds * 1000 + 250));
         res = await call(system, user);
+
+        if (res.status === 429) {
+          const retry = parseQuota(await res.text());
+          throw new RateLimitError("gemini", retry.retryAfterSeconds, retry.daily ? "day" : "minute");
+        }
       }
 
       if (!res.ok) throw new Error(`Gemini request failed: ${res.status} ${await res.text()}`);

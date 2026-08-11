@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
   { href: "/pomodoro", label: "Pomodoro", tone: "primary", icon: <Timer {...iconProps} /> },
   { href: "/finance", label: "Finance", tone: "finance", icon: <BarChart3 {...iconProps} /> },
   { href: "/passwords", label: "Passwords", tone: "passwords", icon: <Lock {...iconProps} /> },
-  { href: "/ai", label: "AI Chat", tone: "primary", icon: <Sparkles {...iconProps} /> },
+  { href: "/ai", label: "Noctis Chat", tone: "primary", icon: <Sparkles {...iconProps} /> },
 ];
 
 const toneVar: Record<Tone, string> = {
@@ -48,7 +48,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <AuthGuard>
-      <div className="flex min-h-dvh flex-col md:flex-row">
+      {/* h-dvh, not min-h-dvh: the shell is exactly the viewport, so <main> is the only thing that
+          scrolls. With min-h it grew past the screen and the document scrolled the header away. */}
+      <div className="flex h-dvh flex-col overflow-hidden md:flex-row">
         <aside className="hidden shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)]/70 backdrop-blur-xl md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:flex-col md:p-4">
           <div className="mb-6 flex items-center gap-2 px-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -132,7 +134,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Link>
               <Link
                 href="/ai"
-                aria-label="Open AI chat"
+                aria-label="Open Noctis Chat"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
               >
                 ✦

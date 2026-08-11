@@ -48,12 +48,28 @@ export function nudgePrompt(context: UserContext, slot: NudgeSlot): string {
   ].join("\n");
 }
 
-export function chatPrompt(context: UserContext, message: string): string {
+export interface PriorTurn {
+  role: string;
+  content: string;
+}
+
+/** Only the tail is sent — enough for "delete that one too" to resolve, cheap enough for a free tier. */
+function formatHistory(history: PriorTurn[]): string {
+  if (history.length === 0) return "";
+  const turns = history
+    .slice(-10)
+    .map((turn) => `${turn.role === "user" ? "User" : "You"}: ${turn.content}`)
+    .join("\n");
+  return `Earlier in this conversation:\n${turns}\n`;
+}
+
+export function chatPrompt(context: UserContext, message: string, history: PriorTurn[] = []): string {
   return [
     `Current date and time: ${new Date().toISOString()}`,
     "",
     formatContext(context),
     "",
+    formatHistory(history),
     `User message: "${message}"`,
     "",
     "If the user is asking you to do something, respond with ONLY one JSON tool call.",
