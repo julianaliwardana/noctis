@@ -3,6 +3,9 @@
 A personal productivity app — tasks, habits, a Pomodoro timer, finance tracking, an
 encrypted password manager, and an AI assistant — built as a pnpm monorepo.
 
+> Deploying to a server? See **[DEPLOY.md](DEPLOY.md)**. This README covers local
+> development only.
+
 ## What you need to prepare
 
 Everything below runs **on your own machine**. Postgres and Redis are not third-party

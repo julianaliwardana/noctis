@@ -1,0 +1,57 @@
+name: noctis
+
+x-app: &app
+  # Set by deploy.sh to the git short SHA, so every past build stays startable.
+  image: noctis:${TAG:-latest}
+  build:
+    context: .
+    args:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+      NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL}
+  env_file: .env
+  restart: unless-stopped
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_started }
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes: ["redis_data:/data"]
+    restart: unless-stopped
+
+  api:
+    <<: *app
+    command: pnpm --filter @noctis/api start
+
+  agent:
+    <<: *app
+    command: pnpm --filter @noctis/agent start
+
+  web:
+    <<: *app
+    command: pnpm --filter @noctis/web start
+
+  # Outbound-only. Nothing here listens on a public port.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
