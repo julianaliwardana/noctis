@@ -154,25 +154,42 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   loadConversations: async () => {
-    set({ conversations: await chatApi.fetchConversations() });
+    try {
+      set({ conversations: await chatApi.fetchConversations() });
+    } catch {
+      // Keep whatever list is already on screen.
+    }
   },
 
   openConversation: async (id) => {
-    const conversation = await chatApi.fetchConversation(id);
-    set({ conversationId: id, messages: conversation.messages.map(toChatMessage) });
+    try {
+      const conversation = await chatApi.fetchConversation(id);
+      set({ conversationId: id, messages: conversation.messages.map(toChatMessage) });
+    } catch {
+      // Leave the current chat in place rather than blanking it.
+    }
   },
 
   startNewChat: () => set({ conversationId: null, messages: [] }),
 
   renameConversation: async (id, title) => {
-    const updated = await chatApi.renameConversation(id, title);
-    set({
-      conversations: get().conversations.map((entry) => (entry.id === id ? updated : entry)),
-    });
+    try {
+      const updated = await chatApi.renameConversation(id, title);
+      set({
+        conversations: get().conversations.map((entry) => (entry.id === id ? updated : entry)),
+      });
+    } catch {
+      // The old title stays on screen, which is the truth until the server accepts the new one.
+    }
   },
 
   removeConversation: async (id) => {
-    await chatApi.deleteConversation(id);
+    try {
+      await chatApi.deleteConversation(id);
+    } catch {
+      return; // Still on the server, so it stays in the list.
+    }
+
     set({
       conversations: get().conversations.filter((entry) => entry.id !== id),
       ...(get().conversationId === id ? { conversationId: null, messages: [] } : {}),

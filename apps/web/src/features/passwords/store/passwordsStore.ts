@@ -24,8 +24,11 @@ export const usePasswordsStore = create<PasswordsState>((set, get) => ({
 
   fetchEntries: async () => {
     set({ loading: true });
-    const entries = await passwordsApi.fetchPasswords();
-    set({ entries, loading: false });
+    try {
+      set({ entries: await passwordsApi.fetchPasswords(), loading: false });
+    } catch {
+      set({ loading: false });
+    }
   },
 
   addEntry: async (key, input) => {

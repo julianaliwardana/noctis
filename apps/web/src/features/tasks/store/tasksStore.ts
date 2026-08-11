@@ -17,8 +17,11 @@ export const useTasksStore = create<TasksState>((set, get) => ({
 
   fetchTasks: async () => {
     set({ loading: true });
-    const tasks = await tasksApi.fetchTasks();
-    set({ tasks, loading: false });
+    try {
+      set({ tasks: await tasksApi.fetchTasks(), loading: false });
+    } catch {
+      set({ loading: false });
+    }
   },
 
   addTask: async (input) => {

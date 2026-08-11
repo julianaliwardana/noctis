@@ -29,12 +29,16 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
   fetchAll: async () => {
     set({ loading: true });
-    const [expenses, summary, categories] = await Promise.all([
-      financeApi.fetchExpenses(),
-      financeApi.fetchSummary(),
-      financeApi.fetchCategories(),
-    ]);
-    set({ expenses, summary, categories, loading: false });
+    try {
+      const [expenses, summary, categories] = await Promise.all([
+        financeApi.fetchExpenses(),
+        financeApi.fetchSummary(),
+        financeApi.fetchCategories(),
+      ]);
+      set({ expenses, summary, categories, loading: false });
+    } catch {
+      set({ loading: false });
+    }
   },
 
   addExpense: async (input) => {

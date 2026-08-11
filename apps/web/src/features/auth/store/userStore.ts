@@ -15,8 +15,11 @@ export const useUserStore = create<UserState>((set) => ({
 
   fetchUser: async () => {
     set({ loading: true });
-    const user = await userApi.fetchMe();
-    set({ user, loading: false });
+    try {
+      set({ user: await userApi.fetchMe(), loading: false });
+    } catch {
+      set({ loading: false });
+    }
   },
 
   updateUser: async (input) => {

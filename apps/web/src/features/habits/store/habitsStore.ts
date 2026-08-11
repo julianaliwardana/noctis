@@ -21,8 +21,11 @@ export const useHabitsStore = create<HabitsState>((set, get) => ({
 
   fetchHabits: async () => {
     set({ loading: true });
-    const habits = await habitsApi.fetchHabits();
-    set({ habits, loading: false });
+    try {
+      set({ habits: await habitsApi.fetchHabits(), loading: false });
+    } catch {
+      set({ loading: false });
+    }
   },
 
   addHabit: async (input) => {
