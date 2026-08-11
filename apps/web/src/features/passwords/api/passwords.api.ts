@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Password } from "@noctis/types";
 
 export type PasswordDto = Omit<Password, "createdAt"> & { createdAt: string };
@@ -12,13 +12,13 @@ export interface SavePasswordInput {
 }
 
 export function fetchPasswords(): Promise<PasswordDto[]> {
-  return apiFetch<PasswordDto[]>("/passwords");
+  return api.get<PasswordDto[]>("/passwords");
 }
 
 export function savePassword(input: SavePasswordInput): Promise<PasswordDto> {
-  return apiFetch<PasswordDto>("/passwords", { method: "POST", body: JSON.stringify(input) });
+  return api.post<PasswordDto>("/passwords", input);
 }
 
 export function deletePassword(id: string): Promise<void> {
-  return apiFetch<void>(`/passwords/${id}`, { method: "DELETE" });
+  return api.delete(`/passwords/${id}`);
 }

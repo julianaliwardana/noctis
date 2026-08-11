@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export interface ChatResponse {
   message: string;
@@ -6,5 +6,5 @@ export interface ChatResponse {
 }
 
 export function sendChatMessage(message: string): Promise<ChatResponse> {
-  return apiFetch<ChatResponse>("/ai/chat", { method: "POST", body: JSON.stringify({ message }) });
+  return api.post<ChatResponse>("/ai/chat", { message });
 }

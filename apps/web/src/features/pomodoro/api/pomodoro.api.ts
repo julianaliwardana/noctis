@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export type PomodoroPhase = "focus" | "short" | "long";
 
@@ -7,10 +7,7 @@ export function recordSession(
   startedAt: string,
   endedAt: string,
 ): Promise<void> {
-  return apiFetch<void>("/pomodoro", {
-    method: "POST",
-    body: JSON.stringify({ phase, startedAt, endedAt }),
-  });
+  return api.post<void>("/pomodoro", { phase, startedAt, endedAt });
 }
 
 export interface YouTubeResult {
@@ -25,7 +22,5 @@ export interface YouTubeResult {
 export type SearchSource = "video" | "music";
 
 export function searchYouTube(query: string, source: SearchSource = "video"): Promise<YouTubeResult[]> {
-  return apiFetch<YouTubeResult[]>(
-    `/youtube/search?q=${encodeURIComponent(query)}&source=${source}`,
-  );
+  return api.get<YouTubeResult[]>("/youtube/search", { params: { q: query, source } });
 }

@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Task } from "@noctis/types";
 
 export type TaskDto = Omit<Task, "dueAt" | "completedAt" | "createdAt"> & {
@@ -15,17 +15,17 @@ export interface CreateTaskInput {
 }
 
 export function fetchTasks(): Promise<TaskDto[]> {
-  return apiFetch<TaskDto[]>("/tasks");
+  return api.get<TaskDto[]>("/tasks");
 }
 
 export function createTask(input: CreateTaskInput): Promise<TaskDto> {
-  return apiFetch<TaskDto>("/tasks", { method: "POST", body: JSON.stringify(input) });
+  return api.post<TaskDto>("/tasks", input);
 }
 
 export function completeTask(id: string): Promise<TaskDto> {
-  return apiFetch<TaskDto>(`/tasks/${id}/complete`, { method: "POST" });
+  return api.post<TaskDto>(`/tasks/${id}/complete`);
 }
 
 export function deleteTask(id: string): Promise<void> {
-  return apiFetch<void>(`/tasks/${id}`, { method: "DELETE" });
+  return api.delete(`/tasks/${id}`);
 }

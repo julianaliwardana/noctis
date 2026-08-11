@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Habit, HabitLog } from "@noctis/types";
 
 export type HabitDto = Omit<Habit, "createdAt" | "endDate"> & { createdAt: string; endDate: string | null };
@@ -13,25 +13,25 @@ export interface CreateHabitInput {
 }
 
 export function fetchHabits(): Promise<HabitDto[]> {
-  return apiFetch<HabitDto[]>("/habits");
+  return api.get<HabitDto[]>("/habits");
 }
 
 export function createHabit(input: CreateHabitInput): Promise<HabitDto> {
-  return apiFetch<HabitDto>("/habits", { method: "POST", body: JSON.stringify(input) });
+  return api.post<HabitDto>("/habits", input);
 }
 
 export function logHabit(id: string, note?: string): Promise<HabitDto> {
-  return apiFetch<HabitDto>(`/habits/${id}/log`, { method: "POST", body: JSON.stringify({ note }) });
+  return api.post<HabitDto>(`/habits/${id}/log`, { note });
 }
 
 export function fetchHabitLogs(id: string): Promise<HabitLogDto[]> {
-  return apiFetch<HabitLogDto[]>(`/habits/${id}/logs`);
+  return api.get<HabitLogDto[]>(`/habits/${id}/logs`);
 }
 
 export function updateHabitColor(id: string, color: string): Promise<HabitDto> {
-  return apiFetch<HabitDto>(`/habits/${id}`, { method: "PATCH", body: JSON.stringify({ color }) });
+  return api.patch<HabitDto>(`/habits/${id}`, { color });
 }
 
 export function deleteHabit(id: string): Promise<void> {
-  return apiFetch<void>(`/habits/${id}`, { method: "DELETE" });
+  return api.delete(`/habits/${id}`);
 }

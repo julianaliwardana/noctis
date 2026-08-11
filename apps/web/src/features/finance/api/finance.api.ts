@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Category, Expense } from "@noctis/types";
 
 export type ExpenseDto = Omit<Expense, "date"> & { date: string };
@@ -24,33 +24,33 @@ export interface MonthlySummary {
 }
 
 export function fetchExpenses(): Promise<ExpenseDto[]> {
-  return apiFetch<ExpenseDto[]>("/finance");
+  return api.get<ExpenseDto[]>("/finance");
 }
 
 export function fetchSummary(): Promise<MonthlySummary> {
-  return apiFetch<MonthlySummary>("/finance/summary");
+  return api.get<MonthlySummary>("/finance/summary");
 }
 
 export function addExpense(input: CreateExpenseInput): Promise<ExpenseDto> {
-  return apiFetch<ExpenseDto>("/finance", { method: "POST", body: JSON.stringify(input) });
+  return api.post<ExpenseDto>("/finance", input);
 }
 
 export function deleteExpense(id: string): Promise<void> {
-  return apiFetch<void>(`/finance/${id}`, { method: "DELETE" });
+  return api.delete(`/finance/${id}`);
 }
 
 export function fetchCategories(): Promise<CategoryDto[]> {
-  return apiFetch<CategoryDto[]>("/finance/categories");
+  return api.get<CategoryDto[]>("/finance/categories");
 }
 
 export function addCategory(input: { name: string; color?: string }): Promise<CategoryDto> {
-  return apiFetch<CategoryDto>("/finance/categories", { method: "POST", body: JSON.stringify(input) });
+  return api.post<CategoryDto>("/finance/categories", input);
 }
 
 export function updateCategory(id: string, input: CategoryInput): Promise<CategoryDto> {
-  return apiFetch<CategoryDto>(`/finance/categories/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  return api.patch<CategoryDto>(`/finance/categories/${id}`, input);
 }
 
 export function deleteCategory(id: string): Promise<void> {
-  return apiFetch<void>(`/finance/categories/${id}`, { method: "DELETE" });
+  return api.delete(`/finance/categories/${id}`);
 }

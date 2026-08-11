@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export interface UserDto {
   id: string;
@@ -16,9 +16,9 @@ export interface UpdateUserInput {
 }
 
 export function fetchMe(): Promise<UserDto> {
-  return apiFetch<UserDto>("/user/me");
+  return api.get<UserDto>("/user/me");
 }
 
 export function updateMe(input: UpdateUserInput): Promise<UserDto> {
-  return apiFetch<UserDto>("/user/me", { method: "PATCH", body: JSON.stringify(input) });
+  return api.patch<UserDto>("/user/me", input);
 }

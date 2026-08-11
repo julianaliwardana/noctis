@@ -1,3 +1,4 @@
+import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
 import { clearToken, getRefreshToken, getToken, setTokens } from "./auth";
 import { expireSession } from "./session";
 
@@ -13,6 +14,11 @@ export class ApiError extends Error {
   }
 }
 
+const client = axios.create({
+  baseURL: API_URL,
+  headers: { "Content-Type": "application/json" },
+});
+
 /**
  * Shared across concurrent callers so a page that fires five requests at once refreshes once,
  * rather than racing five refreshes and keeping whichever token happened to land last.
@@ -23,17 +29,12 @@ async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
-  const res = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
+  // Bare axios, not `client` — a 401 here must not re-enter the refresh interceptor.
+  const { data } = await axios.post<{ accessToken: string }>(`${API_URL}/auth/refresh`, {
+    refreshToken,
   });
-
-  if (!res.ok) return null;
-
-  const { accessToken } = (await res.json()) as { accessToken: string };
-  setTokens(accessToken);
-  return accessToken;
+  setTokens(data.accessToken);
+  return data.accessToken;
 }
 
 function refreshOnce(): Promise<string | null> {
@@ -45,37 +46,43 @@ function refreshOnce(): Promise<string | null> {
   return refreshInFlight;
 }
 
-function request(path: string, init: RequestInit, token: string | null): Promise<Response> {
-  return fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  });
-}
+client.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let res = await request(path, init, getToken());
+client.interceptors.response.use(undefined, async (error: AxiosError<{ error?: string }>) => {
+  const config = error.config as (InternalAxiosRequestConfig & { retried?: boolean }) | undefined;
+  const status = error.response?.status;
 
   // A 401 is expected every 15 minutes as the access token lapses — trade the refresh token for
   // a fresh one and replay the request before bothering the user about it.
-  if (res.status === 401 && !path.startsWith("/auth/")) {
-    const refreshed = await refreshOnce();
-    if (refreshed) {
-      res = await request(path, init, refreshed);
-    } else {
-      clearToken();
-      expireSession();
+  if (status === 401 && config && !config.retried && !config.url?.startsWith("/auth/")) {
+    config.retried = true;
+    const token = await refreshOnce();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      return client(config);
     }
+    clearToken();
+    expireSession();
+    // The session dialog is now the only thing the user needs to act on. Rejecting here instead
+    // would surface as an unhandled rejection in every mount-effect fetch and store action that
+    // has no reason to catch a dead session — so the chain stops quietly.
+    return new Promise(() => {});
   }
 
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new ApiError(body?.error ?? res.statusText, res.status);
-  }
+  throw new ApiError(error.response?.data?.error ?? error.message, status ?? 0);
+});
 
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
+export const api = {
+  get: <T>(url: string, config?: AxiosRequestConfig) =>
+    client.get<T>(url, config).then((res) => res.data),
+  post: <T>(url: string, body?: unknown, config?: AxiosRequestConfig) =>
+    client.post<T>(url, body, config).then((res) => res.data),
+  patch: <T>(url: string, body?: unknown, config?: AxiosRequestConfig) =>
+    client.patch<T>(url, body, config).then((res) => res.data),
+  delete: <T = void>(url: string, config?: AxiosRequestConfig) =>
+    client.delete<T>(url, config).then((res) => res.data),
+};
