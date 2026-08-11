@@ -5,8 +5,8 @@ interface OllamaChatResponse {
 }
 
 export function createOllamaProvider(): LLMProvider {
-  const baseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-  const model = process.env.OLLAMA_MODEL ?? "qwen2.5:7b";
+  const baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+  const model = process.env.OLLAMA_MODEL || "qwen2.5:7b";
 
   return {
     async complete(system: string, user: string): Promise<string> {

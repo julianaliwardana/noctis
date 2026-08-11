@@ -73,6 +73,7 @@ export function chatPrompt(context: UserContext, message: string): string {
     '{ "intent": "GET_SUMMARY", "period": "today"|"week"|"month" }',
     "",
     "daysOfWeek is 0 for Sunday through 6 for Saturday, and colors are #rrggbb.",
+    "Amounts may use Indonesian shorthand: 45k or 45rb is 45000, 1jt is 1000000. Send plain numbers.",
     "Otherwise, respond with ONLY this JSON shape:",
     '{ "intent": "REPLY", "message": string }',
   ].join("\n");

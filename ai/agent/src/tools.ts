@@ -4,6 +4,18 @@ import { formatCurrency } from "@noctis/utils";
 export interface ChatResult {
   message: string;
   action?: { type: string; summary: string };
+  /**
+   * Deletes are proposed, never executed here. A misheard "hapus" against a habit streak is
+   * unrecoverable, so the model only names the record and the client confirms it through the
+   * normal REST endpoint — which re-checks ownership anyway.
+   */
+  pendingDelete?: PendingDelete;
+}
+
+export interface PendingDelete {
+  kind: "task" | "habit" | "transaction" | "category";
+  id: string;
+  label: string;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -92,10 +104,9 @@ export async function deleteTask(userId: string, title: string): Promise<ChatRes
   const found = resolveByName(tasks, (task) => task.title, title, "task");
   if (!found.ok) return { message: found.message };
 
-  await db.task.delete({ where: { id: found.item.id } });
   return {
-    message: `Deleted "${found.item.title}".`,
-    action: { type: "DELETE_TASK", summary: `Deleted task: ${found.item.title}` },
+    message: `Delete the task "${found.item.title}"?`,
+    pendingDelete: { kind: "task", id: found.item.id, label: found.item.title },
   };
 }
 
@@ -159,10 +170,9 @@ export async function deleteHabit(userId: string, name: string): Promise<ChatRes
   const found = resolveByName(habits, (habit) => habit.name, name, "habit");
   if (!found.ok) return { message: found.message };
 
-  await db.habit.delete({ where: { id: found.item.id } });
   return {
-    message: `Stopped tracking "${found.item.name}".`,
-    action: { type: "DELETE_HABIT", summary: `Deleted habit: ${found.item.name}` },
+    message: `Stop tracking "${found.item.name}"? Its logs and streak go with it.`,
+    pendingDelete: { kind: "habit", id: found.item.id, label: found.item.name },
   };
 }
 
@@ -202,10 +212,9 @@ export async function deleteTransaction(userId: string, title: string): Promise<
   const found = resolveByName(expenses, (expense) => expense.title, title, "transaction");
   if (!found.ok) return { message: found.message };
 
-  await db.expense.delete({ where: { id: found.item.id } });
   return {
-    message: `Deleted "${found.item.title}" (${formatCurrency(found.item.amount)}).`,
-    action: { type: "DELETE_TRANSACTION", summary: `Deleted transaction: ${found.item.title}` },
+    message: `Delete "${found.item.title}" (${formatCurrency(found.item.amount)})?`,
+    pendingDelete: { kind: "transaction", id: found.item.id, label: found.item.title },
   };
 }
 
@@ -235,21 +244,13 @@ export async function deleteCategory(userId: string, name: string): Promise<Chat
   if (!found.ok) return { message: found.message };
   if (categories.length === 1) return { message: "That's your only category — I'll keep it." };
 
+  // Same fallback rule financeService.deleteCategory applies when the client confirms.
   const remaining = categories.filter((category) => category.id !== found.item.id);
   const fallback = remaining.find((category) => category.name === "Other") ?? remaining[0];
 
-  // ponytail: mirrors financeService.deleteCategory — extract to a shared package if a third caller appears.
-  await db.$transaction([
-    db.expense.updateMany({
-      where: { userId, category: found.item.name },
-      data: { category: (fallback as { name: string }).name },
-    }),
-    db.category.delete({ where: { id: found.item.id } }),
-  ]);
-
   return {
-    message: `Deleted "${found.item.name}" — its transactions moved to ${(fallback as { name: string }).name}.`,
-    action: { type: "DELETE_CATEGORY", summary: `Deleted category: ${found.item.name}` },
+    message: `Delete "${found.item.name}"? Its transactions move to ${(fallback as { name: string }).name}.`,
+    pendingDelete: { kind: "category", id: found.item.id, label: found.item.name },
   };
 }
 

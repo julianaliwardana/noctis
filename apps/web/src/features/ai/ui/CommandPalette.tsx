@@ -7,7 +7,7 @@ import { useChat } from "../hooks/useChat";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const { messages, sending, send } = useChat();
+  const { messages, sending, send, deletingId, resolveDelete } = useChat();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
@@ -27,7 +27,13 @@ export function CommandPalette() {
         <DialogHeader className="sr-only">
           <DialogTitle>Ask Noctis</DialogTitle>
         </DialogHeader>
-        <ChatWindow messages={messages} sending={sending} onSend={send} />
+        <ChatWindow
+          messages={messages}
+          sending={sending}
+          onSend={send}
+          deletingId={deletingId}
+          onResolveDelete={resolveDelete}
+        />
       </DialogContent>
     </Dialog>
   );

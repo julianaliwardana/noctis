@@ -4,6 +4,7 @@
  * Run from ai/agent: pnpm exec tsx src/tools.check.ts
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { resolveByName } from "./tools";
 
 const tasks = [{ title: "Buy milk" }, { title: "Buy milk for the cake" }, { title: "Call mum" }];
@@ -40,5 +41,18 @@ assert.match(expectFail(resolveByName(twins, name, "Groceries", "task")), /More 
 assert.match(expectFail(resolveByName(tasks, name, "dentist", "task")), /couldn't find a task matching "dentist"/);
 assert.match(expectFail(resolveByName(tasks, name, "   ", "habit")), /Which habit did you mean\?/);
 assert.match(expectFail(resolveByName([], name, "anything", "task")), /couldn't find/);
+
+// Deletes must only ever be proposed — the client confirms them through the REST endpoints.
+// Reading the source is the cheap way to assert this without standing up a database.
+const source = readFileSync(new URL("./tools.ts", import.meta.url), "utf8");
+
+for (const fn of ["deleteTask", "deleteHabit", "deleteTransaction", "deleteCategory"]) {
+  const start = source.indexOf(`export async function ${fn}(`);
+  assert.notEqual(start, -1, `${fn} is gone`);
+  const body = source.slice(start, source.indexOf("\nexport ", start + 1));
+
+  assert.match(body, /pendingDelete: \{/, `${fn} must propose a delete`);
+  assert.doesNotMatch(body, /db\.\w+\.delete|db\.\$transaction/, `${fn} must not delete anything itself`);
+}
 
 console.log("tools: all checks passed");

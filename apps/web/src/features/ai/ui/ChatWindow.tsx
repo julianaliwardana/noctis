@@ -1,18 +1,90 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { AlertTriangle, ArrowUp, Mic, Send, Sparkles, Square } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { AlertTriangle, ArrowUp, Mic, Send, Sparkles, Square, Trash2 } from "lucide-react";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { useTypewriter } from "../hooks/useTypewriter";
 import type { ChatMessage } from "../types";
+
+interface AssistantBubbleProps {
+  message: ChatMessage;
+  deletingId: string | null;
+  onResolveDelete: (messageId: string, confirmed: boolean) => void;
+  onTick: (behavior?: ScrollBehavior, onlyIfNear?: boolean) => void;
+}
+
+function AssistantBubble({ message, deletingId, onResolveDelete, onTick }: AssistantBubbleProps) {
+  const { visible, done } = useTypewriter(message.id, message.content, () => onTick("auto", true));
+
+  return (
+    <div className="flex max-w-[90%] gap-2.5 self-start">
+      <span
+        aria-hidden
+        className={cn(
+          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg",
+          message.failed
+            ? "bg-destructive/12 text-destructive"
+            : "bg-[var(--color-primary)]/12 text-[var(--color-primary)]",
+        )}
+      >
+        {message.failed ? <AlertTriangle className="size-3.5" /> : <Sparkles className="size-3.5" />}
+      </span>
+      <div className="min-w-0">
+        {/* The full text is in the DOM for screen readers from the start; only the caret waits. */}
+        <p aria-label={message.content} className="text-sm whitespace-pre-wrap text-[var(--color-text)]">
+          <span aria-hidden={!done}>{visible}</span>
+          {!done && (
+            <span
+              aria-hidden
+              className="ml-0.5 inline-block h-3.5 w-px animate-pulse align-middle bg-[var(--color-text-muted)]"
+            />
+          )}
+        </p>
+        {done && message.actionLabel && (
+          <Badge variant="secondary" className="mt-2 gap-1.5">
+            <span aria-hidden className="size-1.5 rounded-full bg-[var(--chart-income)]" />
+            {message.actionLabel}
+          </Badge>
+        )}
+        {/* Held back until the question has finished typing — this one deletes something. */}
+        {done && message.pendingDelete && (
+          <div className="mt-2 flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={deletingId !== null}
+              onClick={() => onResolveDelete(message.id, true)}
+            >
+              <Trash2 />
+              Delete {message.pendingDelete.kind}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={deletingId !== null}
+              onClick={() => onResolveDelete(message.id, false)}
+            >
+              Keep it
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export interface ChatWindowProps {
   messages: ChatMessage[];
   sending: boolean;
   onSend: (message: string) => void;
+  deletingId: string | null;
+  onResolveDelete: (messageId: string, confirmed: boolean) => void;
 }
 
 const SUGGESTIONS = [
@@ -22,7 +94,7 @@ const SUGGESTIONS = [
   "How much did I spend this month?",
 ];
 
-export function ChatWindow({ messages, sending, onSend }: ChatWindowProps) {
+export function ChatWindow({ messages, sending, onSend, deletingId, onResolveDelete }: ChatWindowProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -33,10 +105,19 @@ export function ChatWindow({ messages, sending, onSend }: ChatWindowProps) {
     textareaRef.current?.focus();
   });
 
-  // Keep the newest message in view as the conversation and the thinking indicator grow.
+  // Keep the newest message in view as the conversation and the thinking indicator grow. While a
+  // reply is typing this fires every frame, so it jumps instantly and gives up once the user
+  // scrolls away to read something older.
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth", onlyIfNear = false) => {
+    const element = scrollRef.current;
+    if (!element) return;
+    if (onlyIfNear && element.scrollHeight - element.scrollTop - element.clientHeight > 120) return;
+    element.scrollTo({ top: element.scrollHeight, behavior });
+  }, []);
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, sending]);
+    scrollToBottom();
+  }, [messages.length, sending, scrollToBottom]);
 
   // Auto-grow the composer up to a few lines, then let it scroll.
   useEffect(() => {
@@ -105,28 +186,13 @@ export function ChatWindow({ messages, sending, onSend }: ChatWindowProps) {
                 {message.content}
               </div>
             ) : (
-              <div key={message.id} className="flex max-w-[90%] gap-2.5 self-start">
-                <span
-                  aria-hidden
-                  className={cn(
-                    "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg",
-                    message.failed
-                      ? "bg-destructive/12 text-destructive"
-                      : "bg-[var(--color-primary)]/12 text-[var(--color-primary)]",
-                  )}
-                >
-                  {message.failed ? <AlertTriangle className="size-3.5" /> : <Sparkles className="size-3.5" />}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm whitespace-pre-wrap text-[var(--color-text)]">{message.content}</p>
-                  {message.actionLabel && (
-                    <Badge variant="secondary" className="mt-2 gap-1.5">
-                      <span aria-hidden className="size-1.5 rounded-full bg-[var(--chart-income)]" />
-                      {message.actionLabel}
-                    </Badge>
-                  )}
-                </div>
-              </div>
+              <AssistantBubble
+                key={message.id}
+                message={message}
+                deletingId={deletingId}
+                onResolveDelete={onResolveDelete}
+                onTick={scrollToBottom}
+              />
             ),
           )
         )}

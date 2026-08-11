@@ -4,7 +4,7 @@ import { ChatWindow } from "@/features/ai/ui/ChatWindow";
 import { useChat } from "@/features/ai/hooks/useChat";
 
 export default function AiPage() {
-  const { messages, sending, send } = useChat();
+  const { messages, sending, send, deletingId, resolveDelete } = useChat();
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col md:h-[calc(100dvh-4rem)]">
@@ -14,7 +14,13 @@ export default function AiPage() {
           Create and delete tasks, habits, transactions and categories — by typing or by voice.
         </p>
       </div>
-      <ChatWindow messages={messages} sending={sending} onSend={send} />
+      <ChatWindow
+        messages={messages}
+        sending={sending}
+        onSend={send}
+        deletingId={deletingId}
+        onResolveDelete={resolveDelete}
+      />
     </div>
   );
 }
