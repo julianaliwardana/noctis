@@ -28,29 +28,3 @@ export function formatDate(date: Date | string, locale = "id-ID"): string {
     timeStyle: "short",
   }).format(d);
 }
-
-export async function deriveKey(
-  masterPassword: string,
-  salt: Uint8Array,
-): Promise<CryptoKey> {
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(masterPassword),
-    "PBKDF2",
-    false,
-    ["deriveKey"],
-  );
-
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt as BufferSource,
-      iterations: 100_000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"],
-  );
-}

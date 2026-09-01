@@ -1,24 +1,46 @@
-import { api } from "@/lib/api";
-import type { Password } from "@noctis/types";
+import { api, ApiError } from "@/lib/api";
+import type { VaultItem, VaultKeyMaterial } from "@noctis/types";
 
-export type PasswordDto = Omit<Password, "createdAt"> & { createdAt: string };
+export type VaultItemDto = Omit<VaultItem, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
+};
 
-export interface SavePasswordInput {
-  siteName: string;
-  siteUrl?: string;
-  username: string;
+export interface VaultItemPayload {
   ciphertext: string;
   iv: string;
 }
 
-export function fetchPasswords(): Promise<PasswordDto[]> {
-  return api.get<PasswordDto[]>("/passwords");
+/** Resolves null when the vault has never been set up — the caller shows setup instead of unlock. */
+export async function fetchVaultKey(): Promise<VaultKeyMaterial | null> {
+  try {
+    return await api.get<VaultKeyMaterial>("/passwords/key");
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }
 
-export function savePassword(input: SavePasswordInput): Promise<PasswordDto> {
-  return api.post<PasswordDto>("/passwords", input);
+export function createVaultKey(material: VaultKeyMaterial): Promise<VaultKeyMaterial> {
+  return api.post<VaultKeyMaterial>("/passwords/key", material);
 }
 
-export function deletePassword(id: string): Promise<void> {
+export function replaceVaultKey(material: VaultKeyMaterial): Promise<VaultKeyMaterial> {
+  return api.put<VaultKeyMaterial>("/passwords/key", material);
+}
+
+export function fetchItems(): Promise<VaultItemDto[]> {
+  return api.get<VaultItemDto[]>("/passwords");
+}
+
+export function createItem(payload: VaultItemPayload): Promise<VaultItemDto> {
+  return api.post<VaultItemDto>("/passwords", payload);
+}
+
+export function updateItem(id: string, payload: VaultItemPayload): Promise<VaultItemDto> {
+  return api.patch<VaultItemDto>(`/passwords/${id}`, payload);
+}
+
+export function deleteItem(id: string): Promise<void> {
   return api.delete(`/passwords/${id}`);
 }
