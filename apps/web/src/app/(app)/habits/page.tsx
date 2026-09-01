@@ -16,14 +16,11 @@ export default function HabitsPage() {
         <p className="text-sm text-[var(--color-text-muted)]">{habits.length} tracked</p>
       </div>
 
-      <div className="grid items-start gap-6 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(320px,380px)_1fr] xl:items-stretch">
-        <div className="flex flex-col gap-6 xl:min-h-0 xl:overflow-y-auto">
-          <Card className="shrink-0">
-            <CardContent>
-              <HabitForm onAdd={addHabit} />
-            </CardContent>
-          </Card>
-
+      {/* Mobile order is today-first: check habits off, glance at the month, and only then the
+          "add a habit" form — which is rare, and tall enough to bury everything below it.
+          Desktop keeps the original two-column layout via explicit grid placement. */}
+      <div className="grid items-start gap-6 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(320px,380px)_1fr] xl:grid-rows-[auto_minmax(0,1fr)] xl:items-stretch">
+        <div className="order-1 xl:order-none xl:col-start-1 xl:row-start-2 xl:min-h-0 xl:overflow-y-auto">
           {loading ? (
             <p className="text-sm text-[var(--color-text-muted)]">Loading habits…</p>
           ) : (
@@ -31,7 +28,15 @@ export default function HabitsPage() {
           )}
         </div>
 
-        <HabitsCalendar habits={habits} logs={logs} />
+        <div className="order-2 min-h-0 xl:order-none xl:col-start-2 xl:row-span-2">
+          <HabitsCalendar habits={habits} logs={logs} />
+        </div>
+
+        <Card className="order-3 shrink-0 xl:order-none xl:col-start-1 xl:row-start-1">
+          <CardContent>
+            <HabitForm onAdd={addHabit} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -120,13 +120,13 @@ export function HabitsCalendar({ habits, logs }: HabitsCalendarProps) {
             <div
               key={index}
               className={cn(
-                "flex min-h-24 flex-col gap-1 overflow-hidden border-t border-r border-[var(--color-border)] p-1.5 [&:nth-child(7n)]:border-r-0 xl:min-h-0",
+                "flex min-h-14 flex-col gap-1 overflow-hidden border-t border-r border-[var(--color-border)] p-1 md:min-h-24 md:p-1.5 [&:nth-child(7n)]:border-r-0 xl:min-h-0",
                 !inMonth && "bg-[var(--color-border)]/10",
               )}
             >
               <span
                 className={cn(
-                  "flex h-6 w-6 items-center justify-center self-start rounded-full text-xs",
+                  "flex h-5 w-5 items-center justify-center self-start rounded-full text-[11px] md:h-6 md:w-6 md:text-xs",
                   isToday
                     ? "bg-[var(--color-habits)] font-semibold text-white"
                     : inMonth
@@ -137,26 +137,52 @@ export function HabitsCalendar({ habits, logs }: HabitsCalendarProps) {
                 {date.getDate()}
               </span>
 
-              {chips.slice(0, MAX_CHIPS).map((chip, chipIndex) => (
-                <span
-                  key={chipIndex}
-                  title={`${chip.name}${chip.completed ? " ✓" : ""}`}
-                  className={cn(
-                    "truncate rounded px-1.5 py-0.5 text-[11px] leading-tight font-medium",
-                    chip.completed ? "text-white" : "opacity-80",
-                  )}
-                  style={
-                    chip.completed
-                      ? { backgroundColor: chip.color }
-                      : { backgroundColor: `${chip.color}2e`, color: chip.color }
-                  }
-                >
-                  {chip.name}
-                </span>
-              ))}
-              {overflow > 0 && (
-                <span className="px-1.5 text-[11px] text-[var(--color-text-muted)]">{overflow} more</span>
-              )}
+              {/* A 50px-wide cell cannot hold a readable name, so a phone reads the day as dots:
+                  filled means logged, outlined means still due. Names stay in the tooltip. */}
+              <div className="flex flex-wrap gap-1 md:hidden" aria-hidden>
+                {chips.map((chip, chipIndex) => (
+                  <span
+                    key={chipIndex}
+                    title={`${chip.name}${chip.completed ? " ✓" : ""}`}
+                    className="size-1.5 rounded-full"
+                    style={
+                      chip.completed
+                        ? { backgroundColor: chip.color }
+                        : { boxShadow: `inset 0 0 0 1px ${chip.color}`, opacity: 0.65 }
+                    }
+                  />
+                ))}
+              </div>
+
+              {/* Screen readers and phones get the same facts; only the visual density differs. */}
+              <span className="sr-only md:hidden">
+                {chips.length === 0
+                  ? "Nothing scheduled"
+                  : `${chips.filter((chip) => chip.completed).length} of ${chips.length} done`}
+              </span>
+
+              <div className="hidden flex-col gap-1 md:flex">
+                {chips.slice(0, MAX_CHIPS).map((chip, chipIndex) => (
+                  <span
+                    key={chipIndex}
+                    title={`${chip.name}${chip.completed ? " ✓" : ""}`}
+                    className={cn(
+                      "truncate rounded px-1.5 py-0.5 text-[11px] leading-tight font-medium",
+                      chip.completed ? "text-white" : "opacity-80",
+                    )}
+                    style={
+                      chip.completed
+                        ? { backgroundColor: chip.color }
+                        : { backgroundColor: `${chip.color}2e`, color: chip.color }
+                    }
+                  >
+                    {chip.name}
+                  </span>
+                ))}
+                {overflow > 0 && (
+                  <span className="px-1.5 text-[11px] text-[var(--color-text-muted)]">{overflow} more</span>
+                )}
+              </div>
             </div>
           );
         })}

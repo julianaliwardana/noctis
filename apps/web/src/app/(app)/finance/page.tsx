@@ -30,7 +30,9 @@ export default function FinancePage() {
 
       {summary && <SummaryBar summary={summary} />}
 
-      <Card>
+      {/* Mobile pulls the charts above this form: the form is ~450px tall, which pushed every
+          chart off the first two screens. order-* only applies below md, so desktop is unchanged. */}
+      <Card className="order-3 md:order-none">
         <CardHeader>
           <CardTitle>Add transaction</CardTitle>
         </CardHeader>
@@ -52,13 +54,17 @@ export default function FinancePage() {
         </CardContent>
       </Card>
 
-      <FinanceCharts categories={categories} expenses={expenses} />
+      <div className="order-2 md:order-none">
+        <FinanceCharts categories={categories} expenses={expenses} />
+      </div>
 
-      {loading ? (
-        <p className="text-sm text-[var(--color-text-muted)]">Loading transactions…</p>
-      ) : (
-        <TransactionTable categories={categories} expenses={expenses} onDelete={removeExpense} />
-      )}
+      <div className="order-4 md:order-none">
+        {loading ? (
+          <p className="text-sm text-[var(--color-text-muted)]">Loading transactions…</p>
+        ) : (
+          <TransactionTable categories={categories} expenses={expenses} onDelete={removeExpense} />
+        )}
+      </div>
     </div>
   );
 }

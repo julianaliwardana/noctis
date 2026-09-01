@@ -124,10 +124,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 Noctis
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {/* The Five Rule keeps Passwords out of the bottom nav, so the top bar is its only
+                  tap target on a phone — without this it was reachable by command palette alone. */}
+              <Link
+                href="/passwords"
+                aria-label="Passwords"
+                aria-current={isActive("/passwords") ? "page" : undefined}
+                className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--color-border)]/30"
+                style={{
+                  color: isActive("/passwords")
+                    ? "var(--color-passwords)"
+                    : "var(--color-text-muted)",
+                }}
+              >
+                <Lock strokeWidth={1.75} className="h-5 w-5" />
+              </Link>
               <Link
                 href="/profile"
                 aria-label="Profile"
+                aria-current={isActive("/profile") ? "page" : undefined}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-border)]/30 hover:text-[var(--color-text)]"
               >
                 <UserRound strokeWidth={1.75} className="h-5 w-5" />
