@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "appRoot": "/home/julian/Projects/productivity/apps/web",
+  "repoRoot": "/home/julian/Projects/productivity",
+  "contextRoot": "/home/julian/Projects/productivity",
+  "sessionRoot": "/home/julian/Projects/productivity/apps/web/.impeccable/live",
+  "productPath": "/home/julian/Projects/productivity/PRODUCT.md",
+  "designPath": "/home/julian/Projects/productivity/DESIGN.md",
+  "resolvedFrom": "cwd"
+}

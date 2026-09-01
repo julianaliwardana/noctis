@@ -14,10 +14,10 @@
   --color-primary-fg: #ffffff;
   --color-tasks: #c77d2e;
   --color-habits: #4b8b5f;
-  --color-finance: #faeb20;
+  --color-finance: #928100;
   --color-passwords: #8b3a4a;
 
-  --font-display: var(--font-inter);
+  --font-display: var(--font-sans);
   --font-body: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
   --background: var(--color-bg);
@@ -69,7 +69,7 @@
     --color-primary-fg: #0a1414;
     --color-tasks: #d89552;
     --color-habits: #63a878;
-    --color-finance: #faeb20;
+    --color-finance: #b7a63d;
     --color-passwords: #b0596a;
 
     /* Same hues, re-stepped for the dark surface — not an automatic flip. */

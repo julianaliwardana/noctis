@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-01T00:00:00.000Z",
+  "title": "Design System: Noctis",
+  "extensions": {
+    "colorMeta": {
+      "starlight-blue": {
+        "role": "primary",
+        "displayName": "Starlight Blue",
+        "canonical": "oklch(74.2% 0.089 250.1)",
+        "note": "The only domain-independent accent, and the only tone deliberately identical in both themes.",
+        "tonalRamp": ["oklch(15.0% 0.071 250.1)", "oklch(26.0% 0.074 250.1)", "oklch(37.0% 0.077 250.1)", "oklch(48.0% 0.081 250.1)", "oklch(59.0% 0.084 250.1)", "oklch(70.0% 0.088 250.1)", "oklch(82.0% 0.087 250.1)", "oklch(95.0% 0.083 250.1)"]
+      },
+      "ember-amber": {
+        "role": "secondary",
+        "displayName": "Ember Amber",
+        "canonical": "oklch(65.5% 0.129 63.2)",
+        "note": "Tasks, light surface.",
+        "tonalRamp": ["oklch(15.0% 0.106 63.2)", "oklch(26.0% 0.111 63.2)", "oklch(37.0% 0.116 63.2)", "oklch(48.0% 0.121 63.2)", "oklch(59.0% 0.126 63.2)", "oklch(70.0% 0.127 63.2)", "oklch(82.0% 0.122 63.2)", "oklch(95.0% 0.116 63.2)"]
+      },
+      "ember-amber-night": {
+        "role": "secondary",
+        "displayName": "Ember Amber (Night)",
+        "canonical": "oklch(72.3% 0.116 64.1)",
+        "note": "Tasks, dark surface. Hand re-stepped, not derived.",
+        "tonalRamp": ["oklch(15.0% 0.093 64.1)", "oklch(26.0% 0.097 64.1)", "oklch(37.0% 0.102 64.1)", "oklch(48.0% 0.106 64.1)", "oklch(59.0% 0.111 64.1)", "oklch(70.0% 0.115 64.1)", "oklch(82.0% 0.112 64.1)", "oklch(95.0% 0.107 64.1)"]
+      },
+      "verdant-signal": {
+        "role": "secondary",
+        "displayName": "Verdant Signal",
+        "canonical": "oklch(58.2% 0.095 152.6)",
+        "note": "Habits, light surface. Muted on purpose — a logged habit reads as nominal, not as a reward.",
+        "tonalRamp": ["oklch(15.0% 0.081 152.6)", "oklch(26.0% 0.084 152.6)", "oklch(37.0% 0.088 152.6)", "oklch(48.0% 0.092 152.6)", "oklch(59.0% 0.095 152.6)", "oklch(70.0% 0.091 152.6)", "oklch(82.0% 0.087 152.6)", "oklch(95.0% 0.083 152.6)"]
+      },
+      "verdant-signal-night": {
+        "role": "secondary",
+        "displayName": "Verdant Signal (Night)",
+        "canonical": "oklch(67.3% 0.100 152.7)",
+        "note": "Habits, dark surface.",
+        "tonalRamp": ["oklch(15.0% 0.082 152.7)", "oklch(26.0% 0.086 152.7)", "oklch(37.0% 0.090 152.7)", "oklch(48.0% 0.094 152.7)", "oklch(59.0% 0.097 152.7)", "oklch(70.0% 0.099 152.7)", "oklch(82.0% 0.095 152.7)", "oklch(95.0% 0.091 152.7)"]
+      },
+      "sodium-gold": {
+        "role": "secondary",
+        "displayName": "Sodium Gold",
+        "canonical": "oklch(60.0% 0.125 100.0)",
+        "note": "Finance, light surface. Re-stepped 2026-09-01 from #faeb20, which sat at oklch(92.3% 0.191) and 1.18:1 on Paper Field. Now 3.75:1, inside the Sibling Band between tasks (3.14) and habits (3.90). Named for the sodium-vapour lamp, which is this amber-gold rather than a spectral yellow.",
+        "tonalRamp": ["oklch(15.0% 0.105 100.0)", "oklch(26.0% 0.110 100.0)", "oklch(37.0% 0.115 100.0)", "oklch(48.0% 0.120 100.0)", "oklch(59.0% 0.124 100.0)", "oklch(70.0% 0.120 100.0)", "oklch(82.0% 0.115 100.0)", "oklch(95.0% 0.110 100.0)"]
+      },
+      "sodium-gold-night": {
+        "role": "secondary",
+        "displayName": "Sodium Gold (Night)",
+        "canonical": "oklch(72.0% 0.125 100.0)",
+        "note": "Finance, dark surface. Re-stepped 2026-09-01 from #faeb20, which read 14.61:1 on Deep Field and was by far the loudest tone on a dark screen. Now 7.35:1, matching tasks (7.18). Same lightness step as its light counterpart's siblings, hand-authored rather than derived.",
+        "tonalRamp": ["oklch(15.0% 0.100 100.0)", "oklch(26.0% 0.105 100.0)", "oklch(37.0% 0.110 100.0)", "oklch(48.0% 0.114 100.0)", "oklch(59.0% 0.119 100.0)", "oklch(70.0% 0.124 100.0)", "oklch(82.0% 0.121 100.0)", "oklch(95.0% 0.115 100.0)"]
+      },
+      "oxblood-seal": {
+        "role": "secondary",
+        "displayName": "Oxblood Seal",
+        "canonical": "oklch(46.2% 0.111 10.3)",
+        "note": "Passwords, light surface. Doubles as the system destructive tone.",
+        "tonalRamp": ["oklch(15.0% 0.099 10.3)", "oklch(26.0% 0.103 10.3)", "oklch(37.0% 0.108 10.3)", "oklch(48.0% 0.110 10.3)", "oklch(59.0% 0.106 10.3)", "oklch(70.0% 0.102 10.3)", "oklch(82.0% 0.097 10.3)", "oklch(95.0% 0.092 10.3)"]
+      },
+      "oxblood-seal-night": {
+        "role": "secondary",
+        "displayName": "Oxblood Seal (Night)",
+        "canonical": "oklch(57.3% 0.114 9.0)",
+        "note": "Passwords and destructive, dark surface.",
+        "tonalRamp": ["oklch(15.0% 0.097 9.0)", "oklch(26.0% 0.102 9.0)", "oklch(37.0% 0.106 9.0)", "oklch(48.0% 0.110 9.0)", "oklch(59.0% 0.113 9.0)", "oklch(70.0% 0.109 9.0)", "oklch(82.0% 0.104 9.0)", "oklch(95.0% 0.099 9.0)"]
+      },
+      "deep-field": {
+        "role": "neutral",
+        "displayName": "Deep Field",
+        "canonical": "oklch(20.1% 0.012 270.7)",
+        "note": "The room. Night page background.",
+        "tonalRamp": ["oklch(15.0% 0.012 270.7)", "oklch(26.0% 0.012 270.7)", "oklch(37.0% 0.012 270.7)", "oklch(48.0% 0.011 270.7)", "oklch(59.0% 0.011 270.7)", "oklch(70.0% 0.010 270.7)", "oklch(82.0% 0.010 270.7)", "oklch(95.0% 0.009 270.7)"]
+      },
+      "instrument-panel": {
+        "role": "neutral",
+        "displayName": "Instrument Panel",
+        "canonical": "oklch(24.0% 0.016 269.0)",
+        "note": "Night cards, sidebar, headers. One tonal step above the field — this step IS the elevation.",
+        "tonalRamp": ["oklch(15.0% 0.015 269.0)", "oklch(26.0% 0.016 269.0)", "oklch(37.0% 0.015 269.0)", "oklch(48.0% 0.015 269.0)", "oklch(59.0% 0.014 269.0)", "oklch(70.0% 0.013 269.0)", "oklch(82.0% 0.013 269.0)", "oklch(95.0% 0.012 269.0)"]
+      },
+      "hairline-grey": {
+        "role": "neutral",
+        "displayName": "Hairline Grey",
+        "canonical": "oklch(30.1% 0.019 268.1)",
+        "note": "Night borders, dividers, scrollbar thumbs, unlit streak pips.",
+        "tonalRamp": ["oklch(15.0% 0.018 268.1)", "oklch(26.0% 0.019 268.1)", "oklch(37.0% 0.019 268.1)", "oklch(48.0% 0.018 268.1)", "oklch(59.0% 0.017 268.1)", "oklch(70.0% 0.016 268.1)", "oklch(82.0% 0.016 268.1)", "oklch(95.0% 0.015 268.1)"]
+      },
+      "readout-white": {
+        "role": "neutral",
+        "displayName": "Readout White",
+        "canonical": "oklch(93.4% 0.005 275.0)",
+        "note": "Night primary text. Off-white, never pure white — pure white glares on a near-black field.",
+        "tonalRamp": ["oklch(15.0% 0.004 275.0)", "oklch(26.0% 0.004 275.0)", "oklch(37.0% 0.004 275.0)", "oklch(48.0% 0.005 275.0)", "oklch(59.0% 0.005 275.0)", "oklch(70.0% 0.005 275.0)", "oklch(82.0% 0.005 275.0)", "oklch(95.0% 0.005 275.0)"]
+      },
+      "dim-label": {
+        "role": "neutral",
+        "displayName": "Dim Label",
+        "canonical": "oklch(68.0% 0.015 268.4)",
+        "note": "Night secondary text, inactive nav, hints, units.",
+        "tonalRamp": ["oklch(15.0% 0.013 268.4)", "oklch(26.0% 0.013 268.4)", "oklch(37.0% 0.014 268.4)", "oklch(48.0% 0.014 268.4)", "oklch(59.0% 0.015 268.4)", "oklch(70.0% 0.015 268.4)", "oklch(82.0% 0.015 268.4)", "oklch(95.0% 0.014 268.4)"]
+      },
+      "paper-field": {
+        "role": "neutral",
+        "displayName": "Paper Field",
+        "canonical": "oklch(98.5% 0.001 106.4)",
+        "note": "Day page background. Warm, not clinical.",
+        "tonalRamp": ["oklch(15.0% 0.001 106.4)", "oklch(26.0% 0.001 106.4)", "oklch(37.0% 0.001 106.4)", "oklch(48.0% 0.001 106.4)", "oklch(59.0% 0.001 106.4)", "oklch(70.0% 0.001 106.4)", "oklch(82.0% 0.001 106.4)", "oklch(95.0% 0.001 106.4)"]
+      },
+      "paper-panel": {
+        "role": "neutral",
+        "displayName": "Paper Panel",
+        "canonical": "oklch(100.0% 0.000 89.9)",
+        "note": "Day cards and panels.",
+        "tonalRamp": ["oklch(15.0% 0.000 89.9)", "oklch(26.0% 0.000 89.9)", "oklch(37.0% 0.000 89.9)", "oklch(48.0% 0.000 89.9)", "oklch(59.0% 0.000 89.9)", "oklch(70.0% 0.000 89.9)", "oklch(82.0% 0.000 89.9)", "oklch(95.0% 0.000 89.9)"]
+      },
+      "paper-hairline": {
+        "role": "neutral",
+        "displayName": "Paper Hairline",
+        "canonical": "oklch(91.8% 0.005 106.5)",
+        "note": "Day borders and dividers.",
+        "tonalRamp": ["oklch(15.0% 0.004 106.5)", "oklch(26.0% 0.004 106.5)", "oklch(37.0% 0.004 106.5)", "oklch(48.0% 0.005 106.5)", "oklch(59.0% 0.005 106.5)", "oklch(70.0% 0.005 106.5)", "oklch(82.0% 0.005 106.5)", "oklch(95.0% 0.005 106.5)"]
+      },
+      "ink-readout": {
+        "role": "neutral",
+        "displayName": "Ink Readout",
+        "canonical": "oklch(22.2% 0.006 271.1)",
+        "note": "Day primary text.",
+        "tonalRamp": ["oklch(15.0% 0.006 271.1)", "oklch(26.0% 0.006 271.1)", "oklch(37.0% 0.006 271.1)", "oklch(48.0% 0.005 271.1)", "oklch(59.0% 0.005 271.1)", "oklch(70.0% 0.005 271.1)", "oklch(82.0% 0.005 271.1)", "oklch(95.0% 0.004 271.1)"]
+      },
+      "ink-dim": {
+        "role": "neutral",
+        "displayName": "Ink Dim",
+        "canonical": "oklch(54.1% 0.012 261.8)",
+        "note": "Day secondary text.",
+        "tonalRamp": ["oklch(15.0% 0.010 261.8)", "oklch(26.0% 0.011 261.8)", "oklch(37.0% 0.011 261.8)", "oklch(48.0% 0.012 261.8)", "oklch(59.0% 0.012 261.8)", "oklch(70.0% 0.011 261.8)", "oklch(82.0% 0.011 261.8)", "oklch(95.0% 0.010 261.8)"]
+      },
+      "plot-1": { "role": "tertiary", "displayName": "Plot 1", "canonical": "#2a78d6", "note": "Categorical chart slot 1. Fixed order — the set was validated together for CVD and contrast on both surfaces. Night value #3987e5." },
+      "plot-2": { "role": "tertiary", "displayName": "Plot 2", "canonical": "#eb6834", "note": "Categorical chart slot 2. Night value #d95926." },
+      "plot-3": { "role": "tertiary", "displayName": "Plot 3", "canonical": "#1baf7a", "note": "Categorical chart slot 3. Night value #199e70." },
+      "plot-4": { "role": "tertiary", "displayName": "Plot 4", "canonical": "#eda100", "note": "Categorical chart slot 4. Night value #c98500." },
+      "plot-5": { "role": "tertiary", "displayName": "Plot 5", "canonical": "#e87ba4", "note": "Categorical chart slot 5. Night value #d55181." },
+      "plot-6": { "role": "tertiary", "displayName": "Plot 6", "canonical": "#008300", "note": "Categorical chart slot 6. Identical in both themes." },
+      "plot-income": { "role": "tertiary", "displayName": "Plot Income", "canonical": "#1baf7a", "note": "Signed positive values only. Night value #199e70." },
+      "plot-expense": { "role": "tertiary", "displayName": "Plot Expense", "canonical": "#e34948", "note": "Signed negative values only. Night value #e66767." }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The 48px timer readout. One per screen, and only where a number is the entire point." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles — every surface's H1 at 24px. Auth screens drop to 20px, the wordmark to 18px. Deliberately never bold." },
+      "title": { "displayName": "Title", "purpose": "Card, dialog and empty-state titles at 16px/500, via the font-heading utility." },
+      "body": { "displayName": "Body", "purpose": "Everything the user reads, plus nav items, section headings and list rows. 14px carries most of the hierarchy." },
+      "readout": { "displayName": "Readout", "purpose": "Stat values, currency and counts. Mono marks a number as a measurement; always tinted with the owning domain tone." },
+      "label": { "displayName": "Label", "purpose": "Hints, units, timestamps, secondary lines. Rendered in the dim neutral." },
+      "eyebrow": { "displayName": "Eyebrow", "purpose": "The uppercase phase label above the timer. The only uppercase text in the system." }
+    },
+    "shadows": [
+      { "name": "flat", "value": "none", "purpose": "The default. Surfaces separate with ring-1 ring-foreground/10 plus one tonal step — the ring IS the elevation." },
+      { "name": "overlay", "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", "purpose": "Radix popover and select content only — elements that genuinely leave the plane. Paired with the same hairline ring." },
+      { "name": "tooltip", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "Chart tooltips, where the surface must read clearly over dense plotted ink." },
+      { "name": "translucency", "value": "backdrop-filter: blur(24px)", "purpose": "Sidebar and floating panels over a 70%-opacity surface. Reads as translucency, not lift." }
+    ],
+    "motion": [
+      { "name": "state", "value": "transition: color .15s, background-color .15s", "purpose": "The default. 22 of the app's transitions are transition-colors — state changes recolor, they don't move." },
+      { "name": "overlay-enter", "value": "duration: 100ms; fade-in-0 zoom-in-95 slide-in-from-{side}-2", "purpose": "Radix popover and select entrances." },
+      { "name": "atmosphere", "value": "duration: 500ms; ease-in-out", "purpose": "Spotlight gradient fade and the timer progress arc — the slow layer." },
+      { "name": "breathe", "value": "@keyframes breathe { 0%,100% { transform: scale(1) } 50% { transform: scale(1.015) } } 4s ease-in-out infinite", "purpose": "The running Pomodoro assembly. A breath, not a pulse. Gated behind motion-safe:." },
+      { "name": "marquee", "value": "@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } } linear infinite", "purpose": "Overflowing text at a constant 40px/second — duration computed from measured width so all marquees move at the same speed." },
+      { "name": "press", "value": "transform: translateY(1px)", "purpose": "Button active state. One pixel of travel, suppressed on menu triggers." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important } }", "purpose": "Global kill switch. Every animation in the app collapses; no per-component opt-in needed." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The system's main action. Compact at 32px, Starlight Blue fill, one pixel of press travel.",
+      "html": "<button class=\"ds-btn-primary\">Start focus</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-lg, 10px); background: var(--color-primary, #80b0e2); color: var(--color-primary-fg, #0a1414); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all .15s; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--color-primary, #80b0e2) 80%, transparent); } .ds-btn-primary:focus-visible { outline: none; border-color: var(--color-primary, #80b0e2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #80b0e2) 50%, transparent); } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The secondary action. Hairline border over the page, no fill at rest.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--color-border, #2a2e38); border-radius: var(--radius-lg, 10px); background: transparent; color: var(--color-text, #e8e9ed); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; } .ds-btn-outline:hover { background: color-mix(in srgb, var(--color-border, #2a2e38) 50%, transparent); } .ds-btn-outline:focus-visible { outline: none; border-color: var(--color-primary, #80b0e2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #80b0e2) 50%, transparent); } .ds-btn-outline:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Delete and revoke. A 10% Oxblood tint with Oxblood text — never a solid red button.",
+      "html": "<button class=\"ds-btn-destructive\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h18\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"/><path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/></svg>Delete</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-lg, 10px); background: color-mix(in srgb, var(--color-passwords, #b0596a) 20%, transparent); color: var(--color-passwords, #b0596a); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; } .ds-btn-destructive svg { flex-shrink: 0; pointer-events: none; } .ds-btn-destructive:hover { background: color-mix(in srgb, var(--color-passwords, #b0596a) 30%, transparent); } .ds-btn-destructive:focus-visible { outline: none; border-color: color-mix(in srgb, var(--color-passwords, #b0596a) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-passwords, #b0596a) 40%, transparent); } .ds-btn-destructive:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "32px field, transparent over a hairline border. 16px type on mobile so iOS doesn't zoom the viewport on focus.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search tasks\" />",
+      "css": ".ds-input { display: block; width: 100%; min-width: 0; height: 32px; padding: 4px 10px; border: 1px solid var(--color-border, #2a2e38); border-radius: var(--radius-lg, 10px); background: color-mix(in srgb, var(--color-border, #2a2e38) 30%, transparent); color: var(--color-text, #e8e9ed); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 16px; transition: color .15s, background-color .15s, border-color .15s; } @media (min-width: 768px) { .ds-input { font-size: 14px; } } .ds-input::placeholder { color: var(--color-text-muted, #9498a2); } .ds-input:focus-visible { outline: none; border-color: var(--color-primary, #80b0e2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #80b0e2) 50%, transparent); } .ds-input[aria-invalid=\"true\"] { border-color: var(--color-passwords, #b0596a); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-passwords, #b0596a) 20%, transparent); } .ds-input:disabled { opacity: .5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The panel. 14px corners, one tonal step above the field, separated by a hairline ring rather than a shadow. Title in Geist, body in Plex.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><div class=\"ds-card-title\">This month</div><div class=\"ds-card-desc\">Across 14 transactions</div></div><div class=\"ds-card-content\">Spending is tracking 8% under last month.</div></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; overflow: hidden; border-radius: var(--radius-xl, 14px); background: var(--color-surface, #1c1f27); color: var(--color-text, #e8e9ed); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 14px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text, #e8e9ed) 10%, transparent); } .ds-card-header { display: grid; gap: 4px; padding: 0 16px; } .ds-card-title { font-family: var(--font-sans, Geist, system-ui, sans-serif); font-size: 16px; font-weight: 500; line-height: 1.375; } .ds-card-desc { font-size: 14px; color: var(--color-text-muted, #9498a2); } .ds-card-content { padding: 0 16px; }"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The Dashboard reading. A 14%-mix chip in the domain tone behind the icon, then a monospace value tinted with that same tone. The Signal Rule in one component.",
+      "html": "<div class=\"ds-stat\"><span class=\"ds-stat-chip\" aria-hidden=\"true\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\"/></svg></span><div class=\"ds-stat-body\"><p class=\"ds-stat-label\">Longest streak</p><p class=\"ds-stat-value\">14d</p><p class=\"ds-stat-hint\">Morning pages</p></div></div>",
+      "css": ".ds-stat { --tone: var(--color-habits, #63a878); display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--radius-xl, 14px); background: var(--color-surface, #1c1f27); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text, #e8e9ed) 10%, transparent); } .ds-stat-chip { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--radius-lg, 10px); background: color-mix(in oklab, var(--tone) 14%, transparent); color: var(--tone); } .ds-stat-body { min-width: 0; } .ds-stat-label { margin: 0; font-size: 12px; color: var(--color-text-muted, #9498a2); } .ds-stat-value { margin: 0; font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace); font-size: 18px; color: var(--tone); } .ds-stat-hint { margin: 0; font-size: 12px; color: var(--color-text-muted, #9498a2); }"
+    },
+    {
+      "name": "Active Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Wayfinding carried by three simultaneous cues in the domain tone: a 4px left rail, a 14% chip, and a tinted icon. The label goes full-contrast; everything else stays dim.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\"><span class=\"ds-nav-rail\" aria-hidden=\"true\"></span><span class=\"ds-nav-icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m3 17 2 2 4-4\"/><path d=\"m3 7 2 2 4-4\"/><path d=\"M13 6h8\"/><path d=\"M13 12h8\"/><path d=\"M13 18h8\"/></svg></span>Tasks</a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-nav-icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg></span>Pomodoro</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); } .ds-nav-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-xl, 14px); font-size: 14px; font-weight: 500; text-decoration: none; color: var(--color-text-muted, #9498a2); transition: color .15s, background-color .15s; } .ds-nav-item:hover { background: color-mix(in srgb, var(--color-border, #2a2e38) 30%, transparent); color: var(--color-text, #e8e9ed); } .ds-nav-item--active { --tone: var(--color-tasks, #d89552); background: color-mix(in srgb, var(--color-tasks, #d89552) 14%, transparent); color: var(--color-text, #e8e9ed); } .ds-nav-item--active:hover { background: color-mix(in srgb, var(--color-tasks, #d89552) 14%, transparent); } .ds-nav-rail { position: absolute; left: 0; width: 4px; height: 20px; border-radius: 9999px; background: var(--color-tasks, #d89552); } .ds-nav-item--active .ds-nav-icon { color: var(--color-tasks, #d89552); } .ds-nav-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 20px; height: 20px; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "A 20px status pill. Fully rounded because it reports rather than acts.",
+      "html": "<span class=\"ds-badge\">Due today</span> <span class=\"ds-badge ds-badge--outline\">Weekly</span> <span class=\"ds-badge ds-badge--destructive\">Overdue</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 20px; width: fit-content; padding: 2px 8px; border: 1px solid transparent; border-radius: var(--radius-4xl, 26px); background: var(--color-primary, #80b0e2); color: var(--color-primary-fg, #0a1414); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); font-size: 12px; font-weight: 500; white-space: nowrap; } .ds-badge--outline { background: transparent; border-color: var(--color-border, #2a2e38); color: var(--color-text, #e8e9ed); } .ds-badge--destructive { background: color-mix(in srgb, var(--color-passwords, #b0596a) 20%, transparent); color: var(--color-passwords, #b0596a); }"
+    },
+    {
+      "name": "Breathing Timer",
+      "kind": "custom",
+      "description": "The signature. A 256px progress ring around a 48px monospace readout, under an uppercase phase eyebrow. While running, the whole assembly breathes between 1 and 1.015 on a 4s ease-in-out loop — gated behind prefers-reduced-motion.",
+      "html": "<div class=\"ds-timer\"><div class=\"ds-timer-ring\"><svg viewBox=\"0 0 200 200\"><circle cx=\"100\" cy=\"100\" r=\"92\" fill=\"none\" stroke-width=\"6\" class=\"ds-timer-track\"/><circle cx=\"100\" cy=\"100\" r=\"92\" fill=\"none\" stroke-width=\"6\" stroke-linecap=\"round\" transform=\"rotate(-90 100 100)\" class=\"ds-timer-arc\"/></svg><div class=\"ds-timer-face\"><span class=\"ds-timer-eyebrow\">Focus</span><span class=\"ds-timer-value\">18:42</span></div></div><div class=\"ds-timer-pips\"><span class=\"ds-timer-pip ds-timer-pip--on\"></span><span class=\"ds-timer-pip ds-timer-pip--on\"></span><span class=\"ds-timer-pip\"></span><span class=\"ds-timer-pip\"></span><span class=\"ds-timer-streak\">2 today</span></div></div>",
+      "css": "@keyframes ds-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.015) } } .ds-timer { display: flex; flex-direction: column; align-items: center; gap: 24px; font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); } .ds-timer-ring { position: relative; display: flex; align-items: center; justify-content: center; width: 256px; height: 256px; } @media (prefers-reduced-motion: no-preference) { .ds-timer-ring { animation: ds-breathe 4s ease-in-out infinite; } } .ds-timer-ring svg { width: 100%; height: 100%; } .ds-timer-track { stroke: var(--color-border, #2a2e38); } .ds-timer-arc { stroke: var(--color-primary, #80b0e2); stroke-dasharray: 578; stroke-dashoffset: 168; transition: stroke .5s, stroke-dashoffset .5s; } .ds-timer-face { position: absolute; display: flex; flex-direction: column; align-items: center; } .ds-timer-eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--color-text-muted, #9498a2); } .ds-timer-value { font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace); font-size: 48px; line-height: 1; color: var(--color-text, #e8e9ed); } .ds-timer-pips { display: flex; align-items: center; gap: 8px; } .ds-timer-pip { width: 8px; height: 8px; border-radius: 9999px; background: var(--color-border, #2a2e38); transition: background-color .15s; } .ds-timer-pip--on { background: var(--color-primary, #80b0e2); } .ds-timer-streak { margin-left: 4px; font-size: 12px; color: var(--color-text-muted, #9498a2); }"
+    },
+    {
+      "name": "Streak Row",
+      "kind": "custom",
+      "description": "Seven 1.5×4px pips, lit in the habit's own color. The entire reward vocabulary of the product — no confetti, no badge, no celebratory modal.",
+      "html": "<div class=\"ds-streak\"><p class=\"ds-streak-name\">Morning pages</p><div class=\"ds-streak-pips\" aria-label=\"5 day streak\"><span class=\"ds-pip ds-pip--on\"></span><span class=\"ds-pip ds-pip--on\"></span><span class=\"ds-pip\"></span><span class=\"ds-pip ds-pip--on\"></span><span class=\"ds-pip ds-pip--on\"></span><span class=\"ds-pip ds-pip--on\"></span><span class=\"ds-pip\"></span><span class=\"ds-streak-count\">5d</span></div></div>",
+      "css": ".ds-streak { --tone: var(--color-habits, #63a878); font-family: var(--font-body, 'IBM Plex Sans', system-ui, sans-serif); } .ds-streak-name { margin: 0; font-size: 14px; color: var(--color-text, #e8e9ed); } .ds-streak-pips { display: flex; align-items: center; gap: 4px; margin-top: 4px; } .ds-pip { width: 16px; height: 6px; border-radius: 9999px; background: var(--color-border, #2a2e38); } .ds-pip--on { background: var(--tone); } .ds-streak-count { margin-left: 6px; font-size: 12px; color: var(--color-text-muted, #9498a2); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Observatory",
+    "overview": "Noctis is a dim room built so the readings glow. Every surface decision serves one purpose: lower the luminance and the chatter of the chrome so that the things the user actually came to read — a timer counting down, a seven-day streak, a month's cashflow, a balance — are the brightest things on the screen. The interface dims itself so the instruments stay legible. That is the whole thesis, and it is why the product is called Noctis.\n\nThe room is genuinely dark. Dark mode is not a theme applied over a light design; the two modes are separately authored, and the accent tones are re-stepped per surface rather than inverted. Depth is achieved the way it is in an actual instrument panel: hairline seams and tonal shifts between adjacent surfaces, not shadows floating things off the plane. The one exception is the one place it should be — genuine overlays that really do sit above everything else.\n\nDensity is deliberate and tight. Controls are 32px tall, cards step in 16px, labels run 12px. This is a single-user instrument operated by someone who already knows where everything is, so the space goes into separating readings from one another, not into making the interface feel spacious. Color is the navigation system: each domain owns one hue, and that hue appears as a 4px rail, a 14%-mix chip, and an icon tint — never as a wash across a whole surface.",
+    "keyCharacteristics": [
+      "Dark-first, with both themes separately authored and independently contrast-checked",
+      "Flat surfaces separated by hairline rings; shadows reserved for true overlays",
+      "One hue per domain, used as a signal at small scale, never as a background wash",
+      "Monospace is for numbers only — it marks a value as a reading",
+      "Compact and precise: 32px controls, 16px card rhythm, 12px labels",
+      "Charts are the brightest ink on the page; chrome recedes beneath them"
+    ],
+    "rules": [
+      { "name": "The Signal Rule", "body": "A domain tone never becomes a background. It appears as a 4px rail, a color-mix(… 14%, transparent) chip behind an icon or an active nav item, a 2px section dot, a 1.5×4px streak pip, or an icon tint. If a domain tone is filling more than roughly a tenth of a surface, the surface is wrong, not the tone.", "section": "colors" },
+      { "name": "The Fixed Order Rule", "body": "Chart series take plot-1 through plot-6 in declaration order. The order is fixed because it was validated as a set for color-vision deficiency and for contrast on both surfaces. Reordering to \"look better\" silently breaks that validation.", "section": "colors" },
+      { "name": "The Separate Authorship Rule", "body": "Every token that changes between themes is written by hand for its surface. No token is derived from its counterpart by inversion, lightening, or an automatic filter. A new color needs two values, checked independently.", "section": "colors" },
+      { "name": "The Sibling Band Rule", "body": "All four domain tones occupy one bounded band, and a fifth would have to join it. On the light surface: lightness 46–65%, chroma 0.095–0.130, landing between 3.1:1 and 7.2:1 against Paper Field. On the dark surface: lightness 57–72%, chroma 0.100–0.125, landing between 3.9:1 and 7.4:1 against Deep Field. A tone outside that band does not read as a sibling — it reads as an alarm. Measure before adding one.", "section": "colors" },
+      { "name": "The Numerals Rule", "body": "If it is a number the user reads as a measurement — a duration, a count, a streak, an amount — it is JetBrains Mono. If it is a number inside a sentence, it is not. Mono is a semantic marker here, not a style.", "section": "typography" },
+      { "name": "The Weight-Not-Size Rule", "body": "Below the page title, hierarchy is carried by weight (400 → 500) and color (Dim Label → Readout White), not by type scale. Body, nav, and section headings all sit at 14px. Only three things earn a larger size: the page title (24px), a card title (16px), and a genuine readout.", "section": "typography" },
+      { "name": "The Three Jobs Rule", "body": "Geist names, Plex explains, JetBrains measures. A family is never chosen for texture — if a face is being used for a fourth reason, the reason is wrong.", "section": "typography" },
+      { "name": "The One Scroller Rule", "body": "The shell owns the viewport; only <main> scrolls. Anything that would make the document itself scroll is a bug, not a layout choice.", "section": "layout" },
+      { "name": "The Five Rule", "body": "The mobile bottom nav carries five destinations. When an eighth domain arrives, it goes to the top bar and the command palette — not into the bar.", "section": "layout" },
+      { "name": "The Off-Plane Rule", "body": "A shadow means the element has physically left the page. If it is still part of the layout, it gets a hairline ring and a tonal step instead.", "section": "elevation" },
+      { "name": "The Round-Means-Status Rule", "body": "A fully rounded shape signals state, not action. Pills, pips, and dots report; rectangles with 10px corners are the things you click.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do author both theme values by hand for any new color, check each against its own surface, and confirm it lands inside the Sibling Band before shipping it.",
+      "Do reach for a family by its variable — --font-display/--font-heading for Geist, --font-body for Plex, --font-mono for JetBrains. Never by class name.",
+      "Do use JetBrains Mono for any number the user reads as a measurement, tinted with the owning domain tone.",
+      "Do carry a domain tone at signal scale — a 4px rail, a 14% mix chip, a 2px dot, an icon tint — and let the surface underneath stay neutral.",
+      "Do separate surfaces with ring-1 ring-foreground/10 and one tonal step.",
+      "Do keep controls at 32px and card rhythm at 16px. Density is the point.",
+      "Do gate every animation behind motion-safe:; the global reduced-motion block handles the rest.",
+      "Do assign chart series plot-1 through plot-6 in fixed order.",
+      "Do size mobile inputs at 16px and drop to 14px at md, so iOS doesn't zoom."
+    ],
+    "donts": [
+      "Don't add a shadow to something that is still part of the layout. Shadows mean the element genuinely floats.",
+      "Don't introduce a domain tone outside the Sibling Band. High chroma reads as an alarm, not as a category — that is why Finance is gold and not spectral yellow.",
+      "Don't fill a card, header, or panel background with a domain tone. The Signal Rule caps it at roughly a tenth of a surface.",
+      "Don't create hierarchy by enlarging type below the display readout. Change weight and color; body, nav, and section headings share 14px.",
+      "Don't put pure white text on Deep Field. Readout White (#e8e9ed) exists because pure white glares on a near-black field.",
+      "Don't let the document scroll. Only <main> scrolls; the shell is exactly one viewport.",
+      "Don't add a sixth item to the mobile bottom nav.",
+      "Don't drift toward enterprise density — no 11px grey-on-grey tables, no nested nav levels, no columns the user didn't ask for. Compact is not a terminal.",
+      "Don't drift toward consumer-cute — no mascot illustrations, no pastel blob backgrounds, no emoji-led empty states. The Empty component states the fact and offers the action.",
+      "Don't use a heavy or colored border for emphasis. Emphasis is a 14% tone chip or a 4px rail."
+    ]
+  }
+}
