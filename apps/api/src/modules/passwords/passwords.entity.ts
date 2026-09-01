@@ -1,3 +1,4 @@
-import type { Password } from "@noctis/db";
+import type { VaultItem, VaultKey } from "@noctis/db";
 
-export type PasswordEntity = Password;
+export type VaultItemEntity = VaultItem;
+export type VaultKeyEntity = VaultKey;
