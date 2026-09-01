@@ -48,6 +48,8 @@ Two things a generic to-do app could not truthfully claim:
   chooses a cloud AI provider.
 - Seven authenticated surfaces: Dashboard, Tasks, Habits, Pomodoro, Finance, Passwords,
   Noctis Chat. Plus login and register.
+- The vault holds its key in memory only: it locks on reload, on tab close, on a manual
+  lock, and after a configurable idle timeout (15 minutes by default).
 - A command palette is available across the app shell.
 - The Pomodoro surface includes a music panel backed by a server-side YouTube search
   endpoint; results play through the YouTube IFrame player.
@@ -64,17 +66,21 @@ local option must remain viable; the product cannot assume a cloud key exists.
 
 **Auth:** email + password against the user's own API. No third-party identity provider.
 
-**Passwords vault:** encrypted client-side. The encryption salt currently lives in
-`localStorage`, which is adequate for single-device personal use and would need a
-server-managed key-wrapping scheme before multi-device sync. Recorded as a known
-ceiling, not a defect to design around.
+**Passwords vault:** zero-knowledge, on Bitwarden's key model. A random AES-256 vault
+key is *wrapped* under a key derived from the master password (PBKDF2-SHA256, 600k
+iterations) with a server-held salt; the server stores the wrapped key and opaque
+per-item blobs and never sees a name, username, URL, note or password. Because the vault
+key is wrapped rather than derived, the master password can change without re-encrypting
+any item, and every device that knows the password derives the identical key. A failed
+unwrap is the wrong-password check — there is no separate verifier. The master password
+is deliberately separate from the Noctis login password, which does reach the server.
+Consequence: there is no recovery path, and search and sort are client-side.
 
 **Known gap:** the frontend never calls `POST /notifications/subscribe`, so web push
 does not fire yet even with VAPID keys configured. The nudge pipeline produces nudges;
 the delivery wiring to the browser is unbuilt.
 
-**Undecided:** whether push notification delivery gets built, and whether the vault's
-key handling is upgraded. Neither has been committed to.
+**Undecided:** whether push notification delivery gets built.
 
 ## Brand Commitments
 
