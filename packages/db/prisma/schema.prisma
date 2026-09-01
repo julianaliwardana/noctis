@@ -19,7 +19,8 @@ model User {
   habits           Habit[]
   expenses         Expense[]
   categories       Category[]
-  passwords        Password[]
+  vaultKey         VaultKey?
+  vaultItems       VaultItem[]
   nudges           Nudge[]
   pomodoroSessions PomodoroSession[]
   pushSubscription PushSubscription?
@@ -109,16 +110,29 @@ model Expense {
   date     DateTime @default(now())
 }
 
-model Password {
+model VaultKey {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id])
+  salt       String
+  iterations Int      @default(600000)
+  wrappedKey String
+  wrapIv     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// One vault entry. Name, url, username, password and notes are all inside `ciphertext`;
+/// the server stores an opaque blob and timestamps, nothing else.
+model VaultItem {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id])
-  siteName   String
-  siteUrl    String?
-  username   String
   ciphertext String
   iv         String
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Nudge {

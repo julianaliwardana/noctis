@@ -58,15 +58,31 @@ export interface Expense {
   date: Date;
 }
 
-export interface Password {
+/** Server-side shape of a vault entry: an opaque blob and its timestamps. */
+export interface VaultItem {
   id: string;
   userId: string;
-  siteName: string;
-  siteUrl: string | null;
-  username: string;
   ciphertext: string;
   iv: string;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+/** What the client needs to turn a master password back into the vault key. */
+export interface VaultKeyMaterial {
+  salt: string;
+  iterations: number;
+  wrappedKey: string;
+  wrapIv: string;
+}
+
+/** The decrypted contents of a VaultItem's ciphertext. */
+export interface VaultSecret {
+  name: string;
+  url: string;
+  username: string;
+  password: string;
+  notes: string;
 }
 
 export interface Nudge {
