@@ -22,7 +22,10 @@ export function HabitList({ habits, onLog, onColorChange, onDelete }: HabitListP
   }
 
   return (
-    <div className="thin-scroll grid max-h-[28rem] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-1">
+    // No height cap or scroller of its own: on mobile that nested a second scrollbar inside the
+    // page and cut the list off at ~2.5 habits. The xl two-column layout gives its column the
+    // bounded height and the scroll; everywhere else the list just flows and <main> scrolls.
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
       {habits.map((habit) => (
         <HabitCard key={habit.id} habit={habit} onLog={onLog} onColorChange={onColorChange} onDelete={onDelete} />
       ))}

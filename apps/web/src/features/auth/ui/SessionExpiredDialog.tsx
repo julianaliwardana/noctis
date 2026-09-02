@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { clearToken } from "@/lib/auth";
 import { useSessionStore } from "@/lib/session";
 
 /**
@@ -23,8 +22,9 @@ export function SessionExpiredDialog() {
   const expired = useSessionStore((state) => state.expired);
   const reset = useSessionStore((state) => state.reset);
 
+  // /auth/refresh already cleared the cookies on its way to the 401 that opened this dialog,
+  // so there is nothing left to drop here.
   function signIn(): void {
-    clearToken();
     reset();
     router.replace("/login");
   }

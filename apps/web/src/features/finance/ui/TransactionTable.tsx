@@ -86,7 +86,7 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
             />
           </div>
           <Select value={category} onValueChange={reset(setCategory)}>
-            <SelectTrigger className="sm:w-40" aria-label="Filter by category">
+            <SelectTrigger className="w-full sm:w-40" aria-label="Filter by category">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -104,7 +104,7 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
             </SelectContent>
           </Select>
           <Select value={type} onValueChange={reset(setType)}>
-            <SelectTrigger className="sm:w-32" aria-label="Filter by type">
+            <SelectTrigger className="w-full sm:w-32" aria-label="Filter by type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

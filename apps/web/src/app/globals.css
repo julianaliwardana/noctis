@@ -5,6 +5,17 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Native UI — scrollbars, form controls, autofill — follows this, not our custom properties.
+     Without it Chrome painted light scrollbars over the dark theme. */
+  color-scheme: light;
+
+  /* Mobile app chrome. The sticky top bar and the fixed tab bar are pinned to exactly these
+     heights, so the two pages that must fit one screen (pomodoro, AI chat) can derive their
+     height instead of guessing it — which is how they ended up a few px too tall twice. */
+  --app-header-h: 3.75rem;
+  --app-nav-h: 3.5rem;
+  --app-screen-h: calc(100dvh - var(--app-header-h) - var(--app-nav-h));
+
   --color-bg: #fafaf9;
   --color-surface: #ffffff;
   --color-text: #1a1b1e;
@@ -60,6 +71,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
+
     --color-bg: #14161c;
     --color-surface: #1c1f27;
     --color-text: #e8e9ed;
