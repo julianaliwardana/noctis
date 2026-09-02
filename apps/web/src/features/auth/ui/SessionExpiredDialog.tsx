@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { logout } from "@/features/auth/api/auth.api";
 import { useSessionStore } from "@/lib/session";
 
 /**
@@ -22,9 +23,8 @@ export function SessionExpiredDialog() {
   const expired = useSessionStore((state) => state.expired);
   const reset = useSessionStore((state) => state.reset);
 
-  // /auth/refresh already cleared the cookies on its way to the 401 that opened this dialog,
-  // so there is nothing left to drop here.
-  function signIn(): void {
+  async function signIn(): Promise<void> {
+    await logout().catch(() => {});
     reset();
     router.replace("/login");
   }
@@ -42,7 +42,7 @@ export function SessionExpiredDialog() {
           <Button type="button" variant="ghost" onClick={reset}>
             Stay on this page
           </Button>
-          <Button type="button" onClick={signIn}>
+          <Button type="button" onClick={() => void signIn()}>
             <LogIn />
             Sign in
           </Button>

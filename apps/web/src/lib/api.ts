@@ -52,7 +52,6 @@ client.interceptors.response.use(undefined, async (error: AxiosError<{ error?: s
     config.retried = true;
     if (await refreshOnce()) return client(config);
 
-    // /auth/refresh already cleared the dead cookies, so a reload lands on /login.
     expireSession();
     // The session dialog is now the only thing the user needs to act on. Rejecting here instead
     // would surface as an unhandled rejection in every mount-effect fetch and store action that
