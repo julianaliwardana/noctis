@@ -107,7 +107,8 @@ created for you — no manual DNS entry.
 cp .env.prod.example .env
 openssl rand -base64 32           # → JWT_SECRET
 openssl rand -base64 24           # → POSTGRES_PASSWORD (avoid @ and : — they break the URL)
-npx web-push generate-vapid-keys  # → VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY
+# The host has Docker but no Node, so borrow the image the build needs anyway:
+docker run --rm node:22-slim npx -y web-push generate-vapid-keys  # → VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY
 nano .env
 ```
 
@@ -215,6 +216,21 @@ value with no error to tell you why.
 `*.julianwardana.dev` only, so `api.noctis.julianwardana.dev` would fail the TLS handshake
 (error 526) while `noctis-api.julianwardana.dev` is covered. That's also why `COOKIE_DOMAIN`
 is the apex: it's the nearest common parent of the two sibling hosts.
+
+**Postgres bakes `POSTGRES_PASSWORD` in on first start only.** It initialises the role when the
+data directory is empty and never revisits it, so editing the password in `.env` after the first
+`./deploy.sh` leaves the database on the old one — `prisma db push` then fails with
+`P1000: Authentication failed`. Before there's data, drop the volume and start over:
+
+```bash
+docker compose -f docker-compose.prod.yml down -v && ./deploy.sh
+```
+
+After there's data, change the role instead:
+
+```bash
+docker compose -f docker-compose.prod.yml exec postgres psql -U noctis -c "ALTER USER noctis PASSWORD '<new>';"
+```
 
 **CORS errors in the browser console** almost always mean `WEB_ORIGIN` doesn't exactly
 match the site origin. It's parsed as a comma-separated allowlist in `apps/api/src/app.ts`.
