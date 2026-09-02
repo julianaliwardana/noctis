@@ -264,3 +264,82 @@ Keep `AI_PROVIDER=gemini` or `groq` in production; Ollama stays a local-dev opti
 (`@noctis/db`, `@noctis/agent`) uncompiled, so `node dist/app.js` failed with
 `ERR_MODULE_NOT_FOUND`. The `build` script was removed rather than fixed — `tsx` costs a
 few hundred ms at boot and nothing after.
+
+---
+
+## Operating the server from a phone
+
+Claude Code runs *on maverick* and the phone is a window into it, so it sees the real
+checkout, the compose stack and the logs. Setup is once; after that it's one command.
+
+### Install (once)
+
+```bash
+sudo apt install -y tmux
+curl -fsSL https://claude.ai/install.sh | bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+exec $SHELL
+claude --version
+```
+
+The native installer ships a self-contained arm64 binary — the box has no Node and doesn't
+need one. It does **not** add `~/.local/bin` to `PATH` for you; without that line `claude`
+is `command not found`.
+
+Then sign in. Remote Control needs a Pro or Max login — an `ANTHROPIC_API_KEY` won't do:
+
+```bash
+cd ~/noctis && claude     # /login, open the printed URL on your laptop, paste the code back
+```
+
+Accept the workspace-trust prompt while you're in `~/noctis`. Trust is never saved for a
+home directory, so a server started from `~` refuses to connect.
+
+### Run
+
+```bash
+tmux new -s cc                              # or: tmux a -t cc
+cd ~/noctis && claude remote-control --name noctis
+```
+
+Press **space** for a QR code and scan it with the Claude app. `tmux` is what keeps the
+server alive after you close the SSH connection.
+
+| Key | Effect |
+|---|---|
+| `space` | show/hide the QR code |
+| `w` | toggle spawn mode between `same-dir` and `worktree` |
+| `Ctrl-b` `d` | detach — server keeps running |
+| `Ctrl-C` | **stops the server** |
+
+### Gotchas
+
+**`Ctrl-C` is not how you leave.** It kills the server, and the environment link then fails
+with *couldn't open the environment*. Detach with `Ctrl-b` `d`, or just close the terminal —
+tmux survives a dropped SSH connection either way.
+
+**VS Code's integrated terminal swallows `Ctrl-b`** (it's the toggle-sidebar shortcut), so
+detaching appears to do nothing. Close the tab instead, or from another terminal:
+`ssh julian@maverick tmux detach-client -s cc`.
+
+**"Connect to GitHub / choose an environment" means you're in the wrong flow.** That's
+Claude Code on the web, which runs on Anthropic's infrastructure and has no access to this
+box. Remote Control is reached through the QR code or the
+`claude.ai/code?environment=env_...` link the server prints — sessions created inside that
+environment spawn on maverick.
+
+**`-c` only works if a previous server left a session behind.** After a `Ctrl-C` the
+sessions are usually archived, and `claude remote-control -c` fails with *No recent session
+found*. Drop the flag and start a new one.
+
+**`same-dir` spawn mode points every session at the live checkout.** A session on your phone
+can rewrite `.env`, `git checkout`, or run `./deploy.sh` against production, and it has no
+idea the box is production. Use `worktree` mode (press `w`) if you want remote sessions
+isolated until you merge.
+
+**Idle costs nothing.** The server holds an outbound websocket and makes no model calls
+until you send a message. What spends tokens is a task left running, not a session left open.
+
+**tmux dies on reboot.** Nothing restarts the server automatically; re-run the two commands
+above. A systemd user unit plus `loginctl enable-linger julian` would fix it — not worth it
+until the box actually reboots.
