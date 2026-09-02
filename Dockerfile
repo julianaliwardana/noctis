@@ -24,7 +24,10 @@ RUN pnpm install --frozen-lockfile
 
 # Source changes only invalidate from here down.
 COPY . .
-RUN pnpm --filter @noctis/db exec prisma generate
+# prisma.config.ts resolves DATABASE_URL from a .env that isn't (and shouldn't be) in the image.
+# `generate` never connects, so any syntactically valid URL satisfies it.
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
+    pnpm --filter @noctis/db exec prisma generate
 RUN pnpm --filter @noctis/web build
 
 ENV NODE_ENV=production
