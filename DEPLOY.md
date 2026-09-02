@@ -111,13 +111,14 @@ npx web-push generate-vapid-keys  # → VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY
 nano .env
 ```
 
-Four fields are easy to get wrong:
+Five fields are easy to get wrong:
 
 | Field | Requirement |
 |---|---|
 | `DATABASE_URL` | Password must match `POSTGRES_PASSWORD` exactly; host is `postgres`, **not** `localhost` |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Must be byte-identical to `VAPID_PUBLIC_KEY` |
 | `WEB_ORIGIN` | Exactly `https://noctis.julianwardana.dev` — no trailing slash, or CORS fails |
+| `COOKIE_DOMAIN` | `noctis.julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
 | `TUNNEL_TOKEN` | The token from step 3 |
 
 `GEMINI_API_KEY` comes from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)

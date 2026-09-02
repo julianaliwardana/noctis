@@ -40,8 +40,8 @@ cp .env.example .env
 The defaults already match `docker-compose.yml` (`DATABASE_URL`, `REDIS_URL`), so
 Postgres/Redis need no changes. Things you should still set:
 
-- `JWT_SECRET` / `JWT_REFRESH_SECRET` — replace the placeholder text with random
-  values: `openssl rand -hex 32`.
+- `JWT_SECRET` — replace the placeholder text with a random value: `openssl rand -hex 32`.
+  Access and refresh tokens share this one secret and are told apart by a `type` claim.
 - `AI_PROVIDER` — defaults to `ollama` (free, runs locally, no account). To use a
   cloud provider instead:
   - `AI_PROVIDER=groq` + `GROQ_API_KEY` from a free account at
