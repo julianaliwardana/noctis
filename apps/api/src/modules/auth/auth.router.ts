@@ -1,9 +1,11 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
-import { loginDto, refreshDto, registerDto } from "./auth.dto";
+import { loginDto, registerDto } from "./auth.dto";
 import {
+  REFRESH_COOKIE,
+  clearAuthCookies,
   createUser,
-  signAccessToken,
-  signRefreshToken,
+  setAccessCookie,
+  setRefreshCookie,
   verifyCredentials,
   verifyRefreshToken,
 } from "./auth.service";
@@ -32,10 +34,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const user = await createUser(body.email, body.password);
-    return reply.code(201).send({
-      accessToken: signAccessToken(fastify, user.id),
-      refreshToken: signRefreshToken(fastify, user.id),
-    });
+    setAccessCookie(fastify, reply, user.id);
+    setRefreshCookie(fastify, reply, user.id);
+    return reply.code(201).send({ id: user.id, email: user.email });
   });
 
   fastify.post("/login", { preHandler: authRateLimit }, async (request, reply) => {
@@ -46,24 +47,32 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(401).send({ error: "Invalid credentials" });
     }
 
-    return reply.send({
-      accessToken: signAccessToken(fastify, user.id),
-      refreshToken: signRefreshToken(fastify, user.id),
-    });
+    setAccessCookie(fastify, reply, user.id);
+    setRefreshCookie(fastify, reply, user.id);
+    return reply.send({ id: user.id, email: user.email });
   });
 
   /**
    * Deliberately not behind `authenticate` — that requires a live access token, which is exactly
-   * what the caller no longer has. The refresh token is verified here instead.
+   * what the caller no longer has. The refresh cookie is verified here instead, and cleared when it
+   * turns out to be dead so the browser stops presenting a session the server won't honour.
    */
   fastify.post("/refresh", { preHandler: authRateLimit }, async (request, reply) => {
-    const body = refreshDto.parse(request.body);
-    const userId = verifyRefreshToken(fastify, body.refreshToken);
-    if (!userId) return reply.code(401).send({ error: "Session expired" });
+    const userId = verifyRefreshToken(fastify, request.cookies[REFRESH_COOKIE] ?? "");
+    const user = userId ? await fastify.db.user.findUnique({ where: { id: userId } }) : null;
 
-    const user = await fastify.db.user.findUnique({ where: { id: userId } });
-    if (!user) return reply.code(401).send({ error: "Session expired" });
+    if (!user) {
+      clearAuthCookies(reply);
+      return reply.code(401).send({ error: "Session expired" });
+    }
 
-    return reply.send({ accessToken: signAccessToken(fastify, user.id) });
+    setAccessCookie(fastify, reply, user.id);
+    return reply.code(204).send();
+  });
+
+  /** The only way out: httpOnly cookies can't be dropped by the client that owns them. */
+  fastify.post("/logout", async (_request, reply) => {
+    clearAuthCookies(reply);
+    return reply.code(204).send();
   });
 };

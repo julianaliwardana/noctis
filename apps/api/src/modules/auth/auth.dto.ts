@@ -11,8 +11,3 @@ export const loginDto = z.object({
   password: z.string().min(8).max(72),
 });
 export type LoginDto = z.infer<typeof loginDto>;
-
-export const refreshDto = z.object({
-  refreshToken: z.string().min(1),
-});
-export type RefreshDto = z.infer<typeof refreshDto>;

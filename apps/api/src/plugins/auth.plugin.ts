@@ -1,6 +1,7 @@
 import fp from "fastify-plugin";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import jwt from "@fastify/jwt";
+import { ACCESS_COOKIE } from "../modules/auth/auth.service";
 
 declare module "@fastify/jwt" {
   interface FastifyJWT {
@@ -21,7 +22,8 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     throw new Error("JWT_SECRET environment variable is required");
   }
 
-  await fastify.register(jwt, { secret });
+  // No `Authorization` header any more — `jwtVerify` reads the httpOnly access cookie instead.
+  await fastify.register(jwt, { secret, cookie: { cookieName: ACCESS_COOKIE, signed: false } });
 
   fastify.decorate(
     "authenticate",

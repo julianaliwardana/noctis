@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import cookie from "@fastify/cookie";
 import dbPlugin from "./plugins/db.plugin";
 import redisPlugin from "./plugins/redis.plugin";
 import authPlugin from "./plugins/auth.plugin";
@@ -21,8 +22,10 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Comma-separated allowlist; without it every origin was reflected back.
   const origins = (process.env.WEB_ORIGIN ?? "http://localhost:3000").split(",").map((origin) => origin.trim());
-  await app.register(cors, { origin: origins });
+  // `credentials` is what lets the browser attach the httpOnly auth cookies to these requests.
+  await app.register(cors, { origin: origins, credentials: true });
   await app.register(helmet);
+  await app.register(cookie);
   await app.register(dbPlugin);
   await app.register(redisPlugin);
   await app.register(authPlugin);
