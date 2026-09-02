@@ -13,7 +13,7 @@ One Oracle Cloud A1 VM runs everything via `docker-compose.prod.yml`:
                   Cloudflare edge (TLS)
                           │
               ┌───────────┴───────────┐
-   noctis.julianwardana.dev   api.noctis.julianwardana.dev
+   noctis.julianwardana.dev   noctis-api.julianwardana.dev
               │                       │
               └───── Cloudflare Tunnel ─────┐
                                             │  (outbound-only)
@@ -94,7 +94,7 @@ At [one.dash.cloudflare.com](https://one.dash.cloudflare.com):
    | Subdomain | Domain | Type | URL |
    |---|---|---|---|
    | `noctis` | `julianwardana.dev` | HTTP | `web:3000` |
-   | `api.noctis` | `julianwardana.dev` | HTTP | `api:3001` |
+   | `noctis-api` | `julianwardana.dev` | HTTP | `api:3001` |
 
    The URLs are compose service names, resolved on the internal Docker network.
 
@@ -118,7 +118,7 @@ Five fields are easy to get wrong:
 | `DATABASE_URL` | Password must match `POSTGRES_PASSWORD` exactly; host is `postgres`, **not** `localhost` |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Must be byte-identical to `VAPID_PUBLIC_KEY` |
 | `WEB_ORIGIN` | Exactly `https://noctis.julianwardana.dev` — no trailing slash, or CORS fails |
-| `COOKIE_DOMAIN` | `noctis.julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
+| `COOKIE_DOMAIN` | `julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
 | `TUNNEL_TOKEN` | The token from step 3 |
 
 `GEMINI_API_KEY` comes from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
@@ -210,6 +210,11 @@ Restore: `gunzip -c backup-YYYY-MM-DD.sql.gz | docker compose -f docker-compose.
 bundle, so they're `ARG`s in the `Dockerfile`, not runtime env. Changing
 `NEXT_PUBLIC_API_URL` requires a rebuild (`./deploy.sh`); a restart silently keeps the old
 value with no error to tell you why.
+
+**Keep the API hostname one level deep.** Free Universal SSL covers `julianwardana.dev` and
+`*.julianwardana.dev` only, so `api.noctis.julianwardana.dev` would fail the TLS handshake
+(error 526) while `noctis-api.julianwardana.dev` is covered. That's also why `COOKIE_DOMAIN`
+is the apex: it's the nearest common parent of the two sibling hosts.
 
 **CORS errors in the browser console** almost always mean `WEB_ORIGIN` doesn't exactly
 match the site origin. It's parsed as a comma-separated allowlist in `apps/api/src/app.ts`.
