@@ -11,9 +11,11 @@ export default function PomodoroPage() {
   const [background, setBackground] = useState(SCENES[0]!.css);
   const [nowPlaying, setNowPlaying] = useState<string | null>(null);
 
+  // The negative margins cancel main's padding, so --app-screen-h (viewport minus the sticky header
+  // and the fixed tab bar) lands exactly on the visible area — no scroll, no guessed header height.
   return (
     <div
-      className="relative -mx-4 -mt-4 -mb-20 h-[calc(100dvh-3.5rem)] overflow-hidden bg-cover bg-center md:-m-8 md:h-dvh"
+      className="relative -mx-4 -mt-4 -mb-20 h-(--app-screen-h) overflow-hidden bg-cover bg-center md:-m-8 md:h-dvh"
       style={{ background }}
     >
       <div className="absolute inset-0 bg-black/40" aria-hidden />

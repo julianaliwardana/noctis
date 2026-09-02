@@ -10,7 +10,7 @@ export default function HabitsPage() {
   const { habits, logs, loading, addHabit, logHabit, updateColor, deleteHabit } = useHabits();
 
   return (
-    <div className="flex flex-col gap-6 xl:h-[calc(100dvh-4rem)]">
+    <div className="flex flex-col gap-6 xl:h-full">
       <div className="shrink-0">
         <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">Habits</h1>
         <p className="text-sm text-[var(--color-text-muted)]">{habits.length} tracked</p>
@@ -20,7 +20,7 @@ export default function HabitsPage() {
           "add a habit" form — which is rare, and tall enough to bury everything below it.
           Desktop keeps the original two-column layout via explicit grid placement. */}
       <div className="grid items-start gap-6 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(320px,380px)_1fr] xl:grid-rows-[auto_minmax(0,1fr)] xl:items-stretch">
-        <div className="order-1 xl:order-none xl:col-start-1 xl:row-start-2 xl:min-h-0 xl:overflow-y-auto">
+        <div className="thin-scroll order-1 xl:order-none xl:col-start-1 xl:row-start-2 xl:min-h-0 xl:overflow-x-hidden xl:overflow-y-auto xl:pr-1">
           {loading ? (
             <p className="text-sm text-[var(--color-text-muted)]">Loading habits…</p>
           ) : (

@@ -18,10 +18,11 @@ export default function AiPage() {
   const { messages, sending, send, deletingId, resolveDelete, provider, setProvider, cooldownUntil } = useChat();
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // h-full fills whatever <main> gives it — the old calc() guessed at the header and tab bar and
-  // came out ~25px too tall on mobile, which is what pushed the whole page into scrolling.
+  // Same contract as /pomodoro: cancel main's vertical padding and take --app-screen-h, so the
+  // composer sits on the tab bar with nothing scrolling behind it. Desktop keeps h-full, where
+  // <main> is still a bounded scroll container.
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl gap-6">
+    <div className="mx-auto -mt-4 -mb-20 flex h-(--app-screen-h) min-h-0 w-full max-w-6xl gap-6 pt-4 md:mt-0 md:mb-0 md:h-full md:pt-0">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--color-border)] pr-4 md:flex">
         <ConversationList />
       </aside>
