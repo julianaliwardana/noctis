@@ -22,8 +22,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
           .send({
             error:
               error.scope === "day"
-                ? `${error.provider} has used up its free quota for today. Switch model to keep going.`
-                : `${error.provider} is rate limited. Try again in ${error.retryAfterSeconds}s or switch model.`,
+                ? `${error.provider} has used up its free quota for today.`
+                : `${error.provider} is rate limited. Try again in ${error.retryAfterSeconds}s.`,
             provider: error.provider,
             retryAfter: error.retryAfterSeconds,
             scope: error.scope,
@@ -32,6 +32,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       throw error;
     }
   });
+
+  fastify.get("/models", async () => aiService.listModels());
 
   fastify.get("/conversations", async (request) => {
     return aiService.listConversations(request.user.userId);

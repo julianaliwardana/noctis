@@ -8,18 +8,14 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  actionLabel?: string;
+  /** One summary per thing the reply did ("Created task: Call bank"), in order. */
+  actions?: string[];
+  /** The model that answered, when the gateway says. Live replies only — not stored. */
+  model?: string;
   failed?: boolean;
   /** Set while the delete is still awaiting the user's yes; cleared once they answer either way. */
   pendingDelete?: PendingDelete;
 }
-
-export type ProviderName = "gemini" | "groq";
-
-export const PROVIDER_OPTIONS: { value: ProviderName; label: string; hint: string }[] = [
-  { value: "gemini", label: "Gemini", hint: "Gemini Flash — best at Indonesian, but only 20 requests/day free" },
-  { value: "groq", label: "Groq", hint: "Groq Llama — the daily driver, far higher free limits" },
-];
 
 export interface ConversationSummary {
   id: string;
@@ -38,4 +34,10 @@ export interface StoredMessage {
 
 export interface ConversationDetail extends ConversationSummary {
   messages: StoredMessage[];
+}
+
+/** An entry in the server's model allowlist. The first one is the server's default. */
+export interface ChatModel {
+  id: string;
+  label: string;
 }

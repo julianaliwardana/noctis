@@ -1,18 +1,23 @@
-import { isProviderName, type LLMProvider, type ProviderName } from "./provider";
+import { isProviderName, type ProviderName, type ToolCapableProvider } from "./provider";
 import { createOllamaProvider } from "./ollama.provider";
 import { createGroqProvider } from "./groq.provider";
 import { createClaudeProvider } from "./claude.provider";
 import { createGeminiProvider } from "./gemini.provider";
+import { createOmniRouteProvider, omniRouteModels, type ChatModel } from "./omniroute.provider";
 
-/** `requested` comes from the user's model picker; AI_PROVIDER is the fallback default. */
-export function createProvider(requested?: string): LLMProvider {
-  const name: ProviderName = isProviderName(requested)
-    ? requested
-    : isProviderName(process.env.AI_PROVIDER)
-      ? process.env.AI_PROVIDER
-      : "ollama";
+function configuredProvider(): ProviderName {
+  return isProviderName(process.env.AI_PROVIDER) ? process.env.AI_PROVIDER : "ollama";
+}
 
-  switch (name) {
+/**
+ * The server picks the provider, never the client — chat context carries finance data, and which
+ * upstream may see it is a deployment decision (AI_PROVIDER). A client may only name a model from
+ * the server's own allowlist (see chatModels); anything else falls back to the default.
+ */
+export function createProvider(model?: string): ToolCapableProvider {
+  switch (configuredProvider()) {
+    case "omniroute":
+      return createOmniRouteProvider(model);
     case "gemini":
       return createGeminiProvider();
     case "groq":
@@ -24,5 +29,11 @@ export function createProvider(requested?: string): LLMProvider {
   }
 }
 
-export { PROVIDERS, RateLimitError, isProviderName } from "./provider";
-export type { LLMProvider, ProviderName } from "./provider";
+/** What the chat's model picker may offer. Only OmniRoute has a list; other providers are fixed. */
+export function chatModels(): ChatModel[] {
+  return configuredProvider() === "omniroute" ? omniRouteModels() : [];
+}
+
+export { PROVIDERS, RateLimitError, ToolsUnsupportedError, isProviderName } from "./provider";
+export type { LLMProvider, ProviderName, ToolCall, ToolMessage, ToolSpec, ToolTurn } from "./provider";
+export type { ChatModel } from "./omniroute.provider";

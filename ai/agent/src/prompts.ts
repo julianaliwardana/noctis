@@ -10,7 +10,7 @@ export function systemPrompt(): string {
   ].join(" ");
 }
 
-function formatContext(context: UserContext): string {
+export function formatContext(context: UserContext): string {
   const tasks = context.pendingTasks.length
     ? context.pendingTasks
         .map((task) => `- ${task.title}${task.dueAt ? ` (due ${task.dueAt.toISOString()})` : ""}`)
@@ -92,5 +92,25 @@ export function chatPrompt(context: UserContext, message: string, history: Prior
     "Amounts may use Indonesian shorthand: 45k or 45rb is 45000, 1jt is 1000000. Send plain numbers.",
     "Otherwise, respond with ONLY this JSON shape:",
     '{ "intent": "REPLY", "message": string }',
+  ].join("\n");
+}
+
+/**
+ * System prompt for the tool loop. The schema lives in the tool specs, so this only carries the
+ * data and the conventions the specs can't express.
+ */
+export function toolSystemPrompt(context: UserContext): string {
+  return [
+    systemPrompt(),
+    `Current date and time: ${new Date().toISOString()}`,
+    "",
+    formatContext(context),
+    "",
+    "Use the tools to act. One message may need several calls — e.g. add a task and log a transaction.",
+    "Refer to tasks, habits, categories and transactions by their name exactly as listed above — never by id.",
+    "Resolve relative dates against the current date and time and send them as ISO 8601 strings.",
+    "Amounts are IDR and may use shorthand: 45k or 45rb is 45000, 1jt is 1000000. Send plain numbers.",
+    "If a tool returns an error, fix the arguments and call it again; if it asks a question, ask the user.",
+    "When you are done, reply in one or two short sentences in the user's language. Do not repeat numbers you were not given.",
   ].join("\n");
 }

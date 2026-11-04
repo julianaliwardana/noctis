@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/dialog";
 
 export default function AiPage() {
-  const { messages, sending, send, deletingId, resolveDelete, provider, setProvider, cooldownUntil } = useChat();
+  const { messages, sending, send, deletingId, resolveDelete, cooldownUntil, models, model, setModel } = useChat();
   const [historyOpen, setHistoryOpen] = useState(false);
 
   // Same contract as /pomodoro: cancel main's vertical padding and take --app-screen-h, so the
@@ -57,9 +57,10 @@ export default function AiPage() {
           onSend={send}
           deletingId={deletingId}
           onResolveDelete={resolveDelete}
-          provider={provider}
-          onProviderChange={setProvider}
           cooldownUntil={cooldownUntil}
+          models={models}
+          model={model}
+          onModelChange={setModel}
         />
       </div>
     </div>

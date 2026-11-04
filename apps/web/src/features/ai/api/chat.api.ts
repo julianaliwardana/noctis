@@ -1,21 +1,26 @@
 import { api } from "@/lib/api";
-import type { ConversationDetail, ConversationSummary, PendingDelete, ProviderName } from "../types";
+import type { ChatModel, ConversationDetail, ConversationSummary, PendingDelete } from "../types";
 
 export interface ChatResponse {
   message: string;
-  action?: { type: string; summary: string };
+  actions?: { type: string; summary: string }[];
   pendingDelete?: PendingDelete;
+  model?: string;
   conversationId: string;
 }
 
 export interface SendChatInput {
   message: string;
   conversationId?: string;
-  provider: ProviderName;
+  model?: string;
 }
 
 export function sendChatMessage(input: SendChatInput): Promise<ChatResponse> {
   return api.post<ChatResponse>("/ai/chat", input);
+}
+
+export async function fetchModels(): Promise<ChatModel[]> {
+  return (await api.get<{ models: ChatModel[] }>("/ai/models")).models;
 }
 
 export function fetchConversations(): Promise<ConversationSummary[]> {

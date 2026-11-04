@@ -46,6 +46,9 @@ Postgres/Redis need no changes. Things you should still set:
   cloud provider instead:
   - `AI_PROVIDER=groq` + `GROQ_API_KEY` from a free account at
     [console.groq.com](https://console.groq.com)
+  - `AI_PROVIDER=omniroute` + `OMNIROUTE_BASE_URL` / `OMNIROUTE_API_KEY` / `OMNIROUTE_MODEL` for a
+    self-hosted [OmniRoute](https://github.com/diegosouzapw/OmniRoute) gateway (any OpenAI-compatible
+    endpoint works). Live-check it with `pnpm exec tsx --env-file=../../apps/api/.env src/llm/omniroute.check.ts` from `ai/agent`.
   - `AI_PROVIDER=claude` + `ANTHROPIC_API_KEY` from a paid account at
     [console.anthropic.com](https://console.anthropic.com)
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` — optional, only needed for push

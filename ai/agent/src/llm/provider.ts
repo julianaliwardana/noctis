@@ -1,6 +1,8 @@
+import type { LLMProvider } from "@noctis/types";
+
 export type { LLMProvider } from "@noctis/types";
 
-export const PROVIDERS = ["gemini", "groq", "claude", "ollama"] as const;
+export const PROVIDERS = ["gemini", "groq", "omniroute", "claude", "ollama"] as const;
 
 export type ProviderName = (typeof PROVIDERS)[number];
 
@@ -28,4 +30,41 @@ export class RateLimitError extends Error {
     this.retryAfterSeconds = retryAfterSeconds;
     this.scope = scope;
   }
+}
+
+/** The upstream refused the `tools` field — chat.ts drops back to single-intent JSON for this turn. */
+export class ToolsUnsupportedError extends Error {
+  constructor(detail: string) {
+    super(`tool calling unsupported: ${detail}`);
+    this.name = "ToolsUnsupportedError";
+  }
+}
+
+// OpenAI chat-completions shapes — the wire format OmniRoute speaks for every upstream.
+export interface ToolCall {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+}
+
+export type ToolMessage =
+  | { role: "system" | "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: ToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+export interface ToolSpec {
+  type: "function";
+  function: { name: string; description: string; parameters: Record<string, unknown> };
+}
+
+export interface ToolTurn {
+  content: string;
+  toolCalls: ToolCall[];
+  /** What the gateway says answered — for a combo, the upstream model that actually ran. */
+  model?: string;
+}
+
+/** A provider that can run the tool loop. Providers without `chat` use single-intent JSON. */
+export interface ToolCapableProvider extends LLMProvider {
+  chat?(messages: ToolMessage[], tools: ToolSpec[]): Promise<ToolTurn>;
 }

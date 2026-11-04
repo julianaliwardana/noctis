@@ -8,7 +8,7 @@ import { useChatStore } from "../store/chatStore";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const { messages, sending, send, deletingId, resolveDelete, provider, setProvider, cooldownUntil } = useChat();
+  const { messages, sending, send, deletingId, resolveDelete, cooldownUntil, models, model, setModel } = useChat();
   const startNewChat = useChatStore((state) => state.startNewChat);
 
   const openRef = useRef(open);
@@ -48,9 +48,10 @@ export function CommandPalette() {
           onSend={send}
           deletingId={deletingId}
           onResolveDelete={resolveDelete}
-          provider={provider}
-          onProviderChange={setProvider}
           cooldownUntil={cooldownUntil}
+          models={models}
+          model={model}
+          onModelChange={setModel}
         />
       </DialogContent>
     </Dialog>

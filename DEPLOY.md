@@ -122,9 +122,22 @@ Five fields are easy to get wrong:
 | `COOKIE_DOMAIN` | `julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
 | `TUNNEL_TOKEN` | The token from step 3 |
 
-`GEMINI_API_KEY` comes from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-(free tier). `GEMINI_MODEL`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY` and
-`INNERTUBE_KEY` are optional.
+`YOUTUBE_API_KEY` and `INNERTUBE_KEY` are optional.
+
+AI runs through OmniRoute only: `AI_PROVIDER=omniroute`,
+`OMNIROUTE_BASE_URL=https://omniroute.julianwardana.dev/v1`, `OMNIROUTE_API_KEY` = the `noctis`
+key, `OMNIROUTE_MODEL=noctis` (the Z.ai-only combo). Chat and nudges both carry finance data, so
+do not set `GEMINI_API_KEY`, `GROQ_API_KEY` or `ANTHROPIC_API_KEY` on the server.
+
+`OMNIROUTE_MODELS` fills the chat's model picker (`id=Label,…`, first = default), e.g.
+`noctis=Auto,<glm-4.7-flash id>=GLM-4.7 Flash`. The server ignores any model a client sends that
+isn't on it, so list Z.ai models only. Then run the live check against every entry:
+`pnpm --filter @noctis/agent exec tsx src/llm/omniroute.check.ts` (inside the api container).
+Check from inside the stack (the slim image has no curl/wget, so use node):
+
+```bash
+docker compose exec api node -e 'fetch(process.env.OMNIROUTE_BASE_URL+"/models",{headers:{Authorization:"Bearer "+process.env.OMNIROUTE_API_KEY}}).then(r=>r.text()).then(console.log)'
+```
 
 ### 5. Launch
 
@@ -151,7 +164,7 @@ Each check exercises one more layer, so work down in order:
 
 1. `https://noctis.julianwardana.dev` loads over HTTPS → tunnel + web
 2. Register and log in → web → api → postgres → JWT
-3. Send an AI chat message → api → agent → Gemini
+3. Send an AI chat message → api → agent → OmniRoute (`noctis` combo)
 4. Enable push notifications → VAPID keys match
 
 ---
@@ -257,7 +270,7 @@ the app never invokes. `node:22-alpine` reports fewer, but musl has no `bcrypt` 
 so you'd trade the warning for a compiler toolchain in the image.
 
 **Don't run Ollama here.** Two OCPUs with no GPU makes CPU-only inference unusably slow.
-Keep `AI_PROVIDER=gemini` or `groq` in production; Ollama stays a local-dev option.
+Keep `AI_PROVIDER=omniroute` in production; Ollama stays a local-dev option.
 
 **`apps/api` has no build step.** It runs under `tsx` in production. Compiling it with
 `tsc` produced extensionless ESM imports and left the workspace TS packages

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useChatStore } from "../store/chatStore";
 
 export function useChat() {
@@ -8,9 +9,15 @@ export function useChat() {
   const send = useChatStore((state) => state.send);
   const deletingId = useChatStore((state) => state.deletingId);
   const resolveDelete = useChatStore((state) => state.resolveDelete);
-  const provider = useChatStore((state) => state.provider);
-  const setProvider = useChatStore((state) => state.setProvider);
   const cooldownUntil = useChatStore((state) => state.cooldownUntil);
+  const models = useChatStore((state) => state.models);
+  const model = useChatStore((state) => state.model);
+  const setModel = useChatStore((state) => state.setModel);
+  const loadModels = useChatStore((state) => state.loadModels);
 
-  return { messages, sending, send, deletingId, resolveDelete, provider, setProvider, cooldownUntil };
+  useEffect(() => {
+    if (models.length === 0) void loadModels();
+  }, [models.length, loadModels]);
+
+  return { messages, sending, send, deletingId, resolveDelete, cooldownUntil, models, model, setModel };
 }
