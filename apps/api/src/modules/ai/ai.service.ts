@@ -25,7 +25,7 @@ export async function sendMessage(userId: string, input: ChatDto): Promise<ChatR
 
   // The model runs before anything is written: a rate-limited retry would otherwise leave a trail
   // of empty conversations, and the client still holds the message to send again.
-  const result = await handleChat(userId, input.message, { provider: input.provider, history });
+  const result = await handleChat(userId, input.message, { history });
 
   const conversation = existing ?? (await aiRepository.createConversation(userId, titleFrom(input.message)));
   await aiRepository.appendMessage(conversation.id, "user", input.message);

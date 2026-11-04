@@ -5,13 +5,12 @@ import { createClaudeProvider } from "./claude.provider";
 import { createGeminiProvider } from "./gemini.provider";
 import { createOmniRouteProvider } from "./omniroute.provider";
 
-/** `requested` comes from the user's model picker; AI_PROVIDER is the fallback default. */
-export function createProvider(requested?: string): LLMProvider {
-  const name: ProviderName = isProviderName(requested)
-    ? requested
-    : isProviderName(process.env.AI_PROVIDER)
-      ? process.env.AI_PROVIDER
-      : "ollama";
+/**
+ * The server picks the model, never the client — chat context carries finance data, and which
+ * upstream may see it is a deployment decision (AI_PROVIDER), not a per-request one.
+ */
+export function createProvider(): LLMProvider {
+  const name: ProviderName = isProviderName(process.env.AI_PROVIDER) ? process.env.AI_PROVIDER : "ollama";
 
   switch (name) {
     case "gemini":

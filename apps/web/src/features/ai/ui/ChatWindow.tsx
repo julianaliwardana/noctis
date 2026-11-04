@@ -5,11 +5,10 @@ import { AlertTriangle, ArrowUp, Hourglass, Mic, Send, Sparkles, Square, Trash2 
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useTypewriter } from "../hooks/useTypewriter";
-import { PROVIDER_OPTIONS, type ChatMessage, type ProviderName } from "../types";
+import type { ChatMessage } from "../types";
 
 interface AssistantBubbleProps {
   message: ChatMessage;
@@ -86,8 +85,6 @@ export interface ChatWindowProps {
   onSend: (message: string) => void;
   deletingId: string | null;
   onResolveDelete: (messageId: string, confirmed: boolean) => void;
-  provider: ProviderName;
-  onProviderChange: (provider: ProviderName) => void;
   cooldownUntil: number | null;
 }
 
@@ -126,8 +123,6 @@ export function ChatWindow({
   onSend,
   deletingId,
   onResolveDelete,
-  provider,
-  onProviderChange,
   cooldownUntil,
 }: ChatWindowProps) {
   const [input, setInput] = useState("");
@@ -279,26 +274,6 @@ export function ChatWindow({
         />
 
         <div className="flex items-center gap-2">
-          <ToggleGroup
-            type="single"
-            size="sm"
-            variant="outline"
-            value={provider}
-            onValueChange={(next) => next && onProviderChange(next as ProviderName)}
-            aria-label="Model"
-          >
-            {PROVIDER_OPTIONS.map((option) => (
-              <ToggleGroupItem
-                key={option.value}
-                value={option.value}
-                title={option.hint}
-                className="px-2.5 text-xs data-[state=on]:bg-[var(--color-primary)]/12 data-[state=on]:text-[var(--color-primary)]"
-              >
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-
           {cooldown > 0 && (
             <p role="status" className="flex items-center gap-1 text-xs text-destructive">
               <Hourglass className="size-3.5 shrink-0" />

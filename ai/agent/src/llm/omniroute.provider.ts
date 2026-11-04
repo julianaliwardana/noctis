@@ -8,8 +8,10 @@ interface ChatCompletionResponse {
  * OmniRoute is a self-hosted, OpenAI-compatible gateway — one key, many upstreams (GLM, DeepSeek,
  * OpenCode free models, combos). OMNIROUTE_MODEL is whatever id or combo name the gateway lists
  * under GET /v1/models; there is no sane default, so an unset model is a config error, not a guess.
+ * The base URL defaults to the public gateway — the same URL from a laptop in dev and from the
+ * containers in prod.
  */
-const DEFAULT_BASE_URL = "http://localhost:20128/v1";
+const DEFAULT_BASE_URL = "https://omniroute.julianwardana.dev/v1";
 
 /** Free upstreams behind a gateway can hang; a held-open request is worse than a fast failure. */
 const TIMEOUT_MS = 60_000;

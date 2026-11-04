@@ -4,17 +4,7 @@ import { useFinanceStore } from "@/features/finance/store/financeStore";
 import { useHabitsStore } from "@/features/habits/store/habitsStore";
 import { useTasksStore } from "@/features/tasks/store/tasksStore";
 import * as chatApi from "../api/chat.api";
-import {
-  isProviderName,
-  providerLabel,
-  type ChatMessage,
-  type ConversationSummary,
-  type PendingDelete,
-  type ProviderName,
-  type StoredMessage,
-} from "../types";
-
-const PROVIDER_KEY = "noctis_ai_provider";
+import type { ChatMessage, ConversationSummary, PendingDelete, StoredMessage } from "../types";
 
 /**
  * The assistant only ever proposes a delete. Confirming runs it through the same store action the
@@ -26,15 +16,6 @@ const runDelete: Record<PendingDelete["kind"], (id: string) => Promise<void>> = 
   transaction: (id) => useFinanceStore.getState().removeExpense(id),
   category: (id) => useFinanceStore.getState().removeCategory(id),
 };
-
-/** OmniRoute is the default: the self-hosted gateway pools free upstreams, so no single quota runs dry. */
-const DEFAULT_PROVIDER: ProviderName = "omniroute";
-
-function storedProvider(): ProviderName {
-  if (typeof window === "undefined") return DEFAULT_PROVIDER;
-  const saved = window.localStorage.getItem(PROVIDER_KEY);
-  return isProviderName(saved) ? saved : DEFAULT_PROVIDER;
-}
 
 /** Saved replies lose their pendingDelete on purpose — the record id would be stale by now. */
 function toChatMessage(stored: StoredMessage): ChatMessage {
@@ -54,14 +35,12 @@ interface ChatState {
   messages: ChatMessage[];
   conversations: ConversationSummary[];
   conversationId: string | null;
-  provider: ProviderName;
   sending: boolean;
   deletingId: string | null;
   /** Epoch ms until the picked model accepts requests again, or null when it is free. */
   cooldownUntil: number | null;
   send: (content: string) => Promise<void>;
   resolveDelete: (messageId: string, confirmed: boolean) => Promise<void>;
-  setProvider: (provider: ProviderName) => void;
   loadConversations: () => Promise<void>;
   openConversation: (id: string) => Promise<void>;
   startNewChat: () => void;
@@ -73,7 +52,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   conversations: [],
   conversationId: null,
-  provider: storedProvider(),
   sending: false,
   deletingId: null,
   cooldownUntil: null,
@@ -86,7 +64,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.sendChatMessage({
         message: content,
         conversationId: get().conversationId ?? undefined,
-        provider: get().provider,
       });
 
       set({
@@ -107,8 +84,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error instanceof ApiError && error.status === 429
           ? (error.data as { retryAfter?: number; scope?: "minute" | "day" })
           : null;
-      const name = providerLabel(get().provider);
-
       set({
         cooldownUntil:
           limit && limit.scope !== "day" ? Date.now() + Number(limit.retryAfter ?? 60) * 1000 : null,
@@ -118,8 +93,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             limit === null
               ? "I couldn't reach the assistant just now. Try again in a moment."
               : limit.scope === "day"
-                ? `${name} has used up its free quota for today. Switch model below to keep going — it resets tomorrow.`
-                : `${name} is rate limited for another ${limit.retryAfter}s. Wait it out, or switch model below.`,
+                ? "Every free model has used up its quota for today. It resets tomorrow."
+                : `All free models are busy. Try again in ${limit.retryAfter}s.`,
             { failed: true },
           ),
         ],
@@ -155,12 +130,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch {
       settle({ content: `I couldn't delete "${pending.label}". Try again from the ${pending.kind} list.`, failed: true });
     }
-  },
-
-  setProvider: (provider) => {
-    window.localStorage.setItem(PROVIDER_KEY, provider);
-    // Switching model is how you get out of a cooldown, so the old model's wait no longer applies.
-    set({ provider, cooldownUntil: null });
   },
 
   loadConversations: async () => {

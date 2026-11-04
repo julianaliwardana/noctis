@@ -122,13 +122,12 @@ Five fields are easy to get wrong:
 | `COOKIE_DOMAIN` | `julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
 | `TUNNEL_TOKEN` | The token from step 3 |
 
-`GEMINI_API_KEY` comes from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-(free tier). `GEMINI_MODEL`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY` and
-`INNERTUBE_KEY` are optional.
+`YOUTUBE_API_KEY` and `INNERTUBE_KEY` are optional.
 
-`OMNIROUTE_*` points at the OmniRoute gateway on this same VM. `localhost` inside the api/agent
-containers is the container itself, so use the gateway's Tailscale IP
-(`http://100.x.y.z:20128/v1`) or its container name on a Docker network both stacks join.
+AI runs through OmniRoute only: `AI_PROVIDER=omniroute`,
+`OMNIROUTE_BASE_URL=https://omniroute.julianwardana.dev/v1`, `OMNIROUTE_API_KEY` = the `noctis`
+key, `OMNIROUTE_MODEL=noctis` (the Z.ai-only combo). Chat and nudges both carry finance data, so
+do not set `GEMINI_API_KEY`, `GROQ_API_KEY` or `ANTHROPIC_API_KEY` on the server.
 Check from inside the stack (the slim image has no curl/wget, so use node):
 
 ```bash
@@ -160,7 +159,7 @@ Each check exercises one more layer, so work down in order:
 
 1. `https://noctis.julianwardana.dev` loads over HTTPS → tunnel + web
 2. Register and log in → web → api → postgres → JWT
-3. Send an AI chat message → api → agent → Gemini
+3. Send an AI chat message → api → agent → OmniRoute (`noctis` combo)
 4. Enable push notifications → VAPID keys match
 
 ---
@@ -266,7 +265,7 @@ the app never invokes. `node:22-alpine` reports fewer, but musl has no `bcrypt` 
 so you'd trade the warning for a compiler toolchain in the image.
 
 **Don't run Ollama here.** Two OCPUs with no GPU makes CPU-only inference unusably slow.
-Keep `AI_PROVIDER=omniroute`, `gemini` or `groq` in production; Ollama stays a local-dev option.
+Keep `AI_PROVIDER=omniroute` in production; Ollama stays a local-dev option.
 
 **`apps/api` has no build step.** It runs under `tsx` in production. Compiling it with
 `tsc` produced extensionless ESM imports and left the workspace TS packages

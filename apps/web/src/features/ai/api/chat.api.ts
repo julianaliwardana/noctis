@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { ConversationDetail, ConversationSummary, PendingDelete, ProviderName } from "../types";
+import type { ConversationDetail, ConversationSummary, PendingDelete } from "../types";
 
 export interface ChatResponse {
   message: string;
@@ -11,7 +11,6 @@ export interface ChatResponse {
 export interface SendChatInput {
   message: string;
   conversationId?: string;
-  provider: ProviderName;
 }
 
 export function sendChatMessage(input: SendChatInput): Promise<ChatResponse> {
