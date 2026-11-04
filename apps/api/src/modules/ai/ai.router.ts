@@ -33,6 +33,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  fastify.get("/models", async () => aiService.listModels());
+
   fastify.get("/conversations", async (request) => {
     return aiService.listConversations(request.user.userId);
   });

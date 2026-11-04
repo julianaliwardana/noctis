@@ -1,9 +1,19 @@
 import { db } from "@noctis/db";
 import { formatCurrency } from "@noctis/utils";
 
+export interface ChatAction {
+  type: string;
+  summary: string;
+}
+
 export interface ChatResult {
   message: string;
-  action?: { type: string; summary: string };
+  /** Set by a single tool; the chat reply collects them into `actions`. */
+  action?: ChatAction;
+  /** Everything this reply did, in order — one entry per tool that changed something. */
+  actions?: ChatAction[];
+  /** The model that answered, as the gateway reports it (for a combo, the upstream that ran). */
+  model?: string;
   /**
    * Deletes are proposed, never executed here. A misheard "hapus" against a habit streak is
    * unrecoverable, so the model only names the record and the client confirms it through the

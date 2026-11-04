@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type Keyboard
 import { AlertTriangle, ArrowUp, Hourglass, Mic, Send, Sparkles, Square, Trash2 } from "lucide-react";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Button } from "@/shared/components/ui/button";
-import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useTypewriter } from "../hooks/useTypewriter";
-import type { ChatMessage } from "../types";
+import type { ChatMessage, ChatModel } from "../types";
+import { ActionChips } from "./ActionChips";
+import { ModelPicker } from "./ModelPicker";
 
 interface AssistantBubbleProps {
   message: ChatMessage;
@@ -44,35 +45,45 @@ function AssistantBubble({ message, deletingId, onResolveDelete, onTick }: Assis
             />
           )}
         </p>
-        {done && message.actionLabel && (
-          <Badge variant="secondary" className="mt-2 gap-1.5">
-            <span aria-hidden className="size-1.5 rounded-full bg-[var(--chart-income)]" />
-            {message.actionLabel}
-          </Badge>
-        )}
+        {done && message.actions && <ActionChips actions={message.actions} />}
         {/* Held back until the question has finished typing — this one deletes something. */}
         {done && message.pendingDelete && (
-          <div className="mt-2 flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={deletingId !== null}
-              onClick={() => onResolveDelete(message.id, true)}
-            >
-              <Trash2 />
-              Delete {message.pendingDelete.kind}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={deletingId !== null}
-              onClick={() => onResolveDelete(message.id, false)}
-            >
-              Keep it
-            </Button>
+          <div
+            role="group"
+            aria-label={`Confirm deleting ${message.pendingDelete.label}`}
+            className="relative mt-2.5 flex animate-in flex-col gap-2.5 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-3 pr-3 pl-4 duration-200 fade-in-0 slide-in-from-bottom-1 motion-reduce:animate-none"
+          >
+            {/* The Oxblood rail — the system's destructive signal, at rail scale. */}
+            <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[var(--color-passwords)]" />
+            <div className="min-w-0">
+              <p className="text-xs text-[var(--color-text-muted)] capitalize">Delete {message.pendingDelete.kind}</p>
+              <p className="truncate text-sm font-medium text-[var(--color-text)]">{message.pendingDelete.label}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                disabled={deletingId !== null}
+                onClick={() => onResolveDelete(message.id, true)}
+              >
+                <Trash2 />
+                {deletingId === message.id ? "Deleting…" : "Delete"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={deletingId !== null}
+                onClick={() => onResolveDelete(message.id, false)}
+              >
+                Keep it
+              </Button>
+            </div>
           </div>
+        )}
+        {done && message.model && (
+          <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">via {message.model}</p>
         )}
       </div>
     </div>
@@ -86,13 +97,19 @@ export interface ChatWindowProps {
   deletingId: string | null;
   onResolveDelete: (messageId: string, confirmed: boolean) => void;
   cooldownUntil: number | null;
+  /** The server's allowlist — the picker hides itself when it is empty. */
+  models: ChatModel[];
+  model: string | null;
+  onModelChange: (id: string) => void;
 }
 
-const SUGGESTIONS = [
-  "What's on my plate today?",
-  "Add a task to call the bank tomorrow at 10am",
-  "Log 45k for lunch under Food",
-  "How much did I spend this month?",
+/** Each starter wears its domain's dot, so the empty state doubles as a map of what chat can do. */
+const SUGGESTIONS: { text: string; color: string }[] = [
+  { text: "What's on my plate today?", color: "var(--color-tasks)" },
+  { text: "Add a task to call the bank tomorrow at 10am", color: "var(--color-tasks)" },
+  { text: "Log 45k for lunch under Food", color: "var(--color-finance)" },
+  { text: "How much did I spend this month?", color: "var(--color-finance)" },
+  { text: "Log my run, and add 120k for running shoes", color: "var(--color-habits)" },
 ];
 
 /** Seconds left on a rate-limit wait, ticking down to zero and then releasing the composer. */
@@ -124,9 +141,13 @@ export function ChatWindow({
   deletingId,
   onResolveDelete,
   cooldownUntil,
+  models,
+  model,
+  onModelChange,
 }: ChatWindowProps) {
   const [input, setInput] = useState("");
   const cooldown = useCooldown(cooldownUntil);
+  const thinkingWith = (models.find((entry) => entry.id === model) ?? models[0])?.label;
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -197,12 +218,13 @@ export function ChatWindow({
             <div className="flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
-                  key={suggestion}
+                  key={suggestion.text}
                   type="button"
-                  onClick={() => submit(suggestion)}
-                  className="rounded-full border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-text)]"
+                  onClick={() => submit(suggestion.text)}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-text)]"
                 >
-                  {suggestion}
+                  <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: suggestion.color }} />
+                  {suggestion.text}
                 </button>
               ))}
             </div>
@@ -236,14 +258,17 @@ export function ChatWindow({
             >
               <Sparkles className="size-3.5" />
             </span>
-            <span className="flex gap-1" role="status" aria-label="Noctis is thinking">
-              {[0, 150, 300].map((delay) => (
-                <span
-                  key={delay}
-                  className="size-1.5 animate-bounce rounded-full bg-[var(--color-text-muted)]"
-                  style={{ animationDelay: `${delay}ms` }}
-                />
-              ))}
+            <span className="flex items-center gap-2" role="status" aria-label="Noctis is thinking">
+              <span aria-hidden className="flex gap-1">
+                {[0, 150, 300].map((delay) => (
+                  <span
+                    key={delay}
+                    className="size-1.5 animate-bounce rounded-full bg-[var(--color-text-muted)]"
+                    style={{ animationDelay: `${delay}ms` }}
+                  />
+                ))}
+              </span>
+              {thinkingWith && <span className="text-xs text-[var(--color-text-muted)]">{thinkingWith}</span>}
             </span>
           </div>
         )}
@@ -256,8 +281,7 @@ export function ChatWindow({
         </p>
       )}
 
-      {/* Two models is a segmented control, not a dropdown — both choices stay visible, and it
-          lives inside the composer so there is no second bordered strip above it. */}
+      {/* The model picker lives inside the composer, so there is no second bordered strip above it. */}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col gap-1.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 focus-within:border-[var(--color-primary)]"
@@ -274,6 +298,8 @@ export function ChatWindow({
         />
 
         <div className="flex items-center gap-2">
+          <ModelPicker models={models} value={model} onChange={onModelChange} disabled={sending} />
+
           {cooldown > 0 && (
             <p role="status" className="flex items-center gap-1 text-xs text-destructive">
               <Hourglass className="size-3.5 shrink-0" />

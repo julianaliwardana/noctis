@@ -1,4 +1,4 @@
-import { handleChat, type ChatResult } from "@noctis/agent";
+import { chatModels, handleChat, type ChatModel, type ChatResult } from "@noctis/agent";
 import type { ChatMessage, Conversation } from "@noctis/db";
 import * as aiRepository from "./ai.repository";
 import type { ChatDto } from "./ai.dto";
@@ -25,15 +25,22 @@ export async function sendMessage(userId: string, input: ChatDto): Promise<ChatR
 
   // The model runs before anything is written: a rate-limited retry would otherwise leave a trail
   // of empty conversations, and the client still holds the message to send again.
-  const result = await handleChat(userId, input.message, { history });
+  const result = await handleChat(userId, input.message, { history, model: input.model });
 
   const conversation = existing ?? (await aiRepository.createConversation(userId, titleFrom(input.message)));
   await aiRepository.appendMessage(conversation.id, "user", input.message);
   // pendingDelete is deliberately not stored — its id would be stale by the time a chat is reopened.
-  await aiRepository.appendMessage(conversation.id, "assistant", result.message, result.action?.summary);
+  // One line per action — the column predates multi-action replies, and the client splits it back.
+  const actionLabel = result.actions?.map((action) => action.summary).join("\n") || undefined;
+  await aiRepository.appendMessage(conversation.id, "assistant", result.message, actionLabel);
   await aiRepository.touchConversation(conversation.id);
 
   return { ...result, conversationId: conversation.id };
+}
+
+/** The picker's options — the server allowlist, first entry being the default. */
+export function listModels(): { models: ChatModel[] } {
+  return { models: chatModels() };
 }
 
 export function listConversations(userId: string): Promise<Conversation[]> {
