@@ -39,8 +39,8 @@ export async function sendMessage(userId: string, input: ChatDto): Promise<ChatR
 }
 
 /** The picker's options — the server allowlist, first entry being the default. */
-export function listModels(): { models: ChatModel[] } {
-  return { models: chatModels() };
+export async function listModels(): Promise<{ models: ChatModel[] }> {
+  return { models: await chatModels() };
 }
 
 export function listConversations(userId: string): Promise<Conversation[]> {

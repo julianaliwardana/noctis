@@ -3,7 +3,7 @@ import { createOllamaProvider } from "./ollama.provider";
 import { createGroqProvider } from "./groq.provider";
 import { createClaudeProvider } from "./claude.provider";
 import { createGeminiProvider } from "./gemini.provider";
-import { createOmniRouteProvider, omniRouteModels, type ChatModel } from "./omniroute.provider";
+import { availableOmniRouteModels, createOmniRouteProvider, type ChatModel } from "./omniroute.provider";
 
 function configuredProvider(): ProviderName {
   return isProviderName(process.env.AI_PROVIDER) ? process.env.AI_PROVIDER : "ollama";
@@ -29,11 +29,11 @@ export function createProvider(model?: string): ToolCapableProvider {
   }
 }
 
-/** What the chat's model picker may offer. Only OmniRoute has a list; other providers are fixed. */
-export function chatModels(): ChatModel[] {
-  return configuredProvider() === "omniroute" ? omniRouteModels() : [];
+/** What the chat's model picker may offer: allowlisted and served by the gateway. */
+export async function chatModels(): Promise<ChatModel[]> {
+  return configuredProvider() === "omniroute" ? availableOmniRouteModels() : [];
 }
 
-export { PROVIDERS, RateLimitError, ToolsUnsupportedError, isProviderName } from "./provider";
+export { ModelUnavailableError, PROVIDERS, RateLimitError, ToolsUnsupportedError, isProviderName } from "./provider";
 export type { LLMProvider, ProviderName, ToolCall, ToolMessage, ToolSpec, ToolTurn } from "./provider";
 export type { ChatModel } from "./omniroute.provider";

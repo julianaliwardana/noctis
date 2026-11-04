@@ -106,6 +106,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error instanceof ApiError && error.status === 429
           ? (error.data as { retryAfter?: number; scope?: "minute" | "day" })
           : null;
+      const unavailable =
+        error instanceof ApiError && (error.data as { code?: string } | undefined)?.code === "model_unavailable";
+      const picked = get().models.find((entry) => entry.id === get().model)?.label ?? "That model";
+
+      if (unavailable) {
+        set({
+          messages: [
+            ...get().messages,
+            assistantMessage(`${picked} isn't available on your gateway right now. Pick another model below.`, {
+              failed: true,
+            }),
+          ],
+        });
+        // Re-ask the server: it drops ids the gateway doesn't serve, so the bad one leaves the picker.
+        await get().loadModels();
+        return;
+      }
+
       set({
         cooldownUntil:
           limit && limit.scope !== "day" ? Date.now() + Number(limit.retryAfter ?? 60) * 1000 : null,

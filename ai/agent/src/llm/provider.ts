@@ -40,6 +40,20 @@ export class ToolsUnsupportedError extends Error {
   }
 }
 
+/**
+ * The gateway doesn't know the model — a typo or stale id in OMNIROUTE_MODELS, or a combo that
+ * was deleted. Not worth a fallback: the user should pick another model, so the UI says which.
+ */
+export class ModelUnavailableError extends Error {
+  model: string;
+
+  constructor(model: string, detail: string) {
+    super(`model "${model}" is not available on the gateway: ${detail}`);
+    this.name = "ModelUnavailableError";
+    this.model = model;
+  }
+}
+
 // OpenAI chat-completions shapes — the wire format OmniRoute speaks for every upstream.
 export interface ToolCall {
   id: string;

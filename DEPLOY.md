@@ -129,9 +129,11 @@ AI runs through OmniRoute only: `AI_PROVIDER=omniroute`,
 key, `OMNIROUTE_MODEL=noctis` (the Z.ai-only combo). Chat and nudges both carry finance data, so
 do not set `GEMINI_API_KEY`, `GROQ_API_KEY` or `ANTHROPIC_API_KEY` on the server.
 
-`OMNIROUTE_MODELS` fills the chat's model picker (`id=Label,…`, first = default), e.g.
-`noctis=Auto,<glm-4.7-flash id>=GLM-4.7 Flash`. The server ignores any model a client sends that
-isn't on it, so list Z.ai models only. Then run the live check against every entry:
+`OMNIROUTE_MODELS` fills the chat's model picker (`id=Label,…`, first = default). Each id is copied
+exactly from the gateway's `GET /v1/models` (`… | jq -r '.data[].id'`); the picker hides any the
+gateway doesn't serve, and a model that disappears later gets a "pick another model" reply instead
+of a 500. The server ignores any model a client sends that isn't on the list, so keep it to
+upstreams you trust with finance data. Then run the live check against every entry:
 `pnpm --filter @noctis/agent exec tsx src/llm/omniroute.check.ts` (inside the api container).
 Check from inside the stack (the slim image has no curl/wget, so use node):
 

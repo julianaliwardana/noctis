@@ -1,4 +1,5 @@
 import {
+  ModelUnavailableError,
   RateLimitError,
   ToolsUnsupportedError,
   type ToolCall,
@@ -62,6 +63,54 @@ export function omniRouteModels(): ChatModel[] {
     .filter((model) => model.id !== "");
 }
 
+/**
+ * A 400 means different things: an unknown model ("Unable to determine provider for model …"),
+ * an upstream that refuses `tools`, or one that refuses `response_format`. Each needs a different
+ * response, so read the body rather than treat every 400 the same.
+ */
+function classify400(body: string): "model" | "tools" | "other" {
+  if (/determine provider|unknown model|model not found|not a valid model|combo entry/i.test(body)) return "model";
+  if (/\btools?\b|tool_choice|function call/i.test(body)) return "tools";
+  return "other";
+}
+
+/** What the gateway serves right now — combos included — cached so the picker doesn't hit it per open. */
+let catalog: { at: number; ids: Set<string> | null } | null = null;
+const CATALOG_TTL_MS = 5 * 60_000;
+
+async function gatewayModelIds(baseUrl: string, apiKey: string): Promise<Set<string> | null> {
+  if (catalog && Date.now() - catalog.at < CATALOG_TTL_MS) return catalog.ids;
+  let ids: Set<string> | null = null;
+  try {
+    const res = await fetch(`${baseUrl}/models`, {
+      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (res.ok) {
+      const body = (await res.json()) as { data?: { id?: string }[] };
+      ids = new Set((body.data ?? []).map((entry) => entry.id ?? "").filter(Boolean));
+    }
+  } catch {
+    // Unreachable gateway: show the allowlist as-is rather than an empty picker.
+  }
+  catalog = { at: Date.now(), ids };
+  return ids;
+}
+
+/**
+ * The allowlist minus ids the gateway doesn't serve — a placeholder or typo in OMNIROUTE_MODELS
+ * would otherwise sit in the picker and fail on every message. If the gateway can't be asked,
+ * or none match (a different id format), the allowlist is returned unfiltered.
+ */
+export async function availableOmniRouteModels(): Promise<ChatModel[]> {
+  const allowed = omniRouteModels();
+  const baseUrl = (process.env.OMNIROUTE_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
+  const ids = await gatewayModelIds(baseUrl, process.env.OMNIROUTE_API_KEY || "");
+  if (!ids) return allowed;
+  const served = allowed.filter((model) => ids.has(model.id));
+  return served.length > 0 ? served : allowed;
+}
+
 export function createOmniRouteProvider(requestedModel?: string): ToolCapableProvider {
   // `||`, not `??` — an unset var in .env reads as "".
   const baseUrl = (process.env.OMNIROUTE_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
@@ -89,6 +138,11 @@ export function createOmniRouteProvider(requestedModel?: string): ToolCapablePro
       const retryAfter = Number(res.headers.get("retry-after"));
       throw new RateLimitError("omniroute", Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 60);
     }
+    if (res.status === 400 || res.status === 404 || res.status === 422) {
+      const body = await res.text();
+      if (classify400(body) === "model") throw new ModelUnavailableError(model, body);
+      throw new Error(`OmniRoute request failed: ${res.status} ${body}`);
+    }
     if (res.status === 401 || res.status === 403) {
       throw new Error(`OmniRoute rejected the API key (${res.status}) — check OMNIROUTE_API_KEY`);
     }
@@ -106,7 +160,10 @@ export function createOmniRouteProvider(requestedModel?: string): ToolCapablePro
       // Every prompt here asks for a JSON object. Not every upstream behind the gateway accepts
       // response_format, so a 400/422 earns one retry without it — safeParseJSON copes with fences.
       let res = await post({ messages, response_format: { type: "json_object" } });
-      if (res.status === 400 || res.status === 422) res = await post({ messages });
+      if (res.status === 400 || res.status === 422) {
+        const body = await res.clone().text();
+        if (classify400(body) !== "model") res = await post({ messages });
+      }
 
       const data = await read(res);
       return stripThinking(data.choices?.[0]?.message?.content ?? "");
@@ -114,7 +171,11 @@ export function createOmniRouteProvider(requestedModel?: string): ToolCapablePro
 
     async chat(messages: ToolMessage[], tools: ToolSpec[]) {
       const res = await post({ messages, tools, tool_choice: "auto" });
-      if (res.status === 400 || res.status === 422) throw new ToolsUnsupportedError(await res.text());
+      if (res.status === 400 || res.status === 422) {
+        const body = await res.clone().text();
+        // Only a refusal of `tools` earns the single-intent fallback; a bad model fails fast in read().
+        if (classify400(body) === "tools") throw new ToolsUnsupportedError(body);
+      }
 
       const data = await read(res);
       const message = data.choices?.[0]?.message;

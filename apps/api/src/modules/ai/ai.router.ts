@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { RateLimitError } from "@noctis/agent";
+import { ModelUnavailableError, RateLimitError } from "@noctis/agent";
 import { chatDto, renameConversationDto } from "./ai.dto";
 import * as aiService from "./ai.service";
 
@@ -28,6 +28,15 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
             retryAfter: error.retryAfterSeconds,
             scope: error.scope,
           });
+      }
+      // A bad id in OMNIROUTE_MODELS is config, not an outage — say which model, so it can be swapped.
+      if (error instanceof ModelUnavailableError) {
+        request.log.warn({ model: error.model }, "model not available on gateway");
+        return reply.code(422).send({
+          error: `Model "${error.model}" isn't available on the gateway.`,
+          code: "model_unavailable",
+          model: error.model,
+        });
       }
       throw error;
     }
