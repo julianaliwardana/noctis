@@ -14,12 +14,21 @@ export interface ChatMessage {
   pendingDelete?: PendingDelete;
 }
 
-export type ProviderName = "gemini" | "groq";
+export type ProviderName = "omniroute" | "gemini" | "groq";
 
 export const PROVIDER_OPTIONS: { value: ProviderName; label: string; hint: string }[] = [
+  { value: "omniroute", label: "OmniRoute", hint: "Your self-hosted gateway — routes to whichever model OMNIROUTE_MODEL names" },
   { value: "gemini", label: "Gemini", hint: "Gemini Flash — best at Indonesian, but only 20 requests/day free" },
-  { value: "groq", label: "Groq", hint: "Groq Llama — the daily driver, far higher free limits" },
+  { value: "groq", label: "Groq", hint: "Groq Llama — far higher free limits than Gemini" },
 ];
+
+export function isProviderName(value: unknown): value is ProviderName {
+  return PROVIDER_OPTIONS.some((option) => option.value === value);
+}
+
+export function providerLabel(provider: ProviderName): string {
+  return PROVIDER_OPTIONS.find((option) => option.value === provider)?.label ?? provider;
+}
 
 export interface ConversationSummary {
   id: string;

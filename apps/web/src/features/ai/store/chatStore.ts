@@ -4,7 +4,15 @@ import { useFinanceStore } from "@/features/finance/store/financeStore";
 import { useHabitsStore } from "@/features/habits/store/habitsStore";
 import { useTasksStore } from "@/features/tasks/store/tasksStore";
 import * as chatApi from "../api/chat.api";
-import type { ChatMessage, ConversationSummary, PendingDelete, ProviderName, StoredMessage } from "../types";
+import {
+  isProviderName,
+  providerLabel,
+  type ChatMessage,
+  type ConversationSummary,
+  type PendingDelete,
+  type ProviderName,
+  type StoredMessage,
+} from "../types";
 
 const PROVIDER_KEY = "noctis_ai_provider";
 
@@ -19,10 +27,13 @@ const runDelete: Record<PendingDelete["kind"], (id: string) => Promise<void>> = 
   category: (id) => useFinanceStore.getState().removeCategory(id),
 };
 
-/** Groq is the default: Gemini's free tier is 20 requests/day/model, which a chat burns through fast. */
+/** OmniRoute is the default: the self-hosted gateway pools free upstreams, so no single quota runs dry. */
+const DEFAULT_PROVIDER: ProviderName = "omniroute";
+
 function storedProvider(): ProviderName {
-  if (typeof window === "undefined") return "groq";
-  return window.localStorage.getItem(PROVIDER_KEY) === "gemini" ? "gemini" : "groq";
+  if (typeof window === "undefined") return DEFAULT_PROVIDER;
+  const saved = window.localStorage.getItem(PROVIDER_KEY);
+  return isProviderName(saved) ? saved : DEFAULT_PROVIDER;
 }
 
 /** Saved replies lose their pendingDelete on purpose — the record id would be stale by now. */
@@ -96,8 +107,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error instanceof ApiError && error.status === 429
           ? (error.data as { retryAfter?: number; scope?: "minute" | "day" })
           : null;
-      const name = get().provider === "gemini" ? "Gemini" : "Groq";
-      const other = get().provider === "gemini" ? "Groq" : "Gemini";
+      const name = providerLabel(get().provider);
 
       set({
         cooldownUntil:
@@ -108,8 +118,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             limit === null
               ? "I couldn't reach the assistant just now. Try again in a moment."
               : limit.scope === "day"
-                ? `${name} has used up its free quota for today. Switch to ${other} below to keep going — it resets tomorrow.`
-                : `${name} is rate limited for another ${limit.retryAfter}s. Wait it out, or switch to ${other} below.`,
+                ? `${name} has used up its free quota for today. Switch model below to keep going — it resets tomorrow.`
+                : `${name} is rate limited for another ${limit.retryAfter}s. Wait it out, or switch model below.`,
             { failed: true },
           ),
         ],

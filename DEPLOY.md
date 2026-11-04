@@ -126,6 +126,15 @@ Five fields are easy to get wrong:
 (free tier). `GEMINI_MODEL`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY` and
 `INNERTUBE_KEY` are optional.
 
+`OMNIROUTE_*` points at the OmniRoute gateway on this same VM. `localhost` inside the api/agent
+containers is the container itself, so use the gateway's Tailscale IP
+(`http://100.x.y.z:20128/v1`) or its container name on a Docker network both stacks join.
+Check from inside the stack (the slim image has no curl/wget, so use node):
+
+```bash
+docker compose exec api node -e 'fetch(process.env.OMNIROUTE_BASE_URL+"/models",{headers:{Authorization:"Bearer "+process.env.OMNIROUTE_API_KEY}}).then(r=>r.text()).then(console.log)'
+```
+
 ### 5. Launch
 
 ```bash
@@ -257,7 +266,7 @@ the app never invokes. `node:22-alpine` reports fewer, but musl has no `bcrypt` 
 so you'd trade the warning for a compiler toolchain in the image.
 
 **Don't run Ollama here.** Two OCPUs with no GPU makes CPU-only inference unusably slow.
-Keep `AI_PROVIDER=gemini` or `groq` in production; Ollama stays a local-dev option.
+Keep `AI_PROVIDER=omniroute`, `gemini` or `groq` in production; Ollama stays a local-dev option.
 
 **`apps/api` has no build step.** It runs under `tsx` in production. Compiling it with
 `tsc` produced extensionless ESM imports and left the workspace TS packages

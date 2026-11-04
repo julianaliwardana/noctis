@@ -3,6 +3,7 @@ import { createOllamaProvider } from "./ollama.provider";
 import { createGroqProvider } from "./groq.provider";
 import { createClaudeProvider } from "./claude.provider";
 import { createGeminiProvider } from "./gemini.provider";
+import { createOmniRouteProvider } from "./omniroute.provider";
 
 /** `requested` comes from the user's model picker; AI_PROVIDER is the fallback default. */
 export function createProvider(requested?: string): LLMProvider {
@@ -17,6 +18,8 @@ export function createProvider(requested?: string): LLMProvider {
       return createGeminiProvider();
     case "groq":
       return createGroqProvider();
+    case "omniroute":
+      return createOmniRouteProvider();
     case "claude":
       return createClaudeProvider();
     case "ollama":

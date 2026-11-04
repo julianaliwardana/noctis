@@ -1,6 +1,6 @@
 export type { LLMProvider } from "@noctis/types";
 
-export const PROVIDERS = ["gemini", "groq", "claude", "ollama"] as const;
+export const PROVIDERS = ["gemini", "groq", "omniroute", "claude", "ollama"] as const;
 
 export type ProviderName = (typeof PROVIDERS)[number];
 

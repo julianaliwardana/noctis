@@ -61,7 +61,7 @@ Two things a generic to-do app could not truthfully claim:
 `apps/api` is Fastify as a modular monolith. `packages/db` is Prisma + Postgres.
 `ai/agent` holds the LLM provider abstraction, nudge scheduler, and chat handler.
 
-**AI providers:** pluggable — Ollama (local, the default), Groq, Claude, Gemini. The
+**AI providers:** pluggable — Ollama (local, the default), Groq, Claude, Gemini, OmniRoute (self-hosted gateway). The
 local option must remain viable; the product cannot assume a cloud key exists.
 
 **Auth:** email + password against the user's own API. No third-party identity provider.
