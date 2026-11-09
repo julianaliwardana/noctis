@@ -1,7 +1,15 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
-import { expireSession } from "./session";
+import { expireSession, waitForSession } from "./session";
+import { refreshOutcome, type RefreshOutcome } from "./refreshOutcome";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+/**
+ * Same origin, always: Next rewrites /api/* to the API (next.config.ts). That's what lets the
+ * session cookies be host-only — a separate API host would need parent-domain cookies.
+ */
+const API_URL = "/api";
+
+/** Auth calls that must not trigger a refresh-and-retry when they 401. */
+const NO_REFRESH = ["/auth/login", "/auth/register", "/auth/refresh"];
 
 export class ApiError extends Error {
   status: number;
@@ -28,14 +36,19 @@ const client = axios.create({
  * Shared across concurrent callers so a page that fires five requests at once refreshes once,
  * rather than racing five refreshes against each other.
  */
-let refreshInFlight: Promise<boolean> | null = null;
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
 
-function refreshOnce(): Promise<boolean> {
+function refreshOnce(): Promise<RefreshOutcome> {
   // Bare axios, not `client` — a 401 here must not re-enter the refresh interceptor.
+  //
+  // No body: `undefined`, never `null`. For a POST axios defaults Content-Type to
+  // application/x-www-form-urlencoded and only drops it when the body is undefined; Fastify has no
+  // parser for that type and answered 415, so every refresh failed and the session "expired" every
+  // 15 minutes.
   refreshInFlight ??= axios
-    .post(`${API_URL}/auth/refresh`, null, { withCredentials: true })
-    .then(() => true)
-    .catch(() => false)
+    .post(`${API_URL}/auth/refresh`, undefined, { withCredentials: true })
+    .then(() => refreshOutcome(204))
+    .catch((error: AxiosError) => refreshOutcome(error.response?.status))
     .finally(() => {
       refreshInFlight = null;
     });
@@ -48,15 +61,24 @@ client.interceptors.response.use(undefined, async (error: AxiosError<{ error?: s
 
   // A 401 is expected every 15 minutes as the access cookie lapses — trade the refresh cookie for
   // a fresh one and replay the request before bothering the user about it.
-  if (status === 401 && config && !config.retried && !config.url?.startsWith("/auth/")) {
+  if (status === 401 && config && !config.retried && !NO_REFRESH.some((path) => config.url?.startsWith(path))) {
     config.retried = true;
-    if (await refreshOnce()) return client(config);
+    const outcome = await refreshOnce();
+    if (outcome === "renewed") return client(config);
 
-    expireSession();
-    // The session dialog is now the only thing the user needs to act on. Rejecting here instead
-    // would surface as an unhandled rejection in every mount-effect fetch and store action that
-    // has no reason to catch a dead session — so the chain stops quietly.
-    return new Promise(() => {});
+    if (outcome === "expired") {
+      expireSession();
+      // Park the request until the user signs back in from the session dialog, then replay it — so
+      // the page finishes loading instead of staying half-empty. Rejecting instead would surface as
+      // an unhandled rejection in every mount-effect fetch that has no reason to catch this.
+      await waitForSession();
+      config.retried = false;
+      return client(config);
+    }
+
+    // Refresh couldn't be reached (offline, rate-limited, server error): the session may be fine,
+    // so fail this one request normally rather than telling the user they were signed out.
+    throw new ApiError("Couldn't reach the server. Try again in a moment.", status, error.response?.data);
   }
 
   throw new ApiError(error.response?.data?.error ?? error.message, status ?? 0, error.response?.data);

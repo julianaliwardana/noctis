@@ -4,11 +4,13 @@ FROM node:22.23.4-slim
 RUN npm i -g pnpm@10.30.0
 WORKDIR /app
 
-# Baked into the client bundle at build time, so they must be args, not env_file.
-ARG NEXT_PUBLIC_API_URL
+# Baked into the build, so they must be args, not env_file. The browser reaches the API through
+# the web app's own /api rewrite; API_INTERNAL_URL is where that rewrite points (empty = the
+# compose service, http://api:3001).
+ARG API_INTERNAL_URL
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ARG NEXT_PUBLIC_CDN_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+ENV API_INTERNAL_URL=$API_INTERNAL_URL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY \
     NEXT_PUBLIC_CDN_URL=$NEXT_PUBLIC_CDN_URL
 

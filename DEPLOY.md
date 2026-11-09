@@ -96,6 +96,10 @@ At [one.dash.cloudflare.com](https://one.dash.cloudflare.com):
    | `noctis` | `julianwardana.dev` | HTTP | `web:3000` |
    | `noctis-api` | `julianwardana.dev` | HTTP | `api:3001` |
 
+   The web app reaches the API through its own `/api` rewrite, so `noctis-api` is only there for
+   the MCP connector (`/mcp`). Point the connector at `https://noctis.julianwardana.dev/api/mcp`
+   instead and this hostname can go.
+
    The URLs are compose service names, resolved on the internal Docker network.
 
 ✅ Cloudflare DNS now shows two proxied CNAMEs pointing at `*.cfargotunnel.com`. These are
@@ -119,7 +123,9 @@ Five fields are easy to get wrong:
 | `DATABASE_URL` | Password must match `POSTGRES_PASSWORD` exactly; host is `postgres`, **not** `localhost` |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Must be byte-identical to `VAPID_PUBLIC_KEY` |
 | `WEB_ORIGIN` | Exactly `https://noctis.julianwardana.dev` — no trailing slash, or CORS fails |
-| `COOKIE_DOMAIN` | `julianwardana.dev` — a parent of both the web origin and the API, or the session cookies never reach one of them |
+| `JWT_SECRET` | At least 32 characters, or the API refuses to start |
+| `COOKIE_DOMAIN` | Only on servers that ran the old parent-domain cookies: `julianwardana.dev`, so the API can expire them. Remove after 2026-12-10. New servers leave it out |
+| `ALLOW_REGISTRATION` | `false`. Set `true` only long enough to create your account, then restart with it off |
 | `TUNNEL_TOKEN` | The token from step 3 |
 
 `YOUTUBE_API_KEY` and `INNERTUBE_KEY` are optional.
@@ -163,7 +169,7 @@ docker compose -f docker-compose.prod.yml ps
 Each check exercises one more layer, so work down in order:
 
 1. `https://noctis.julianwardana.dev` loads over HTTPS → tunnel + web
-2. Register and log in → web → api → postgres → JWT
+2. Register (with `ALLOW_REGISTRATION=true`) and log in → web → `/api` rewrite → api → postgres → JWT. Then set it back to `false` and `docker compose -f docker-compose.prod.yml up -d api`
 3. Send an AI chat message → api → agent → OmniRoute (`noctis` combo)
 4. Enable push notifications → VAPID keys match
 
@@ -220,15 +226,27 @@ Restore: `gunzip -c backup-YYYY-MM-DD.sql.gz | docker compose -f docker-compose.
 
 ## Gotchas
 
-**`NEXT_PUBLIC_*` is baked in at image build time.** Next.js inlines those into the browser
-bundle, so they're `ARG`s in the `Dockerfile`, not runtime env. Changing
-`NEXT_PUBLIC_API_URL` requires a rebuild (`./deploy.sh`); a restart silently keeps the old
-value with no error to tell you why.
+**`NEXT_PUBLIC_*` and `API_INTERNAL_URL` are baked in at image build time.** Next.js inlines
+the former into the browser bundle and resolves rewrites during `next build`, so they're `ARG`s
+in the `Dockerfile`, not runtime env. Changing them requires a rebuild (`./deploy.sh`); a
+restart silently keeps the old value with no error to tell you why.
 
-**Keep the API hostname one level deep.** Free Universal SSL covers `julianwardana.dev` and
-`*.julianwardana.dev` only, so `api.noctis.julianwardana.dev` would fail the TLS handshake
-(error 526) while `noctis-api.julianwardana.dev` is covered. That's also why `COOKIE_DOMAIN`
-is the apex: it's the nearest common parent of the two sibling hosts.
+**The browser never talks to the API host.** Every call goes to `noctis.julianwardana.dev/api/*`
+and Next proxies it to `api:3001`. That keeps the session cookies host-only (`__Host-` prefix):
+a separate API host would need cookies on the apex, and those reach every
+`*.julianwardana.dev` service (OmniRoute, the CDN, the portfolio). If you ever add a public API
+hostname again, keep it one level deep — free Universal SSL covers `*.julianwardana.dev` only.
+
+**The API trusts `CF-Connecting-IP`** for rate limiting. Cloudflare overwrites it at the edge, so
+it can't be forged as long as the API is only reachable through Cloudflare — don't publish
+`api:3001` on a host port.
+
+**MCP is bound by account id.** Set `MCP_USER_ID`, not just `MCP_USER_EMAIL`, so changing your
+login email doesn't break the BCA import. Look the id up with:
+
+```bash
+docker compose -f docker-compose.prod.yml exec postgres psql -U noctis noctis -c 'select id, email from "User";'
+```
 
 **Postgres bakes `POSTGRES_PASSWORD` in on first start only.** It initialises the role when the
 data directory is empty and never revisits it, so editing the password in `.env` after the first

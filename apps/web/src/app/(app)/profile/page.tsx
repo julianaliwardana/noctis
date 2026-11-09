@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { User, Mail, Cake, CalendarIcon } from "lucide-react";
+import { User, Mail, Cake, CalendarIcon, KeyRound, LogOut } from "lucide-react";
 import { formatDate } from "@noctis/utils";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -12,6 +13,8 @@ import { Calendar } from "@/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import SpotlightCard from "@/shared/components/SpotlightCard";
 import { useUser } from "@/features/auth/hooks/useUser";
+import { logoutAll } from "@/features/auth/api/auth.api";
+import { ApiError } from "@/lib/api";
 
 function toDateInputValue(dateOfBirth: string | null): string {
   return dateOfBirth ? dateOfBirth.slice(0, 10) : "";
@@ -33,9 +36,12 @@ function initialsOf(name: string | null, email: string): string {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, loading, updateUser } = useUser();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [signingOutAll, setSigningOutAll] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -46,7 +52,22 @@ export default function ProfilePage() {
     setName(user.name ?? "");
     setEmail(user.email);
     setDateOfBirth(toDateInputValue(user.dateOfBirth));
+    setCurrentPassword("");
   }, [user]);
+
+  // The email is the login, so the API asks for the password before changing it.
+  const emailChanged = !!user && email.trim().toLowerCase() !== user.email.toLowerCase();
+
+  async function handleSignOutEverywhere(): Promise<void> {
+    setSigningOutAll(true);
+    try {
+      await logoutAll();
+      router.replace("/login");
+    } catch {
+      setError("Couldn't sign out your other sessions. Try again.");
+      setSigningOutAll(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent): Promise<void> {
     event.preventDefault();
@@ -59,10 +80,15 @@ export default function ProfilePage() {
         email,
         name: name || undefined,
         dateOfBirth: dateOfBirth || undefined,
+        currentPassword: emailChanged ? currentPassword : undefined,
       });
       setSaved(true);
-    } catch {
-      setError("Couldn't save your profile. Check your details and try again.");
+    } catch (cause) {
+      if (cause instanceof ApiError && (cause.status === 403 || cause.status === 409)) {
+        setError(cause.status === 403 ? "That password isn't right." : cause.message);
+      } else {
+        setError("Couldn't save your profile. Check your details and try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -181,6 +207,24 @@ export default function ProfilePage() {
                 />
               </Field>
 
+              {emailChanged && (
+                <Field>
+                  <FieldLabel htmlFor="currentPassword" className="items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    Current password
+                  </FieldLabel>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    placeholder="Confirm it's you to change your email"
+                    required
+                  />
+                </Field>
+              )}
+
               <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
                 <p className="text-sm" aria-live="polite">
                   {error && <span className="text-[var(--color-passwords)]">{error}</span>}
@@ -194,6 +238,27 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-medium text-[var(--color-text)]">Sessions</h2>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Sign out on every device, including this one. Use it if a device is lost or you think
+              someone else has your session.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={signingOutAll}
+            onClick={() => void handleSignOutEverywhere()}
+          >
+            <LogOut />
+            {signingOutAll ? "Signing out…" : "Sign out everywhere"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

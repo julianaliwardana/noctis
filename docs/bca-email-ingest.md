@@ -18,8 +18,9 @@ Gmail (connector) ──► Claude ──► POST https://noctis-api.julianwarda
 | `packages/db/prisma/schema.prisma` | `Expense.source`, `Expense.externalId`, unique `(userId, externalId)` |
 | `apps/api/src/modules/finance/finance.repository.ts` | `createImported`, `findByExternalId(s)`, `searchByTitle` |
 
-The endpoint is **off** unless `MCP_TOKEN` and `MCP_USER_EMAIL` are set. Every tool acts as
-that one account; no tool takes a user id.
+The endpoint is **off** unless `MCP_TOKEN` and `MCP_USER_ID` (or the older `MCP_USER_EMAIL`)
+are set. Every tool acts as that one account; no tool takes a user id. Prefer `MCP_USER_ID`: an
+email binding breaks the moment you change your login email.
 
 `add_transaction` is idempotent on `externalId` (the Gmail message id) — a re-run returns
 `duplicate`, never a second row. It refuses unknown categories, so new categories only appear
@@ -34,7 +35,7 @@ through an explicit `create_category` call.
 3. Server env:
    ```
    MCP_TOKEN=<openssl rand -hex 32>
-   MCP_USER_EMAIL=<your Noctis login email>
+   MCP_USER_ID=<your Noctis user id — see DEPLOY.md, "MCP is bound by account id">
    ```
 4. Check it from anywhere:
    ```sh

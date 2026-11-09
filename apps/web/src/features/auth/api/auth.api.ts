@@ -17,3 +17,13 @@ export function login(email: string, password: string): Promise<AuthUser> {
 export function logout(): Promise<void> {
   return api.post<void>("/auth/logout");
 }
+
+/** Revokes every session on every device, then clears this browser's cookies. */
+export function logoutAll(): Promise<void> {
+  return api.post<void>("/auth/logout-all");
+}
+
+/** Sign-up is off in production unless the server enables it. */
+export function registrationStatus(): Promise<{ open: boolean }> {
+  return api.get<{ open: boolean }>("/auth/registration");
+}

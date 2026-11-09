@@ -5,8 +5,9 @@ import { ACCESS_COOKIE } from "../modules/auth/auth.service";
 
 declare module "@fastify/jwt" {
   interface FastifyJWT {
-    payload: { userId: string; type: "access" | "refresh" };
-    user: { userId: string; type?: "access" | "refresh" };
+    /** `ver` is the user's tokenVersion at issue time; see revokeAllSessions. */
+    payload: { userId: string; type: "access" | "refresh"; ver: number };
+    user: { userId: string; type?: "access" | "refresh"; ver?: number };
   }
 }
 
@@ -20,6 +21,10 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error("JWT_SECRET environment variable is required");
+  }
+  // HS256 is only as strong as its key; `openssl rand -base64 32` gives 44 characters.
+  if (process.env.NODE_ENV === "production" && secret.length < 32) {
+    throw new Error("JWT_SECRET must be at least 32 characters in production");
   }
 
   // No `Authorization` header any more — `jwtVerify` reads the httpOnly access cookie instead.
