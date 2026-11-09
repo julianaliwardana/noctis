@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useServerSeed } from "@/lib/useServerSeed";
 import { useTasksStore } from "../store/tasksStore";
+import type { TaskDto } from "../api/tasks.api";
 
-export function useTasks() {
+export interface TasksSnapshot {
+  tasks: TaskDto[];
+}
+
+export function useTasks(initial?: TasksSnapshot | null) {
   const tasks = useTasksStore((state) => state.tasks);
   const loading = useTasksStore((state) => state.loading);
   const fetchTasks = useTasksStore((state) => state.fetchTasks);
@@ -11,9 +16,11 @@ export function useTasks() {
   const completeTask = useTasksStore((state) => state.completeTask);
   const removeTask = useTasksStore((state) => state.removeTask);
 
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  const snapshot = useServerSeed(
+    initial,
+    (data) => useTasksStore.setState({ tasks: data.tasks, loading: false }),
+    fetchTasks,
+  );
 
-  return { tasks, loading, addTask, completeTask, removeTask };
+  return { tasks: snapshot?.tasks ?? tasks, loading: snapshot ? false : loading, addTask, completeTask, removeTask };
 }

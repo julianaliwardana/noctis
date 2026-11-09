@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useServerSeed } from "@/lib/useServerSeed";
 import { useUserStore } from "../store/userStore";
+import type { UserDto } from "../api/user.api";
 
-export function useUser() {
+export interface UserSnapshot {
+  user: UserDto;
+}
+
+export function useUser(initial?: UserSnapshot | null) {
   const user = useUserStore((state) => state.user);
   const loading = useUserStore((state) => state.loading);
   const fetchUser = useUserStore((state) => state.fetchUser);
   const updateUser = useUserStore((state) => state.updateUser);
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  const snapshot = useServerSeed(
+    initial,
+    (data) => useUserStore.setState({ user: data.user, loading: false }),
+    fetchUser,
+  );
 
-  return { user, loading, updateUser };
+  return { user: snapshot?.user ?? user, loading: snapshot ? false : loading, updateUser };
 }
