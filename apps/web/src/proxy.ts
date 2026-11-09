@@ -3,14 +3,15 @@ import { authRedirect, loginUrl, safeNext } from "@/lib/authRedirect";
 import { refreshCookieName } from "@/lib/authCookies";
 
 /**
- * Replaces the old client-side AuthGuard. The session cookies are httpOnly, so the gate moved to
+ * Next 16 renamed middleware to proxy; it runs on the Node.js runtime. Replaces the old
+ * client-side AuthGuard. The session cookies are httpOnly, so the gate moved to
  * the one place that can still read them — the server — which also means no blank first paint
  * while the browser works out whether anyone is signed in. Only a UX gate: the API checks the
  * tokens on every request.
  */
 const REFRESH_COOKIE = refreshCookieName(process.env.NODE_ENV === "production");
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const to = authRedirect(request.cookies.has(REFRESH_COOKIE), pathname);
   if (!to) return NextResponse.next();
