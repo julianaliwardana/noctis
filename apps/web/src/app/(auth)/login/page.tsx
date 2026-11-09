@@ -8,6 +8,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Field, FieldLabel } from "@/shared/components/ui/field";
 import { Button } from "@/shared/components/ui/button";
 import { login } from "@/features/auth/api/auth.api";
+import { safeNext } from "@/lib/authRedirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +24,8 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/dashboard");
+      // Read here rather than via useSearchParams, which would force a Suspense boundary on the page.
+      router.push(safeNext(new URLSearchParams(window.location.search).get("next")));
     } catch {
       setError("That email and password don't match our records.");
     } finally {

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { authRedirect } from "@/lib/authRedirect";
+import { authRedirect, loginUrl, safeNext } from "@/lib/authRedirect";
 import { refreshCookieName } from "@/lib/authCookies";
 
 /**
@@ -11,8 +11,14 @@ import { refreshCookieName } from "@/lib/authCookies";
 const REFRESH_COOKIE = refreshCookieName(process.env.NODE_ENV === "production");
 
 export function middleware(request: NextRequest): NextResponse {
-  const to = authRedirect(request.cookies.has(REFRESH_COOKIE), request.nextUrl.pathname);
-  return to ? NextResponse.redirect(new URL(to, request.url)) : NextResponse.next();
+  const { pathname, search } = request.nextUrl;
+  const to = authRedirect(request.cookies.has(REFRESH_COOKIE), pathname);
+  if (!to) return NextResponse.next();
+
+  // Signed out → remember the page so sign-in lands back on it. Signed in on /login → honour it.
+  const target =
+    to === "/login" ? loginUrl(pathname + search) : safeNext(request.nextUrl.searchParams.get("next"));
+  return NextResponse.redirect(new URL(target, request.url));
 }
 
 export const config = {
