@@ -1,7 +1,14 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
 import { expireSession } from "./session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+/**
+ * Same origin, always: Next rewrites /api/* to the API (next.config.ts). That's what lets the
+ * session cookies be host-only — a separate API host would need parent-domain cookies.
+ */
+const API_URL = "/api";
+
+/** Auth calls that must not trigger a refresh-and-retry when they 401. */
+const NO_REFRESH = ["/auth/login", "/auth/register", "/auth/refresh"];
 
 export class ApiError extends Error {
   status: number;
@@ -48,7 +55,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError<{ error?: s
 
   // A 401 is expected every 15 minutes as the access cookie lapses — trade the refresh cookie for
   // a fresh one and replay the request before bothering the user about it.
-  if (status === 401 && config && !config.retried && !config.url?.startsWith("/auth/")) {
+  if (status === 401 && config && !config.retried && !NO_REFRESH.some((path) => config.url?.startsWith(path))) {
     config.retried = true;
     if (await refreshOnce()) return client(config);
 

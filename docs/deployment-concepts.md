@@ -43,7 +43,7 @@ happens once, on a builder          happens on every container start
 values are BAKED IN                 values are READ FRESH
 to change: rebuild                  to change: restart
 
-NEXT_PUBLIC_API_URL                 DATABASE_URL, REDIS_URL
+API_INTERNAL_URL (rewrite target)   DATABASE_URL, REDIS_URL
 NEXT_PUBLIC_VAPID_PUBLIC_KEY        JWT_SECRET, GEMINI_API_KEY
 NEXT_PUBLIC_CDN_URL                 WEB_ORIGIN, VAPID_PRIVATE_KEY
 ```
@@ -52,7 +52,9 @@ NEXT_PUBLIC_CDN_URL                 WEB_ORIGIN, VAPID_PRIVATE_KEY
 build time, because you are shipping a file. Anything that executes *on your server* can
 be decided at run time, because the process reads its own environment.
 
-That's why `NEXT_PUBLIC_API_URL` is an `ARG` in the Dockerfile and `DATABASE_URL` is not.
+That's why `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is an `ARG` in the Dockerfile and `DATABASE_URL` is
+not. (`API_INTERNAL_URL` is an `ARG` for a related reason: Next resolves rewrites during
+`next build`.)
 The same trap appears as `VITE_*`, `REACT_APP_*`, and `PUBLIC_*` in other frameworks.
 
 **Security corollary:** a build-time browser variable is published. It ends up in a

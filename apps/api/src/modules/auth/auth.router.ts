@@ -1,54 +1,70 @@
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { loginDto, registerDto } from "./auth.dto";
+import {
+  CREDENTIAL_LIMIT,
+  REFRESH_LIMIT,
+  clearLoginFailures,
+  ipRateLimit,
+  loginLockedOut,
+  recordLoginFailure,
+} from "./auth.rateLimit";
 import {
   REFRESH_COOKIE,
   clearAuthCookies,
   createUser,
+  findUserByEmail,
+  revokeAllSessions,
   setAccessCookie,
-  setRefreshCookie,
+  startSession,
   verifyCredentials,
   verifyRefreshToken,
 } from "./auth.service";
 
-const AUTH_RATE_LIMIT = 10;
-const AUTH_RATE_WINDOW_SECONDS = 60;
-
-async function authRateLimit(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const key = `ratelimit:auth:${request.ip}`;
-  const count = await request.server.redis.incr(key);
-  if (count === 1) {
-    await request.server.redis.expire(key, AUTH_RATE_WINDOW_SECONDS);
-  }
-  if (count > AUTH_RATE_LIMIT) {
-    await reply.code(429).send({ error: "Too many requests, try again later" });
-  }
+/**
+ * Off unless explicitly enabled. Noctis is a single-person app on a public URL: an open sign-up
+ * form lets anyone create an account and spend the AI quota. Enable it in dev, or briefly in
+ * production to create the first account.
+ */
+function registrationOpen(): boolean {
+  return process.env.ALLOW_REGISTRATION?.trim().toLowerCase() === "true";
 }
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.post("/register", { preHandler: authRateLimit }, async (request, reply) => {
+  const credentialLimit = ipRateLimit(CREDENTIAL_LIMIT);
+  const refreshLimit = ipRateLimit(REFRESH_LIMIT);
+
+  /** Lets the register page say "closed" up front instead of after the user fills the form in. */
+  fastify.get("/registration", async () => ({ open: registrationOpen() }));
+
+  fastify.post("/register", { preHandler: credentialLimit }, async (request, reply) => {
+    if (!registrationOpen()) {
+      return reply.code(403).send({ error: "Registration is closed" });
+    }
+
     const body = registerDto.parse(request.body);
 
-    const existing = await fastify.db.user.findUnique({ where: { email: body.email } });
+    const existing = await findUserByEmail(body.email);
     if (existing) {
       return reply.code(409).send({ error: "Email already registered" });
     }
 
     const user = await createUser(body.email, body.password);
-    setAccessCookie(fastify, reply, user.id);
-    setRefreshCookie(fastify, reply, user.id);
+    startSession(fastify, reply, user);
     return reply.code(201).send({ id: user.id, email: user.email });
   });
 
-  fastify.post("/login", { preHandler: authRateLimit }, async (request, reply) => {
+  fastify.post("/login", { preHandler: credentialLimit }, async (request, reply) => {
     const body = loginDto.parse(request.body);
-    const user = await verifyCredentials(body.email, body.password);
+    if (await loginLockedOut(request, reply, body.email)) return reply;
 
+    const user = await verifyCredentials(body.email, body.password);
     if (!user) {
+      await recordLoginFailure(request, body.email);
       return reply.code(401).send({ error: "Invalid credentials" });
     }
 
-    setAccessCookie(fastify, reply, user.id);
-    setRefreshCookie(fastify, reply, user.id);
+    await clearLoginFailures(request, body.email);
+    startSession(fastify, reply, user);
     return reply.send({ id: user.id, email: user.email });
   });
 
@@ -56,22 +72,32 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
    * Deliberately not behind `authenticate` — that requires a live access token, which is exactly
    * what the caller no longer has. The refresh cookie is verified here instead, and cleared when it
    * turns out to be dead so the browser stops presenting a session the server won't honour.
+   *
+   * `ver` must match the user's current tokenVersion: bumping it (logout-everywhere) is what
+   * revokes refresh tokens that would otherwise stay valid for their full 30 days.
    */
-  fastify.post("/refresh", { preHandler: authRateLimit }, async (request, reply) => {
-    const userId = verifyRefreshToken(fastify, request.cookies[REFRESH_COOKIE] ?? "");
-    const user = userId ? await fastify.db.user.findUnique({ where: { id: userId } }) : null;
+  fastify.post("/refresh", { preHandler: refreshLimit }, async (request, reply) => {
+    const claims = verifyRefreshToken(fastify, request.cookies[REFRESH_COOKIE] ?? "");
+    const user = claims ? await fastify.db.user.findUnique({ where: { id: claims.userId } }) : null;
 
-    if (!user) {
+    if (!user || !claims || user.tokenVersion !== claims.ver) {
       clearAuthCookies(reply);
       return reply.code(401).send({ error: "Session expired" });
     }
 
-    setAccessCookie(fastify, reply, user.id);
+    setAccessCookie(fastify, reply, user);
     return reply.code(204).send();
   });
 
-  /** The only way out: httpOnly cookies can't be dropped by the client that owns them. */
+  /** Ends this browser's session. httpOnly cookies can't be dropped by the client that owns them. */
   fastify.post("/logout", async (_request, reply) => {
+    clearAuthCookies(reply);
+    return reply.code(204).send();
+  });
+
+  /** Ends every session on every device, including any refresh token that was copied elsewhere. */
+  fastify.post("/logout-all", { preHandler: fastify.authenticate }, async (request, reply) => {
+    await revokeAllSessions(request.user.userId);
     clearAuthCookies(reply);
     return reply.code(204).send();
   });

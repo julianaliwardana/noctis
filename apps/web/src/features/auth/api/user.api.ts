@@ -13,6 +13,8 @@ export interface UpdateUserInput {
   email?: string;
   name?: string;
   dateOfBirth?: string;
+  /** Required by the API only when `email` changes. */
+  currentPassword?: string;
 }
 
 export function fetchMe(): Promise<UserDto> {
