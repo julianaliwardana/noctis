@@ -18,6 +18,34 @@ export function create(userId: string, data: CreateExpenseDto): Promise<Expense>
   return db.expense.create({ data: { ...data, userId } });
 }
 
+export interface ImportedExpenseInput {
+  title: string;
+  amount: number;
+  category: string;
+  type: "income" | "expense";
+  date: Date;
+  source: string;
+  externalId: string;
+}
+
+export function createImported(userId: string, data: ImportedExpenseInput): Promise<Expense> {
+  return db.expense.create({ data: { ...data, userId } });
+}
+
+export function findByExternalIds(userId: string, externalIds: string[]): Promise<Expense[]> {
+  return db.expense.findMany({ where: { userId, externalId: { in: externalIds } } });
+}
+
+export function findByExternalId(userId: string, externalId: string): Promise<Expense | null> {
+  return db.expense.findUnique({ where: { userId_externalId: { userId, externalId } } });
+}
+
+export function searchByTitle(userId: string, query: string | undefined, take: number): Promise<Expense[]> {
+  const where: Prisma.ExpenseWhereInput = { userId };
+  if (query) where.title = { contains: query, mode: "insensitive" };
+  return db.expense.findMany({ where, orderBy: { date: "desc" }, take });
+}
+
 export function remove(id: string): Promise<Expense> {
   return db.expense.delete({ where: { id } });
 }

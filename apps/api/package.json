@@ -23,13 +23,14 @@
     "@noctis/db": "workspace:*",
     "@noctis/types": "workspace:*",
     "@noctis/utils": "workspace:*",
-    "@noctis/agent": "workspace:*"
+    "@noctis/agent": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
     "tsx": "^4.19.2",
     "@types/bcrypt": "^5.0.2",
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.20.5",
     "@types/web-push": "^3.6.4"
   }
 }

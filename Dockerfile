@@ -1,4 +1,6 @@
-FROM node:22-slim
+# Pinned, not node:22-slim: a cached floating tag kept an old 22.x around.
+# 22.23.4 fixes CVE-2026-111497 (Brotli RCE, Oct 2026 security release).
+FROM node:22.23.4-slim
 RUN npm i -g pnpm@10.30.0
 WORKDIR /app
 

@@ -100,14 +100,20 @@ model Category {
 }
 
 model Expense {
-  id       String   @id @default(cuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id])
-  title    String
-  amount   Float
-  category String
-  type     String   @default("expense")
-  date     DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  amount     Float
+  category   String
+  type       String   @default("expense")
+  date       DateTime @default(now())
+  /// Where the entry came from when it wasn't typed in the app, e.g. "bca-email".
+  source     String?
+  /// Id in the source system (the Gmail message id for "bca-email"). Makes imports idempotent.
+  externalId String?
+
+  @@unique([userId, externalId])
 }
 
 model VaultKey {
