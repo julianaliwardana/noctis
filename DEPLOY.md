@@ -226,6 +226,11 @@ Restore: `gunzip -c backup-YYYY-MM-DD.sql.gz | docker compose -f docker-compose.
 
 ## Gotchas
 
+**Server rendering needs `TZ` on the web container.** Dashboard and finance render on the
+server (Partial Prerendering), including "due today" and the date heading. `TZ=Asia/Jakarta` in
+`.env` reaches every service through `env_file`; without it the server would compute "today" in
+UTC and the page would disagree with the browser after hydration.
+
 **`NEXT_PUBLIC_*` and `API_INTERNAL_URL` are baked in at image build time.** Next.js inlines
 the former into the browser bundle and resolves rewrites during `next build`, so they're `ARG`s
 in the `Dockerfile`, not runtime env. Changing them requires a rebuild (`./deploy.sh`); a
