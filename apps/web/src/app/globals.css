@@ -11,6 +11,10 @@
    with the stored choice: `rail:` = icon-only sidebar, `contained:` = centred max-width content. */
 @custom-variant rail (&:where([data-sidebar="rail"] *));
 @custom-variant contained (&:where([data-width="contained"] *));
+/* Pagination layout (shared/components/ui/pagination.tsx): which parts show is pure CSS. */
+@custom-variant pg-numbered (&:where([data-pagination="numbered"] *));
+@custom-variant pg-simple (&:where([data-pagination="simple"] *));
+@custom-variant pg-compact (&:where([data-pagination="compact"] *));
 
 /*
  * 60 / 30 / 10
@@ -274,6 +278,73 @@ html[data-spotlight="on"] [data-slot="card"]::after {
 html[data-spotlight="on"] [data-slot="card"][data-hot]::before,
 html[data-spotlight="on"] [data-slot="card"][data-hot]::after {
   opacity: 1;
+}
+
+/* Tables. Lined is the default in table.tsx (borders live on the cells); the others restyle the
+   same markup. The hover highlight comes last so it wins over stripes. */
+html[data-table="striped"] [data-slot="table-body"] [data-slot="table-row"] > td,
+html[data-table="minimal"] [data-slot="table-row"] > :is(td, th) {
+  border-color: transparent;
+}
+html[data-table="striped"] [data-slot="table-body"] [data-slot="table-row"]:nth-child(even) > td {
+  background-color: color-mix(in srgb, var(--color-border) 38%, transparent);
+}
+html[data-table="striped"] [data-slot="table-body"] [data-slot="table-row"] > td:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+html[data-table="striped"] [data-slot="table-body"] [data-slot="table-row"] > td:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+html[data-table="minimal"] [data-slot="table-footer"] {
+  background-color: transparent;
+}
+html[data-table="boxed"] [data-slot="table-container"] {
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+html[data-table="boxed"] [data-slot="table-header"] th {
+  background-color: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+html[data-table="boxed"] [data-slot="table-header"] th:first-child { border-top-left-radius: var(--radius); }
+html[data-table="boxed"] [data-slot="table-header"] th:last-child { border-top-right-radius: var(--radius); }
+html[data-table="boxed"] [data-slot="table-row"] > :is(td, th):not(:last-child) {
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+[data-slot="table-body"] > [data-slot="table-row"]:hover > td {
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+[data-slot="table-body"] > [data-slot="table-row"] > td:first-child {
+  transition: box-shadow 400ms var(--ease-spring-soft), background-color 200ms ease;
+}
+[data-slot="table-body"] > [data-slot="table-row"]:hover > td:first-child {
+  box-shadow: inset 2px 0 0 var(--color-primary);
+}
+html[data-table="boxed"] [data-slot="table-body"] > [data-slot="table-row"]:hover > td:first-child {
+  box-shadow: inset 2px 0 0 var(--color-primary), inset -1px 0 0 color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+/* Fields — inputs, textareas and select triggers share one style so forms stay consistent. */
+html[data-field="filled"] :is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]) {
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--color-border) 55%, transparent);
+}
+html[data-field="filled"] :is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):hover {
+  background-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+html[data-field="filled"] :is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):focus-visible {
+  border-color: var(--color-primary);
+  background-color: transparent;
+}
+html[data-field="underline"] :is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]) {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+html[data-field="underline"] :is([data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 1px 0 0 var(--color-primary);
 }
 
 html[data-motion="reduced"] *,

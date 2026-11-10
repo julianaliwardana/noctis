@@ -21,6 +21,8 @@ interface SegmentedProps<T extends string> {
   iconOnly?: boolean;
   orientation?: "horizontal" | "vertical";
   className?: string;
+  /** Extra classes for each option button (e.g. taller hit targets in a narrow rail). */
+  itemClassName?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ export function Segmented<T extends string>({
   iconOnly = false,
   orientation = "horizontal",
   className,
+  itemClassName,
 }: SegmentedProps<T>) {
   const id = useId();
 
@@ -74,6 +77,7 @@ export function Segmented<T extends string>({
             className={cn(
               "press relative flex h-7 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[calc(var(--radius)-2px)] px-2.5 text-xs font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-[0.96]",
               selected ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]",
+              itemClassName,
             )}
           >
             {selected && (

@@ -18,6 +18,11 @@ export const APPEARANCE_OPTIONS = {
   width: ["full", "contained"],
   motion: ["full", "reduced"],
   spotlight: ["on", "off"],
+  table: ["lined", "striped", "minimal", "boxed"],
+  field: ["outline", "filled", "underline"],
+  menu: ["dropdown", "overlay"],
+  pagination: ["numbered", "simple", "compact"],
+  pageSize: ["10", "20", "50"],
 } as const;
 
 export type AppearanceKey = keyof typeof APPEARANCE_OPTIONS;
@@ -34,6 +39,11 @@ export const DEFAULT_APPEARANCE: Appearance = {
   width: "full",
   motion: "full",
   spotlight: "on",
+  table: "lined",
+  field: "outline",
+  menu: "dropdown",
+  pagination: "numbered",
+  pageSize: "10",
 };
 
 export const APPEARANCE_STORAGE_KEY = "noctis-appearance";

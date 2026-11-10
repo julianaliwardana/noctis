@@ -540,6 +540,11 @@ and motion. Stored in `localStorage` (`noctis-appearance`), applied before first
   accent needs all six, white-or-fg on fill ≥ 4.5:1 and text ≥ 4.5:1 on every base.
 - **Density** scales Tailwind's `--spacing`; **text size** scales the root font size.
 - **Layout** uses the `rail:` and `contained:` custom variants; a full-bleed page sets `data-bleed`.
+- **Data & forms:** table style (lined, striped, minimal, boxed — `data-table`, restyling the
+  same `data-slot`s), rows per page, pagination (numbered, simple, compact — one markup in
+  `ui/pagination.tsx`, parts shown via the `pg-*` variants), field style (outline, filled,
+  underline — inputs, textareas and select triggers together), select menus (dropdown or overlay).
+- Body table rows highlight on hover with a 6% accent tint and a 2px accent edge in every style.
 
 ## Motion
 

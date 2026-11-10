@@ -5,6 +5,9 @@ import { format } from "date-fns";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2 } from "lucide-react";
 import { formatCurrency } from "@noctis/utils";
 import { Badge } from "@/shared/components/ui/badge";
+import { Pagination } from "@/shared/components/ui/pagination";
+import { useAppearance } from "@/lib/appearanceStore";
+import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -20,8 +23,6 @@ import {
 } from "@/shared/components/ui/table";
 import { categoryNames, colorFor, queryExpenses, sumSigned, type SortKey } from "../lib/finance.lib";
 import type { CategoryDto, ExpenseDto } from "../api/finance.api";
-
-const PAGE_SIZE = 10;
 
 const COLUMNS: { key: SortKey; label: string; className?: string }[] = [
   { key: "date", label: "Date" },
@@ -43,6 +44,8 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
   const [sort, setSort] = useState<SortKey>("date");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
+  // Rows per page is an Appearance setting (Profile → Appearance → Rows per page).
+  const pageSize = Number(useAppearance().pageSize);
 
   const names = useMemo(() => categoryNames(categories, expenses), [categories, expenses]);
   const rows = useMemo(
@@ -50,9 +53,11 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
     [expenses, search, category, type, sort, dir],
   );
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const current = Math.min(page, pageCount - 1);
-  const visible = rows.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+  const visible = rows.slice(current * pageSize, current * pageSize + pageSize);
+  const first = rows.length === 0 ? 0 : current * pageSize + 1;
+  const last = Math.min(rows.length, (current + 1) * pageSize);
 
   function toggleSort(key: SortKey): void {
     if (key === sort) setDir(dir === "asc" ? "desc" : "asc");
@@ -124,17 +129,23 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
                 const active = sort === column.key;
                 const Icon = !active ? ChevronsUpDown : dir === "asc" ? ArrowUp : ArrowDown;
                 return (
-                  <TableHead key={column.key} className={column.className}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                  <TableHead
+                    key={column.key}
+                    className={column.className}
+                    aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : undefined}
+                  >
+                    <button
+                      type="button"
                       onClick={() => toggleSort(column.key)}
                       aria-label={`Sort by ${column.label}`}
-                      className={column.className && "-mr-2 ml-auto"}
+                      className={cn(
+                        "press -mx-1.5 inline-flex h-7 items-center gap-1 rounded-md px-1.5 uppercase outline-none hover:text-[var(--color-text)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] active:scale-[0.96]",
+                        active && "text-[var(--color-primary-text)]",
+                      )}
                     >
                       {column.label}
-                      <Icon className={active ? "" : "opacity-40"} />
-                    </Button>
+                      <Icon className={cn("size-3.5", !active && "opacity-40")} />
+                    </button>
                   </TableHead>
                 );
               })}
@@ -157,7 +168,11 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
                   </TableCell>
                   <TableCell className="max-w-[16rem] truncate font-medium">{expense.title}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="gap-1.5">
+                    <Badge
+                      variant="secondary"
+                      className="gap-1.5 text-[var(--color-text)]"
+                      style={{ backgroundColor: `color-mix(in srgb, ${colorFor(categories, expense.category)} 14%, transparent)` }}
+                    >
                       <span
                         aria-hidden
                         className="size-2 rounded-full"
@@ -202,23 +217,14 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
           )}
         </Table>
 
-        {pageCount > 1 && (
-          <div className="flex items-center justify-end gap-2 pt-4 text-sm text-[var(--color-text-muted)]">
-            <span>
-              Page {current + 1} of {pageCount}
-            </span>
-            <Button variant="outline" size="sm" disabled={current === 0} onClick={() => setPage(current - 1)}>
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={current >= pageCount - 1}
-              onClick={() => setPage(current + 1)}
-            >
-              Next
-            </Button>
-          </div>
+        {rows.length > 0 && (
+          <Pagination
+            className="mt-5 border-t border-[var(--color-border)] pt-4"
+            page={current}
+            pageCount={pageCount}
+            onPageChange={setPage}
+            summary={`${first}–${last} of ${rows.length}`}
+          />
         )}
       </CardContent>
     </Card>

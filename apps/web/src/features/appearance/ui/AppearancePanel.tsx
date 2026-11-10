@@ -278,6 +278,72 @@ export function AppearancePanel() {
         </section>
 
         <section>
+          <SectionTitle>Data &amp; forms</SectionTitle>
+          <div className="divide-y divide-[var(--color-border)]">
+            <SettingRow title="Table style" hint="Row lines, stripes, nothing but hover, or a boxed grid.">
+              <Segmented
+                label="Table style"
+                value={a.table}
+                options={opts<Appearance["table"]>([
+                  ["lined", "Lined"],
+                  ["striped", "Striped"],
+                  ["minimal", "Minimal"],
+                  ["boxed", "Boxed"],
+                ])}
+                onChange={(v) => setAppearance("table", v)}
+              />
+            </SettingRow>
+            <SettingRow title="Rows per page" hint="How many rows a table shows at once.">
+              <Segmented
+                label="Rows per page"
+                value={a.pageSize}
+                options={opts<Appearance["pageSize"]>([
+                  ["10", "10"],
+                  ["20", "20"],
+                  ["50", "50"],
+                ])}
+                onChange={(v) => setAppearance("pageSize", v)}
+              />
+            </SettingRow>
+            <SettingRow title="Pagination" hint="Page numbers, Previous / Next, or just arrows.">
+              <Segmented
+                label="Pagination"
+                value={a.pagination}
+                options={opts<Appearance["pagination"]>([
+                  ["numbered", "Numbered"],
+                  ["simple", "Simple"],
+                  ["compact", "Compact"],
+                ])}
+                onChange={(v) => setAppearance("pagination", v)}
+              />
+            </SettingRow>
+            <SettingRow title="Field style" hint="Inputs and selects: outlined, filled, or a single underline.">
+              <Segmented
+                label="Field style"
+                value={a.field}
+                options={opts<Appearance["field"]>([
+                  ["outline", "Outline"],
+                  ["filled", "Filled"],
+                  ["underline", "Underline"],
+                ])}
+                onChange={(v) => setAppearance("field", v)}
+              />
+            </SettingRow>
+            <SettingRow title="Select menus" hint="Drop down below the field, or open over it on the chosen item.">
+              <Segmented
+                label="Select menus"
+                value={a.menu}
+                options={opts<Appearance["menu"]>([
+                  ["dropdown", "Dropdown"],
+                  ["overlay", "Overlay"],
+                ])}
+                onChange={(v) => setAppearance("menu", v)}
+              />
+            </SettingRow>
+          </div>
+        </section>
+
+        <section>
           <SectionTitle>Layout</SectionTitle>
           <div className="divide-y divide-[var(--color-border)]">
             <SettingRow title="Sidebar" hint="Full labels, or an icon rail. Desktop only.">

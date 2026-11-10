@@ -169,7 +169,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <RailTooltip label="Profile" />
           </Link>
           <SignOutButton />
-          <ThemeToggle className="mx-1 mt-1 rail:md:mx-0 rail:md:flex-col" />
+          {/* In the icon rail the three options stack; taller targets and real gaps keep them tappable. */}
+          <ThemeToggle
+            className="mx-1 mt-2 rail:md:mx-auto rail:md:mt-3 rail:md:w-11 rail:md:flex-col rail:md:gap-1.5 rail:md:p-1"
+            itemClassName="h-7 rail:md:h-9 rail:md:w-full rail:md:flex-none rail:md:px-0"
+          />
         </div>
       </aside>
 

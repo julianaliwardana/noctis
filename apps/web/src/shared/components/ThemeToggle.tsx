@@ -18,9 +18,10 @@ interface ThemeToggleProps {
   showLabels?: boolean;
   orientation?: "horizontal" | "vertical";
   className?: string;
+  itemClassName?: string;
 }
 
-export function ThemeToggle({ showLabels = false, orientation, className }: ThemeToggleProps) {
+export function ThemeToggle({ showLabels = false, orientation, className, itemClassName }: ThemeToggleProps) {
   const preference = useThemePreference();
 
   return (
@@ -32,6 +33,7 @@ export function ThemeToggle({ showLabels = false, orientation, className }: Them
       iconOnly={!showLabels}
       orientation={orientation}
       className={className}
+      itemClassName={itemClassName}
     />
   );
 }
