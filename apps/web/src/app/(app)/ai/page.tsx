@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export default function AiPage() {
   const { messages, sending, send, deletingId, resolveDelete, cooldownUntil, models, model, setModel } = useChat();
@@ -29,12 +30,10 @@ export default function AiPage() {
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">Noctis Chat</h1>
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Create and delete tasks, habits, transactions and categories — by typing or by voice.
-            </p>
-          </div>
+          <PageHeader
+            title="Noctis Chat"
+            description="Create and delete tasks, habits, transactions and categories — by typing or by voice."
+          />
 
           <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
             <DialogTrigger asChild>

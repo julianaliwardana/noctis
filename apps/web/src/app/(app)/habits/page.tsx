@@ -5,16 +5,14 @@ import { HabitForm } from "@/features/habits/ui/HabitForm";
 import { HabitList } from "@/features/habits/ui/HabitList";
 import { HabitsCalendar } from "@/features/habits/ui/HabitsCalendar";
 import { useHabits } from "@/features/habits/hooks/useHabits";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export default function HabitsPage() {
   const { habits, logs, loading, addHabit, logHabit, updateColor, deleteHabit } = useHabits();
 
   return (
     <div className="flex flex-col gap-6 xl:h-full">
-      <div className="shrink-0">
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">Habits</h1>
-        <p className="text-sm text-[var(--color-text-muted)]">{habits.length} tracked</p>
-      </div>
+      <PageHeader className="shrink-0" title="Habits" description={`${habits.length} tracked`} />
 
       {/* Mobile order is today-first: check habits off, glance at the month, and only then the
           "add a habit" form — which is rare, and tall enough to bury everything below it.

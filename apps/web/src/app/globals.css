@@ -7,6 +7,11 @@
    mobile top bar, the pomodoro panels — so dark: utilities have to light up in there too. */
 @custom-variant dark (&:where(.dark, .dark *, .theme-inverse, .theme-inverse *));
 
+/* Appearance-driven layout (lib/appearance.ts). Pure CSS so the server render never disagrees
+   with the stored choice: `rail:` = icon-only sidebar, `contained:` = centred max-width content. */
+@custom-variant rail (&:where([data-sidebar="rail"] *));
+@custom-variant contained (&:where([data-width="contained"] *));
+
 /*
  * 60 / 30 / 10
  *
@@ -18,6 +23,7 @@
  *          30 Chalk White — type, on a graphite rail
  *          10 Cobalt Blue — same jobs, same fill
  *
+ * The ten is the user's accent (cobalt by default — see "Appearance" below for the others).
  * Cobalt is the only chromatic chrome. Domain tones and chart inks are readings, not chrome:
  * they stay at signal scale (rail, chip, dot, icon tint) and never count toward the ten.
  */
@@ -41,11 +47,18 @@
   --color-text: #0e0f12;
   --color-text-muted: #62646b;
   --color-rail: #0e0f12;
-  /* 10 — Cobalt Blue. The fill is the same #2f5bff in both themes and always carries white.
-     -text is the step that reads as type or an icon on the current surface. */
-  --color-primary: #2f5bff;
-  --color-primary-fg: #ffffff;
-  --color-primary-text: #2f5bff;
+  /* 10 — the accent. -fg is the ink that sits on the fill; -text is the step that reads as type
+     or an icon on the current surface. Each preset is six hand-checked values (--ac-*, below):
+     fill/fg/text for the light surface and again for the dark one. */
+  --ac-fill-l: #2f5bff;
+  --ac-fg-l: #ffffff;
+  --ac-text-l: #2f5bff;
+  --ac-fill-d: #2f5bff;
+  --ac-fg-d: #ffffff;
+  --ac-text-d: #7f9cff;
+  --color-primary: var(--ac-fill-l);
+  --color-primary-fg: var(--ac-fg-l);
+  --color-primary-text: var(--ac-text-l);
 
   /* Domain tones — signal scale only. */
   --color-tasks: #b9701f;
@@ -90,10 +103,10 @@
   /* 30 — Chalk White */
   --color-text: #f1efea;
   --color-text-muted: #9b9da4;
-  /* 10 — Cobalt Blue */
-  --color-primary: #2f5bff;
-  --color-primary-fg: #ffffff;
-  --color-primary-text: #7f9cff;
+  /* 10 — the accent, dark-surface steps */
+  --color-primary: var(--ac-fill-d);
+  --color-primary-fg: var(--ac-fg-d);
+  --color-primary-text: var(--ac-text-d);
 
   --color-tasks: #d89552;
   --color-habits: #63a878;
@@ -143,6 +156,144 @@
 
 .theme-inverse {
   color: var(--color-text);
+}
+
+/* ─── Appearance ──────────────────────────────────────────────────────────────────────────────
+   One data attribute per setting on <html>, written before first paint (lib/appearance.ts).
+   Every value below was contrast-checked: white (or the listed fg) on the fill ≥ 4.5:1, and the
+   -text step ≥ 4.5:1 on every base's field and panel, both themes. */
+
+html[data-accent="violet"] {
+  --ac-fill-l: #6d3ff0; --ac-fg-l: #ffffff; --ac-text-l: #6d3ff0;
+  --ac-fill-d: #6d3ff0; --ac-fg-d: #ffffff; --ac-text-d: #a98cff;
+}
+html[data-accent="emerald"] {
+  --ac-fill-l: #047a55; --ac-fg-l: #ffffff; --ac-text-l: #047a55;
+  --ac-fill-d: #047a55; --ac-fg-d: #ffffff; --ac-text-d: #3fcf95;
+}
+html[data-accent="crimson"] {
+  --ac-fill-l: #d1264a; --ac-fg-l: #ffffff; --ac-text-l: #c21f42;
+  --ac-fill-d: #d1264a; --ac-fg-d: #ffffff; --ac-text-d: #ff7d95;
+}
+html[data-accent="amber"] {
+  --ac-fill-l: #b45309; --ac-fg-l: #ffffff; --ac-text-l: #a84d08;
+  --ac-fill-d: #e08a14; --ac-fg-d: #0e0f12; --ac-text-d: #f5a742;
+}
+html[data-accent="teal"] {
+  --ac-fill-l: #0f766e; --ac-fg-l: #ffffff; --ac-text-l: #0f766e;
+  --ac-fill-d: #0f766e; --ac-fg-d: #ffffff; --ac-text-d: #2fcfbf;
+}
+/* Monochrome: the accent becomes the thirty itself — onyx by day, chalk by night. */
+html[data-accent="onyx"] {
+  --ac-fill-l: #0e0f12; --ac-fg-l: #f1efea; --ac-text-l: #0e0f12;
+  --ac-fill-d: #f1efea; --ac-fg-d: #0e0f12; --ac-text-d: #f1efea;
+}
+
+/* Base tone — the temperature of the sixty. Warm (chalk) is the default above. */
+html[data-base="neutral"] { --color-bg: #f4f4f5; --color-surface: #ffffff; --color-border: #e4e4e7; }
+html[data-base="neutral"].dark,
+html[data-base="neutral"] .theme-inverse { --color-bg: #0b0b0c; --color-surface: #161618; --color-border: #262629; }
+html[data-base="cool"] { --color-bg: #f1f4f9; --color-surface: #fbfcfe; --color-border: #dde3ec; }
+html[data-base="cool"].dark,
+html[data-base="cool"] .theme-inverse { --color-bg: #0a0d14; --color-surface: #131824; --color-border: #232a38; }
+
+/* Density scales Tailwind's one spacing unit, so every p-*, gap-*, h-* moves together. */
+html[data-density="compact"] { --spacing: 0.22rem; }
+html[data-density="spacious"] { --spacing: 0.285rem; }
+
+/* Text size scales the root, so rem-based type (and everything sized in rem) follows. */
+html[data-text="sm"] { font-size: 93.75%; }
+html[data-text="lg"] { font-size: 106.25%; }
+
+html[data-radius="sharp"] { --radius: 0.3rem; }
+html[data-radius="round"] { --radius: 0.95rem; }
+
+/* Card styles. Unlayered on purpose: they have to beat the ring-1 / bg-card utilities. */
+html[data-card="elevated"] [data-slot="card"] {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-text) 6%, transparent),
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 12px 32px -16px rgb(0 0 0 / 0.22);
+}
+html[data-card="elevated"].dark [data-slot="card"] {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 16px 40px -18px rgb(0 0 0 / 0.75);
+}
+html[data-card="outlined"] [data-slot="card"] {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 16%, transparent);
+}
+html[data-card="glass"] [data-slot="card"] {
+  background-color: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.4),
+    0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent),
+    0 10px 30px -18px rgb(0 0 0 / 0.25);
+}
+html[data-card="glass"].dark [data-slot="card"] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 16px 40px -20px rgb(0 0 0 / 0.8);
+}
+/* Glass needs something behind it to blur: a faint wash of the accent over the field. */
+html[data-card="glass"] body {
+  background-image:
+    radial-gradient(60rem 40rem at 10% -10%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 60%),
+    radial-gradient(50rem 40rem at 110% 110%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Spotlight: a soft wash and a lit edge that follow the pointer across any card. Positions come
+   from one delegated pointermove listener (shared/components/Providers.tsx). */
+html[data-spotlight="on"] [data-slot="card"]::before,
+html[data-spotlight="on"] [data-slot="card"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms var(--ease-spring-soft);
+}
+html[data-spotlight="on"] [data-slot="card"]::before {
+  z-index: -1;
+  background: radial-gradient(28rem circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 65%);
+}
+html[data-spotlight="on"] [data-slot="card"]::after {
+  padding: 1px;
+  background: radial-gradient(14rem circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--color-primary) 75%, transparent), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+html[data-spotlight="on"] [data-slot="card"][data-hot]::before,
+html[data-spotlight="on"] [data-slot="card"][data-hot]::after {
+  opacity: 1;
+}
+
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Spring easings — sampled from a real damped spring (mass 1), not hand-drawn béziers, so CSS
+   motion has the same settle as the motion/react springs. spring = k170 c20 (2% overshoot),
+   soft = k120 c22 (no overshoot), bouncy = k260 c18 (12% overshoot, for small press feedback). */
+@theme {
+  --ease-spring: linear(0, 0.0259, 0.0849, 0.165, 0.2568, 0.3586, 0.4537, 0.5441, 0.6272, 0.7059, 0.7707, 0.8262, 0.8729, 0.9114, 0.9439, 0.9679, 0.9863, 0.9999, 1.01, 1.0163, 1.0201, 1.0219, 1.0223, 1.0216, 1.0202, 1.0183, 1.0163, 1.014, 1.0119, 1.0099, 1.0081, 1.0064, 1.0049, 1.0037, 1.0027, 1.0019, 1.0012, 1.0006, 1.0003, 1, 1);
+  --ease-spring-soft: linear(0, 0.026, 0.087, 0.1627, 0.2498, 0.334, 0.4188, 0.4976, 0.5661, 0.6302, 0.6842, 0.7336, 0.7744, 0.8111, 0.8423, 0.8676, 0.8901, 0.9081, 0.924, 0.9367, 0.9478, 0.9571, 0.9644, 0.9708, 0.9758, 0.9802, 0.9836, 0.9866, 0.989, 0.991, 0.9926, 0.9939, 0.995, 0.9959, 0.9967, 0.9973, 0.9978, 0.9982, 0.9985, 0.9988, 1);
+  --ease-spring-bouncy: linear(0, 0.0529, 0.1793, 0.3438, 0.5186, 0.6839, 0.8207, 0.9362, 1.0212, 1.0773, 1.1081, 1.1189, 1.1154, 1.1021, 1.0833, 1.0625, 1.0424, 1.0246, 1.0107, 0.9997, 0.9922, 0.9878, 0.986, 0.986, 0.9874, 0.9895, 0.9919, 0.9944, 0.9966, 0.9983, 0.9998, 1.0007, 1.0014, 1.0016, 1.0017, 1.0016, 1.0013, 1.001, 1.0007, 1.0005, 1);
+  /* Every plain transition-colors / transition-opacity in the app picks these up. */
+  --default-transition-duration: 220ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @theme inline {
@@ -231,6 +382,39 @@ body {
   }
 }
 
+/* Press feedback: colours ease, the scale springs (bouncy) so a tap feels physical. */
+@utility press {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale, translate;
+  transition-duration: 200ms, 200ms, 200ms, 200ms, 200ms, 600ms, 600ms;
+  transition-timing-function: ease, ease, ease, ease, ease, var(--ease-spring-bouncy), var(--ease-spring);
+}
+
+/* Entrances. app/(app)/template.tsx remounts on every navigation, so the page replays its entry;
+   cards stagger by position where sibling-index() exists and simply arrive together elsewhere.
+   fill-mode backwards: nothing is left transformed afterwards (a lingering transform would trap
+   position:fixed descendants). */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+.page-in {
+  animation: page-in 700ms var(--ease-spring) backwards;
+}
+main [data-slot="card"] {
+  animation: card-in 700ms var(--ease-spring) backwards;
+  animation-delay: calc(min(sibling-index() - 1, 8) * 45ms);
+}
+
+/* Overlays open on the spring instead of tw-animate's flat 100–150ms ease. */
+[data-slot="dialog-content"][data-state="open"],
+[data-slot="popover-content"][data-state="open"],
+[data-slot="select-content"][data-state="open"] {
+  animation-duration: 560ms;
+  animation-timing-function: var(--ease-spring);
+}
+
 @keyframes breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.015); }
@@ -271,6 +455,20 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /* Cards are their own stacking context so the spotlight wash (z -1) sits between the card's
+     background and its content. In base, so a positioning utility on a Card still wins. */
+  [data-slot="card"] {
+    position: relative;
+    isolation: isolate;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
   body {
     @apply bg-background text-foreground;

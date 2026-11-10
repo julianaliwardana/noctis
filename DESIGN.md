@@ -527,6 +527,32 @@ selected by attribute because it can't be reached from JSX) gets a 6px track,
 transparent background, and a fully rounded Hairline thumb that lightens to Dim Label on
 hover.
 
+## Appearance (user-set)
+
+Profile → Appearance lets the user change, per device: theme, accent (cobalt, violet, emerald,
+crimson, amber, teal, onyx), base tone (warm, neutral, cool), density, text size, corners, card
+style (flat, elevated, outlined, glass), spotlight, sidebar (expanded or icon rail), content width
+and motion. Stored in `localStorage` (`noctis-appearance`), applied before first paint as one
+`data-*` attribute per setting on `<html>` (`lib/appearance.ts`), and styled entirely in
+`globals.css` — no component branches on a setting, so the server render never disagrees.
+
+- **Accent presets** are six hand-checked values each (`--ac-fill/fg/text` × light/dark). A new
+  accent needs all six, white-or-fg on fill ≥ 4.5:1 and text ≥ 4.5:1 on every base.
+- **Density** scales Tailwind's `--spacing`; **text size** scales the root font size.
+- **Layout** uses the `rail:` and `contained:` custom variants; a full-bleed page sets `data-bleed`.
+
+## Motion
+
+Springs, not durations. Interactive motion (nav highlight, hover highlight, segmented controls,
+list reorders, readouts) is motion/react with the house spring in `Providers.tsx`; it keeps
+velocity when interrupted. CSS motion (page entry, card stagger, overlays, press feedback, rail
+width) uses `--ease-spring*` — `linear()` curves sampled from a real damped spring, so both
+systems settle the same way. Everything collapses under OS reduce-motion or Appearance → Motion.
+
+- A highlight that follows navigation moves on the click, not on the route change (router
+  updates commit in a transition, where layout animations snap).
+- Entrance animations use `fill-mode: backwards` — nothing stays transformed at rest.
+
 ## Do's and Don'ts
 
 ### Do:

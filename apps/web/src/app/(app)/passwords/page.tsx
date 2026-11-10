@@ -18,6 +18,7 @@ import { ChangeMasterPassword } from "@/features/passwords/ui/ChangeMasterPasswo
 import { LOCK_TIMEOUT_CHOICES, useVaultStore } from "@/features/passwords/store/vaultStore";
 import { usePasswordsStore, type VaultEntry } from "@/features/passwords/store/passwordsStore";
 import { useIdleReset, useVault } from "@/features/passwords/hooks/usePasswords";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export default function PasswordsPage() {
   const { status, vaultKey } = useVault();
@@ -64,38 +65,32 @@ export default function PasswordsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">
-            Passwords
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            {entries.length} {entries.length === 1 ? "entry" : "entries"}, encrypted on this
-            device. Copied passwords clear from your clipboard after 20 seconds.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            onClick={openNew}
-            style={{ ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" }}
-          >
-            <PlusIcon className="size-4" aria-hidden />
-            Add
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Lock vault"
-            onClick={() => useVaultStore.getState().lock()}
-          >
-            <LockIcon className="size-4" aria-hidden />
-          </Button>
-          <VaultSettings onChangeMaster={() => setChangingMaster(true)} />
-        </div>
-      </div>
+      <PageHeader
+        title="Passwords"
+        description={`${entries.length} ${entries.length === 1 ? "entry" : "entries"}, encrypted on this device. Copied passwords clear from your clipboard after 20 seconds.`}
+        actions={
+          <>
+            <Button
+              type="button"
+              onClick={openNew}
+              style={{ ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" }}
+            >
+              <PlusIcon className="size-4" aria-hidden />
+              Add
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Lock vault"
+              onClick={() => useVaultStore.getState().lock()}
+            >
+              <LockIcon className="size-4" aria-hidden />
+            </Button>
+            <VaultSettings onChangeMaster={() => setChangingMaster(true)} />
+          </>
+        }
+      />
 
       <div className="relative">
         <SearchIcon

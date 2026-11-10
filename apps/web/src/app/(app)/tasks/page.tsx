@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { TaskForm } from "@/features/tasks/ui/TaskForm";
 import { TaskList } from "@/features/tasks/ui/TaskList";
 import { useTasks } from "@/features/tasks/hooks/useTasks";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export default function TasksPage() {
   const { tasks, loading, addTask, completeTask, removeTask } = useTasks();
@@ -11,10 +12,7 @@ export default function TasksPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">Tasks</h1>
-        <p className="text-sm text-[var(--color-text-muted)]">{openCount} open</p>
-      </div>
+      <PageHeader title="Tasks" description={`${openCount} open`} />
 
       <Card>
         <CardContent>

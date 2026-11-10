@@ -14,8 +14,12 @@ export default function PomodoroPage() {
   // The negative margins cancel main's padding, so --app-screen-h (viewport minus the sticky header
   // and the fixed tab bar) lands exactly on the visible area — no scroll, no guessed header height.
   return (
+    // theme-inverse: the scenes are always dark, so the timer and panels use the night tokens even
+    // in the light theme (the readout used to be onyx-on-midnight). data-bleed opts out of the
+    // contained content width.
     <div
-      className="relative -mx-4 -mt-4 -mb-20 h-(--app-screen-h) overflow-hidden bg-cover bg-center md:-m-8 md:h-dvh"
+      data-bleed
+      className="theme-inverse relative -mx-4 -mt-4 -mb-20 h-(--app-screen-h) overflow-hidden bg-cover bg-center md:-m-8 md:h-dvh"
       style={{ background }}
     >
       <div className="absolute inset-0 bg-black/40" aria-hidden />

@@ -18,10 +18,11 @@ export function SignOutButton() {
     <button
       type="button"
       onClick={() => void handleSignOut()}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-border)]/30 hover:text-[var(--color-text)]"
+      aria-label="Sign out"
+      className="group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[var(--color-text-muted)] outline-none transition-colors hover:bg-[var(--color-border)]/45 hover:text-[var(--color-text)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rail:md:justify-center rail:md:px-0"
     >
       <LogOut strokeWidth={1.75} className="h-5 w-5 shrink-0" />
-      Sign out
+      <span className="truncate rail:md:sr-only">Sign out</span>
     </button>
   );
 }

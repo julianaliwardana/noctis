@@ -12,10 +12,11 @@ import { Button } from "@/shared/components/ui/button";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import SpotlightCard from "@/shared/components/SpotlightCard";
-import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { AppearancePanel } from "@/features/appearance/ui/AppearancePanel";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { logoutAll } from "@/features/auth/api/auth.api";
 import { ApiError } from "@/lib/api";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 function toDateInputValue(dateOfBirth: string | null): string {
   return dateOfBirth ? dateOfBirth.slice(0, 10) : "";
@@ -101,14 +102,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">
-          Profile
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Manage how you show up across your workspace.
-        </p>
-      </div>
+      <PageHeader title="Profile" description="Your account, and how Noctis looks on this device." />
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         {user && (
@@ -240,17 +234,7 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-medium text-[var(--color-text)]">Appearance</h2>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Light, dark, or whatever this device is set to. Saved on this device only.
-            </p>
-          </div>
-          <ThemeToggle showLabels className="w-full sm:w-72" />
-        </CardContent>
-      </Card>
+      <AppearancePanel />
 
       <Card>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

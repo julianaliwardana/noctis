@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
 import { Check, Flame, ListChecks, Timer, TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency, formatDate } from "@noctis/utils";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
+import { AnimatedNumber } from "@/shared/components/AnimatedNumber";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { useTasks, type TasksSnapshot } from "@/features/tasks/hooks/useTasks";
 import { useHabits, type HabitsSnapshot } from "@/features/habits/hooks/useHabits";
@@ -14,6 +16,7 @@ import { monthlyCashflow } from "@/features/finance/lib/finance.lib";
 import { useUser, type UserSnapshot } from "@/features/auth/hooks/useUser";
 import { cn } from "@/lib/utils";
 import type { HabitDto, HabitLogDto } from "@/features/habits/api/habits.api";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 /** Everything the dashboard shows, fetched on the server so the first paint is complete. */
 export interface DashboardSnapshot {
@@ -45,12 +48,14 @@ function lastWeek(): Date[] {
 function StatTile({
   label,
   value,
+  format,
   hint,
   tone,
   Icon,
 }: {
   label: string;
-  value: string;
+  value: number;
+  format?: (value: number) => string;
   hint: string;
   tone: string;
   Icon: typeof Flame;
@@ -60,16 +65,19 @@ function StatTile({
       <CardContent className="flex items-center gap-3">
         <span
           aria-hidden
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+          className="flex size-10 shrink-0 items-center justify-center rounded-[calc(var(--radius)+2px)] ring-1 ring-inset ring-current/15"
           style={{ backgroundColor: `color-mix(in oklab, ${tone} 14%, transparent)`, color: tone }}
         >
           <Icon className="size-4.5" />
         </span>
         <div className="min-w-0">
           <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
-          <p className="truncate font-[family-name:var(--font-mono)] text-lg" style={{ color: tone }}>
-            {value}
-          </p>
+          <AnimatedNumber
+            value={value}
+            format={format}
+            className="block truncate font-[family-name:var(--font-mono)] text-lg leading-snug tabular-nums"
+            style={{ color: tone }}
+          />
           <p className="truncate text-xs text-[var(--color-text-muted)]">{hint}</p>
         </div>
       </CardContent>
@@ -163,38 +171,35 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-text)]">
-          {greetingName ? `Hi, ${greetingName}` : "Good day"}
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">{formatDate(new Date())}</p>
-      </div>
+      <PageHeader title={greetingName ? `Hi, ${greetingName}` : "Good day"} description={formatDate(new Date())} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Due today"
-          value={String(todaysTasks.length)}
+          value={todaysTasks.length}
           hint={overdueCount > 0 ? `${overdueCount} overdue` : "nothing overdue"}
           tone="var(--color-tasks)"
           Icon={ListChecks}
         />
         <StatTile
           label="Habits today"
-          value={String(todaysHabits.length)}
+          value={todaysHabits.length}
           hint={todaysHabits.length === 0 ? "rest day" : "scheduled"}
           tone="var(--color-habits)"
           Icon={Flame}
         />
         <StatTile
           label="Net this month"
-          value={formatCurrency(net)}
+          value={net}
+          format={(n) => formatCurrency(Math.round(n))}
           hint={net < 0 ? "spending over income" : "income over spending"}
           tone={net < 0 ? "var(--chart-expense)" : "var(--chart-income)"}
           Icon={net < 0 ? TrendingDown : TrendingUp}
         />
         <StatTile
           label="Best streak"
-          value={`${bestStreak}d`}
+          value={bestStreak}
+          format={(n) => `${Math.round(n)}d`}
           hint={bestStreak === 0 ? "log one to start" : "personal record"}
           tone="var(--color-primary-text)"
           Icon={Flame}
@@ -214,11 +219,14 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
               </Empty>
             ) : (
               <div className="thin-scroll flex max-h-64 flex-col gap-1 overflow-y-auto pr-1">
+                <AnimatePresence mode="popLayout" initial={false}>
                 {todaysTasks.map((task) => {
                   const overdue = new Date(task.dueAt as string) < today;
                   return (
-                    <button
+                    <motion.button
                       key={task.id}
+                      layout
+                      exit={{ opacity: 0, x: 32, transition: { type: "spring", stiffness: 300, damping: 30 } }}
                       type="button"
                       onClick={() => completeTask(task.id)}
                       className={cn(
@@ -236,9 +244,10 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
                       {overdue && (
                         <span className="ml-auto shrink-0 text-xs text-[var(--color-tasks)]">overdue</span>
                       )}
-                    </button>
+                    </motion.button>
                   );
                 })}
+                </AnimatePresence>
               </div>
             )}
           </CardContent>

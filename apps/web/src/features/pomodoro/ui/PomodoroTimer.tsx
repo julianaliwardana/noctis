@@ -76,15 +76,17 @@ const TICKS = 44;
 const R_INNER = 76;
 const R_OUTER = 92;
 
-// Ring lights teal (start) → amber (end), VU-meter style.
-const START = { r: 15, g: 139, b: 141 };
-const END = { r: 199, g: 125, b: 46 };
-
+// Ring lights from the accent (start) to the tasks amber (end), VU-meter style — follows the
+// user's accent choice because it is mixed in CSS, not computed here.
 function lerpColor(t: number): string {
-  const r = Math.round(START.r + (END.r - START.r) * t);
-  const g = Math.round(START.g + (END.g - START.g) * t);
-  const b = Math.round(START.b + (END.b - START.b) * t);
-  return `rgb(${r}, ${g}, ${b})`;
+  const amber = Math.round(t * 100);
+  return `color-mix(in oklab, var(--color-primary-text), var(--color-tasks) ${amber}%)`;
+}
+
+// Rounded so the server's and the browser's Math.cos agree to the last digit — they didn't, and
+// every tick was a hydration mismatch.
+function coord(value: number): number {
+  return Math.round(value * 1000) / 1000;
 }
 
 function formatTime(totalSeconds: number): string {
@@ -196,10 +198,10 @@ export function PomodoroTimer({ onSessionComplete }: PomodoroTimerProps) {
     const angle = frac * 2 * Math.PI - Math.PI / 2;
     const lit = frac <= progress;
     return {
-      x1: 100 + R_INNER * Math.cos(angle),
-      y1: 100 + R_INNER * Math.sin(angle),
-      x2: 100 + R_OUTER * Math.cos(angle),
-      y2: 100 + R_OUTER * Math.sin(angle),
+      x1: coord(100 + R_INNER * Math.cos(angle)),
+      y1: coord(100 + R_INNER * Math.sin(angle)),
+      x2: coord(100 + R_OUTER * Math.cos(angle)),
+      y2: coord(100 + R_OUTER * Math.sin(angle)),
       stroke: lit ? lerpColor(frac) : "var(--color-border)",
       opacity: lit ? 1 : 0.4,
     };

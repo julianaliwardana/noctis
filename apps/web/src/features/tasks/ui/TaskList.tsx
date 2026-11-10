@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "motion/react";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/shared/components/ui/empty";
 import { TaskCard } from "./TaskCard";
 import type { TaskDto } from "../api/tasks.api";
@@ -74,13 +75,25 @@ export function TaskList({ tasks, onComplete, onDelete }: TaskListProps) {
       {sections.map(([label, items]) =>
         items.length > 0 ? (
           <div key={label}>
-            <h3 className="mb-1 px-3 text-xs font-medium tracking-wide text-[var(--color-text-muted)] uppercase">
+            <h3 className="mb-1.5 px-3 text-xs font-medium tracking-wider text-[var(--color-text-muted)] uppercase">
               {label}
             </h3>
+            {/* popLayout: a completed task leaves the flow at once and the rest spring up into its
+                place, while it slides out on its own. */}
             <div className="flex flex-col">
-              {items.map((task) => (
-                <TaskCard key={task.id} task={task} onComplete={onComplete} onDelete={onDelete} />
-              ))}
+              <AnimatePresence mode="popLayout" initial={false}>
+                {items.map((task) => (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 32, transition: { type: "spring", stiffness: 300, damping: 30 } }}
+                  >
+                    <TaskCard task={task} onComplete={onComplete} onDelete={onDelete} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         ) : null,

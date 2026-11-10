@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, JetBrains_Mono, Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { themeInitScript } from "@/lib/theme";
+import { appearanceInitScript } from "@/lib/appearance";
+import { Providers } from "@/shared/components/Providers";
 import "./globals.css";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -40,16 +42,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    // suppressHydrationWarning: the script below adds .dark to <html> before React hydrates.
+    // suppressHydrationWarning: the script below adds .dark and the data-* appearance attributes to
+    // <html> before React hydrates.
     <html
       lang="en"
       suppressHydrationWarning
       className={cn(inter.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript + ";" + appearanceInitScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
