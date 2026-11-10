@@ -11,7 +11,7 @@ import { WrongMasterPasswordError } from "../crypto/vaultCrypto";
 import { scorePassword } from "../crypto/generator";
 import { StrengthMeter } from "./StrengthMeter";
 
-const accent = { ["--color-primary" as string]: "var(--color-passwords)" };
+const accent = { ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" };
 
 export function VaultGate({ mode }: { mode: "setup" | "locked" }) {
   return mode === "setup" ? <SetupForm /> : <UnlockForm />;

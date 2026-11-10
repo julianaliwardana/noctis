@@ -88,7 +88,7 @@ export default function RegisterPage() {
         )}
         <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">
           Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-primary)]">
+          <Link href="/login" className="text-[var(--color-primary-text)]">
             Sign in
           </Link>
         </p>

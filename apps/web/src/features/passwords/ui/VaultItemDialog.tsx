@@ -18,7 +18,7 @@ import { Field, FieldLabel } from "@/shared/components/ui/field";
 import { EMPTY_SECRET } from "../store/passwordsStore";
 import { PasswordGenerator } from "./PasswordGenerator";
 
-const accent = { ["--color-primary" as string]: "var(--color-passwords)" };
+const accent = { ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" };
 
 export interface VaultItemDialogProps {
   open: boolean;

@@ -114,7 +114,7 @@ export function TaskForm({ onAdd }: TaskFormProps) {
           size="sm"
           onClick={() => toggleQuickDate(today)}
           aria-pressed={Boolean(date && isSameDay(date, today))}
-          className={cn(date && isSameDay(date, today) && "border-primary bg-primary/10 text-primary")}
+          className={cn(date && isSameDay(date, today) && "border-primary bg-primary/10 text-primary-text")}
         >
           Today
         </Button>
@@ -124,7 +124,7 @@ export function TaskForm({ onAdd }: TaskFormProps) {
           size="sm"
           onClick={() => toggleQuickDate(tomorrow)}
           aria-pressed={Boolean(date && isSameDay(date, tomorrow))}
-          className={cn(date && isSameDay(date, tomorrow) && "border-primary bg-primary/10 text-primary")}
+          className={cn(date && isSameDay(date, tomorrow) && "border-primary bg-primary/10 text-primary-text")}
         >
           Tomorrow
         </Button>
@@ -136,7 +136,7 @@ export function TaskForm({ onAdd }: TaskFormProps) {
               variant="outline"
               size={customLabel ? "sm" : "icon-sm"}
               aria-label="Pick date and time"
-              className={cn(customLabel && "border-primary text-primary")}
+              className={cn(customLabel && "border-primary text-primary-text")}
             >
               <Clock />
               {customLabel}

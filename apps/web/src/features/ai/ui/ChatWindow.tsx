@@ -29,7 +29,7 @@ function AssistantBubble({ message, deletingId, onResolveDelete, onTick }: Assis
           "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg",
           message.failed
             ? "bg-destructive/12 text-destructive"
-            : "bg-[var(--color-primary)]/12 text-[var(--color-primary)]",
+            : "bg-[var(--color-primary)]/12 text-[var(--color-primary-text)]",
         )}
       >
         {message.failed ? <AlertTriangle className="size-3.5" /> : <Sparkles className="size-3.5" />}
@@ -205,7 +205,7 @@ export function ChatWindow({
           <div className="flex flex-1 flex-col items-center justify-center gap-5 px-4 text-center">
             <span
               aria-hidden
-              className="flex size-11 items-center justify-center rounded-2xl bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
+              className="flex size-11 items-center justify-center rounded-2xl bg-[var(--color-primary)]/12 text-[var(--color-primary-text)]"
             >
               <Sparkles className="size-5" />
             </span>
@@ -254,7 +254,7 @@ export function ChatWindow({
           <div className="flex items-center gap-2.5 self-start">
             <span
               aria-hidden
-              className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
+              className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/12 text-[var(--color-primary-text)]"
             >
               <Sparkles className="size-3.5" />
             </span>

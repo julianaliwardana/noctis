@@ -85,7 +85,7 @@ function SectionHeader({ title, href, tone }: { title: string; href?: string; to
         {title}
       </h2>
       {href && (
-        <Link href={href} className="text-xs text-[var(--color-primary)] hover:underline">
+        <Link href={href} className="text-xs text-[var(--color-primary-text)] hover:underline">
           View all
         </Link>
       )}
@@ -196,7 +196,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
           label="Best streak"
           value={`${bestStreak}d`}
           hint={bestStreak === 0 ? "log one to start" : "personal record"}
-          tone="var(--color-primary)"
+          tone="var(--color-primary-text)"
           Icon={Flame}
         />
       </div>
@@ -331,7 +331,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
         <Card>
           <CardContent className="flex h-full flex-col justify-between gap-4">
             <div>
-              <SectionHeader title="Focus session" tone="var(--color-primary)" />
+              <SectionHeader title="Focus session" tone="var(--color-primary-text)" />
               <p className="text-sm text-[var(--color-text-muted)]">
                 Start a Pomodoro when you&apos;re ready to focus.
               </p>

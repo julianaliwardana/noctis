@@ -2,8 +2,25 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* The theme is a class on <html>, set before first paint by the inline script in app/layout.tsx
+   (see lib/theme.ts). .theme-inverse is a dark island inside the light theme — the rail, the
+   mobile top bar, the pomodoro panels — so dark: utilities have to light up in there too. */
+@custom-variant dark (&:where(.dark, .dark *, .theme-inverse, .theme-inverse *));
 
+/*
+ * 60 / 30 / 10
+ *
+ *   Day    60 Chalk White — field and panels
+ *          30 Onyx Black  — the rail, the mobile top bar, and all type
+ *          10 Cobalt Blue — actions, focus, links, the active state
+ *
+ *   Night  60 Onyx Black  — field and panels
+ *          30 Chalk White — type, on a graphite rail
+ *          10 Cobalt Blue — same jobs, same fill
+ *
+ * Cobalt is the only chromatic chrome. Domain tones and chart inks are readings, not chrome:
+ * they stay at signal scale (rail, chip, dot, icon tint) and never count toward the ten.
+ */
 :root {
   /* Native UI — scrollbars, form controls, autofill — follows this, not our custom properties.
      Without it Chrome painted light scrollbars over the dark theme. */
@@ -16,14 +33,22 @@
   --app-nav-h: 3.5rem;
   --app-screen-h: calc(100dvh - var(--app-header-h) - var(--app-nav-h));
 
-  --color-bg: #fafaf9;
-  --color-surface: #ffffff;
-  --color-text: #1a1b1e;
-  --color-text-muted: #6b6f76;
-  --color-border: #e4e4e0;
-  --color-primary: #80b0e2;
+  /* 60 — Chalk White */
+  --color-bg: #f4f2ed;
+  --color-surface: #fdfcfa;
+  --color-border: #e3e0d9;
+  /* 30 — Onyx Black */
+  --color-text: #0e0f12;
+  --color-text-muted: #62646b;
+  --color-rail: #0e0f12;
+  /* 10 — Cobalt Blue. The fill is the same #2f5bff in both themes and always carries white.
+     -text is the step that reads as type or an icon on the current surface. */
+  --color-primary: #2f5bff;
   --color-primary-fg: #ffffff;
-  --color-tasks: #c77d2e;
+  --color-primary-text: #2f5bff;
+
+  /* Domain tones — signal scale only. */
+  --color-tasks: #b9701f;
   --color-habits: #4b8b5f;
   --color-finance: #928100;
   --color-passwords: #8b3a4a;
@@ -31,24 +56,7 @@
   --font-display: var(--font-sans);
   --font-body: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
-  --background: var(--color-bg);
-  --foreground: var(--color-text);
-  --card: var(--color-surface);
-  --card-foreground: var(--color-text);
-  --popover: var(--color-surface);
-  --popover-foreground: var(--color-text);
-  --primary: var(--color-primary);
-  --primary-foreground: var(--color-primary-fg);
-  --secondary: var(--color-surface);
-  --secondary-foreground: var(--color-text);
-  --muted: var(--color-border);
-  --muted-foreground: var(--color-text-muted);
-  --accent: var(--color-border);
-  --accent-foreground: var(--color-text);
-  --destructive: var(--color-passwords);
-  --border: var(--color-border);
-  --input: var(--color-border);
-  --ring: var(--color-primary);
+
   /* Categorical chart slots — fixed order, validated for CVD + contrast on both surfaces. */
   --chart-1: #2a78d6;
   --chart-2: #eb6834;
@@ -69,32 +77,72 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+/* Night — and the same palette for any dark island inside the day theme. Hand-authored for the
+   onyx surface, not derived from the day values. */
+.dark,
+.theme-inverse {
+  color-scheme: dark;
 
-    --color-bg: #14161c;
-    --color-surface: #1c1f27;
-    --color-text: #e8e9ed;
-    --color-text-muted: #9498a2;
-    --color-border: #2a2e38;
-    --color-primary: #80b0e2;
-    --color-primary-fg: #0a1414;
-    --color-tasks: #d89552;
-    --color-habits: #63a878;
-    --color-finance: #b7a63d;
-    --color-passwords: #b0596a;
+  /* 60 — Onyx Black */
+  --color-bg: #0c0d10;
+  --color-surface: #15171b;
+  --color-border: #25272d;
+  /* 30 — Chalk White */
+  --color-text: #f1efea;
+  --color-text-muted: #9b9da4;
+  /* 10 — Cobalt Blue */
+  --color-primary: #2f5bff;
+  --color-primary-fg: #ffffff;
+  --color-primary-text: #7f9cff;
 
-    /* Same hues, re-stepped for the dark surface — not an automatic flip. */
-    --chart-1: #3987e5;
-    --chart-2: #d95926;
-    --chart-3: #199e70;
-    --chart-4: #c98500;
-    --chart-5: #d55181;
-    --chart-6: #008300;
-    --chart-income: #199e70;
-    --chart-expense: #e66767;
-  }
+  --color-tasks: #d89552;
+  --color-habits: #63a878;
+  --color-finance: #b7a63d;
+  --color-passwords: #b0596a;
+
+  /* Same hues, re-stepped for the dark surface — not an automatic flip. */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-income: #199e70;
+  --chart-expense: #e66767;
+}
+
+/* In the night theme the rail is graphite, one quiet step off the field. */
+.dark {
+  --color-rail: #111216;
+}
+
+/* shadcn's aliases. A custom property holding var() is resolved on the element that declares it
+   and inherited as a finished value, so a scope that re-steps --color-* has to redeclare these
+   too — otherwise text-foreground inside the rail would still be day ink. */
+:root,
+.theme-inverse {
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-fg);
+  --secondary: var(--color-surface);
+  --secondary-foreground: var(--color-text);
+  --muted: var(--color-border);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-border);
+  --accent-foreground: var(--color-text);
+  --destructive: var(--color-passwords);
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-primary);
+}
+
+.theme-inverse {
+  color: var(--color-text);
 }
 
 @theme inline {
@@ -105,6 +153,8 @@
   --color-border: var(--color-border);
   --color-primary: var(--color-primary);
   --color-primary-fg: var(--color-primary-fg);
+  --color-primary-text: var(--color-primary-text);
+  --color-rail: var(--color-rail);
   --color-tasks: var(--color-tasks);
   --color-habits: var(--color-habits);
   --color-finance: var(--color-finance);
@@ -158,6 +208,19 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+/* Set for one frame while the theme flips, so every surface changes together instead of each
+   one easing at its own transition speed. */
+.theme-switching,
+.theme-switching * {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

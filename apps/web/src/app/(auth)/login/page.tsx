@@ -69,7 +69,7 @@ export default function LoginPage() {
         </form>
         <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">
           New here?{" "}
-          <Link href="/register" className="text-[var(--color-primary)]">
+          <Link href="/register" className="text-[var(--color-primary-text)]">
             Create an account
           </Link>
         </p>

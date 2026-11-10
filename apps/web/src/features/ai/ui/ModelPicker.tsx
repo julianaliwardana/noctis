@@ -50,7 +50,7 @@ export function ModelPicker({ models, value, onChange, disabled }: ModelPickerPr
             "disabled:pointer-events-none disabled:opacity-50 data-[state=open]:border-[var(--color-primary)] data-[state=open]:text-[var(--color-text)]",
           )}
         >
-          <Cpu aria-hidden className="size-3.5 shrink-0 text-[var(--color-primary)]" />
+          <Cpu aria-hidden className="size-3.5 shrink-0 text-[var(--color-primary-text)]" />
           <span className="truncate">{current.label}</span>
           <ChevronsUpDown aria-hidden className="size-3 shrink-0 opacity-60" />
         </button>
@@ -91,7 +91,7 @@ export function ModelPicker({ models, value, onChange, disabled }: ModelPickerPr
                 </span>
                 <Check
                   aria-hidden
-                  className={cn("size-4 shrink-0 text-[var(--color-primary)]", !selected && "invisible")}
+                  className={cn("size-4 shrink-0 text-[var(--color-primary-text)]", !selected && "invisible")}
                 />
               </button>
             );

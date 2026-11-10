@@ -7,6 +7,7 @@ import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles, UserRo
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
 import { SessionExpiredDialog } from "@/features/auth/ui/SessionExpiredDialog";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 type Tone = "primary" | "tasks" | "habits" | "finance" | "passwords";
@@ -31,7 +32,7 @@ const navItems: NavItem[] = [
 ];
 
 const toneVar: Record<Tone, string> = {
-  primary: "var(--color-primary)",
+  primary: "var(--color-primary-text)",
   tasks: "var(--color-tasks)",
   habits: "var(--color-habits)",
   finance: "var(--color-finance)",
@@ -50,7 +51,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // shell traps the viewport. Desktop still locks to h-dvh so the sidebar can stay fixed.
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
-      <aside className="hidden shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)]/70 backdrop-blur-xl md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:flex-col md:p-4">
+      {/* The rail is the "30": onyx in the day theme, graphite at night. theme-inverse re-steps every
+          token inside it for a dark surface, so nothing in here needs to know which theme is on. */}
+      <aside className="theme-inverse hidden shrink-0 border-r border-[var(--color-border)] bg-[var(--color-rail)] md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:flex-col md:p-4">
         <div className="mb-6 flex items-center gap-2 px-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="https://cdn.julianwardana.dev/Noctis/noctis.png" alt="Noctis" className="h-6 w-6 rounded-lg" />
@@ -111,6 +114,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             Profile
           </Link>
           <SignOutButton />
+          <ThemeToggle className="mx-1 mt-2" />
         </div>
       </aside>
 
@@ -118,7 +122,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           without it this column and <main> refuse to shrink under their content and get clipped by
           the md:overflow-hidden above. On mobile nothing is trapped, so nothing needs it. */}
       <div className="flex flex-1 flex-col md:min-h-0">
-        <header className="sticky top-0 z-40 flex h-(--app-header-h) items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 md:hidden">
+        <header className="theme-inverse sticky top-0 z-40 flex h-(--app-header-h) items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-rail)] px-4 md:hidden">
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="https://cdn.julianwardana.dev/Noctis/noctis.png" alt="Noctis" className="h-6 w-6 rounded-lg" />

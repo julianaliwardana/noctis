@@ -1,9 +1,10 @@
 ---
 name: Noctis
-description: A dark-first personal instrument panel where the chrome dims so the readings stay bright.
+description: A personal instrument panel on a 60/30/10 palette — chalk, onyx, and one cobalt accent — where the chrome recedes so the readings stay bright.
 colors:
-  starlight-blue: "#80b0e2"
-  ember-amber: "#c77d2e"
+  cobalt-blue: "#2f5bff"
+  cobalt-blue-night-text: "#7f9cff"
+  ember-amber: "#b9701f"
   ember-amber-night: "#d89552"
   verdant-signal: "#4b8b5f"
   verdant-signal-night: "#63a878"
@@ -11,16 +12,18 @@ colors:
   sodium-gold-night: "#b7a63d"
   oxblood-seal: "#8b3a4a"
   oxblood-seal-night: "#b0596a"
-  deep-field: "#14161c"
-  instrument-panel: "#1c1f27"
-  hairline-grey: "#2a2e38"
-  readout-white: "#e8e9ed"
-  dim-label: "#9498a2"
-  paper-field: "#fafaf9"
-  paper-panel: "#ffffff"
-  paper-hairline: "#e4e4e0"
-  ink-readout: "#1a1b1e"
-  ink-dim: "#6b6f76"
+  deep-field: "#0c0d10"
+  instrument-panel: "#15171b"
+  hairline-grey: "#25272d"
+  readout-white: "#f1efea"
+  dim-label: "#9b9da4"
+  graphite-rail: "#111216"
+  paper-field: "#f4f2ed"
+  paper-panel: "#fdfcfa"
+  paper-hairline: "#e3e0d9"
+  ink-readout: "#0e0f12"
+  ink-dim: "#62646b"
+  onyx-rail: "#0e0f12"
   plot-1: "#2a78d6"
   plot-2: "#eb6834"
   plot-3: "#1baf7a"
@@ -89,15 +92,15 @@ spacing:
   2xl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.starlight-blue}"
-    textColor: "{colors.deep-field}"
+    backgroundColor: "{colors.cobalt-blue}"
+    textColor: "#ffffff"
     typography: "{typography.body}"
     rounded: "{rounded.lg}"
     padding: "0 10px"
     height: "32px"
   button-primary-hover:
-    backgroundColor: "{colors.starlight-blue}"
-    textColor: "{colors.deep-field}"
+    backgroundColor: "{colors.cobalt-blue}"
+    textColor: "#ffffff"
   button-outline:
     backgroundColor: "transparent"
     textColor: "{colors.readout-white}"
@@ -133,8 +136,8 @@ components:
     rounded: "{rounded.xl}"
     padding: "16px"
   badge:
-    backgroundColor: "{colors.starlight-blue}"
-    textColor: "{colors.deep-field}"
+    backgroundColor: "{colors.cobalt-blue}"
+    textColor: "#ffffff"
     typography: "{typography.label}"
     rounded: "{rounded.4xl}"
     padding: "2px 8px"
@@ -159,9 +162,12 @@ a balance — are the brightest things on the screen. The interface dims itself 
 instruments stay legible. That is the whole thesis, and it is why the product is called
 Noctis.
 
-The room is genuinely dark. Dark mode is not a theme applied over a light design; the
-two modes are separately authored, and the accent tones are re-stepped per surface
-rather than inverted. Depth is achieved the way it is in an actual instrument panel:
+Both rooms are built on the same 60/30/10 split. By day the field is Chalk White, the
+rail and the type are Onyx Black, and Cobalt Blue is the single accent. By night the
+proportions swap — Onyx field, Chalk type — and cobalt keeps the same jobs. The two modes
+are separately authored, and the tones are re-stepped per surface rather than inverted.
+The user picks light, dark, or system; the choice lives in `localStorage` and is applied
+as a `.dark` class on `<html>` before first paint. Depth is achieved the way it is in an actual instrument panel:
 hairline seams and tonal shifts between adjacent surfaces, not shadows floating things
 off the plane. The one exception is the one place it should be — genuine overlays that
 really do sit above everything else.
@@ -175,7 +181,8 @@ wash across a whole surface.
 
 **Key Characteristics:**
 
-- Dark-first, with both themes separately authored and independently contrast-checked
+- 60/30/10 in both themes: one neutral field, one opposing neutral, one cobalt accent
+- Light, dark, and system modes; both themes separately authored and contrast-checked
 - Flat surfaces separated by hairline rings; shadows reserved for true overlays
 - One hue per domain, used as a signal at small scale, never as a background wash
 - Monospace is for numbers only — it marks a value as a reading
@@ -184,22 +191,29 @@ wash across a whole surface.
 
 ## Colors
 
-Two separately authored palettes — a near-black night palette and a warm-paper day
-palette — sharing one set of five domain hues, four of which are re-stepped per surface.
+Two separately authored palettes — a chalk day palette and an onyx night palette — each
+split 60/30/10, sharing one cobalt accent and four domain hues re-stepped per surface.
+
+| | 60 | 30 | 10 |
+| --- | --- | --- | --- |
+| **Day** | Chalk White — field `#f4f2ed`, panels `#fdfcfa` | Onyx Black — the rail `#0e0f12` and all type | Cobalt Blue `#2f5bff` |
+| **Night** | Onyx Black — field `#0c0d10`, panels `#15171b` | Chalk White type `#f1efea`, on a graphite rail `#111216` | Cobalt Blue `#2f5bff` |
 
 ### Primary
 
-- **Starlight Blue** (`#80b0e2`): The system accent, and the only color that is
-  deliberately identical in both themes. Carries primary buttons, links, focus rings,
-  the Dashboard and Pomodoro rails, and the mobile chat button. A desaturated sky blue
-  chosen to read as "the interface speaking" rather than as a domain signal.
+- **Cobalt Blue** (`#2f5bff`): The ten. The system accent, and the only fill that is
+  deliberately identical in both themes; it always carries white (5.2:1). Primary
+  buttons, focus rings, the user's chat bubble, selected dates, the mobile chat button.
+  Where cobalt is *type or an icon* rather than a fill — links, the Dashboard and Pomodoro
+  nav tint, stat readouts — it uses `--color-primary-text`: the same `#2f5bff` on chalk
+  (4.6:1), stepped up to `#7f9cff` on onyx (7.5:1), because the fill is only 3.8:1 there.
 
 ### Secondary — the domain tones
 
 Four hues, one per feature area. These are wayfinding, not decoration: they tell the
 user which instrument they are looking at.
 
-- **Ember Amber** (`#c77d2e` day / `#d89552` night): Tasks. Warm, slightly burnt, the
+- **Ember Amber** (`#b9701f` day / `#d89552` night): Tasks. Warm, slightly burnt, the
   color of something still to be dealt with.
 - **Verdant Signal** (`#4b8b5f` day / `#63a878` night): Habits. Deliberately muted, so a
   logged habit registers as "nominal" rather than as a reward.
@@ -212,21 +226,24 @@ user which instrument they are looking at.
 
 ### Neutral — night
 
-- **Deep Field** (`#14161c`): The room. Page background.
-- **Instrument Panel** (`#1c1f27`): Cards, headers, sidebar, bottom nav. Reads as a
-  panel set into the field, one tonal step up.
-- **Hairline Grey** (`#2a2e38`): Borders, dividers, scrollbar thumbs, and the unlit
+- **Deep Field** (`#0c0d10`): The room. Onyx page background.
+- **Instrument Panel** (`#15171b`): Cards and the bottom nav. Reads as a panel set into
+  the field, one tonal step up.
+- **Graphite Rail** (`#111216`): The sidebar and mobile top bar, half a step off the field.
+- **Hairline Grey** (`#25272d`): Borders, dividers, scrollbar thumbs, and the unlit
   state of streak pips.
-- **Readout White** (`#e8e9ed`): Primary text. Off-white, never pure white — pure white
+- **Readout White** (`#f1efea`): Primary text. Chalk, never pure white — pure white
   on a near-black field glares.
-- **Dim Label** (`#9498a2`): Secondary text, inactive nav, hints, units.
+- **Dim Label** (`#9b9da4`): Secondary text, inactive nav, hints, units.
 
 ### Neutral — day
 
-- **Paper Field** (`#fafaf9`): Page background. Warm, not clinical.
-- **Paper Panel** (`#ffffff`): Cards and panels.
-- **Paper Hairline** (`#e4e4e0`): Borders and dividers.
-- **Ink Readout** (`#1a1b1e`) / **Ink Dim** (`#6b6f76`): Primary and secondary text.
+- **Paper Field** (`#f4f2ed`): Page background. Chalk White — warm, not clinical.
+- **Paper Panel** (`#fdfcfa`): Cards and panels.
+- **Paper Hairline** (`#e3e0d9`): Borders and dividers.
+- **Ink Readout** (`#0e0f12`) / **Ink Dim** (`#62646b`): Primary and secondary text.
+- **Onyx Rail** (`#0e0f12`): The sidebar and mobile top bar. This is where the day
+  theme's thirty lives: a dark island carrying the night tokens (`.theme-inverse`).
 
 ### Tertiary — the plot palette
 
@@ -239,6 +256,17 @@ are the readings.
 - **Plot Income** (`#1baf7a`) / **Plot Expense** (`#e34948`): Signed values only.
 
 ### Named Rules
+
+**The 60/30/10 Rule.** Sixty is the field and its panels, thirty is the opposing neutral
+(the rail and the type), ten is cobalt. Cobalt is the only chromatic chrome: if a second
+hue is doing an interface job — a button, a focus ring, a selected state — it is wrong.
+Domain tones and plot inks do not count toward the ten because they are readings, and
+they stay at signal scale.
+
+**The Dark Island Rule.** Anything that is dark in both themes — the rail, the mobile
+top bar, the pomodoro floating panels — takes the `theme-inverse` class and nothing else.
+The class re-steps every token for an onyx surface, so components inside never branch on
+the theme.
 
 **The Signal Rule.** A domain tone never becomes a background. It appears as a 4px
 rail, a `color-mix(… 14%, transparent)` chip behind an icon or an active nav item, a
@@ -256,8 +284,8 @@ lightening, or an automatic filter. A new color needs two values, checked indepe
 
 **The Sibling Band Rule.** All four domain tones occupy one bounded band, and a fifth
 would have to join it. On the light surface: lightness 46–65%, chroma 0.095–0.130,
-landing between 3.1:1 and 7.2:1 against Paper Field. On the dark surface: lightness
-57–72%, chroma 0.100–0.125, landing between 3.9:1 and 7.4:1 against Deep Field. A tone
+landing between 3.4:1 and 6.7:1 against Paper Field. On the dark surface: lightness
+57–72%, chroma 0.100–0.125, landing between 4.1:1 and 7.9:1 against Deep Field. A tone
 outside that band does not read as a sibling — it reads as an alarm. Measure before
 adding one.
 
@@ -320,9 +348,10 @@ header and nav never scroll away.
 
 **Desktop (≥768px):** A fixed 256px sidebar on the left holding the wordmark, the seven
 domain links, and a profile/sign-out foot. Content sits in a 32px-padded scroll region.
-The sidebar is `--color-surface` at 70% with `backdrop-blur-xl`.
+The sidebar is the opaque rail (`--color-rail`): onyx by day, graphite by night, with the
+light/dark/system switch at its foot. The same switch, labelled, sits on the Profile page.
 
-**Mobile (<768px):** The sidebar is replaced by a 12px-padded top bar (wordmark left,
+**Mobile (<768px):** The sidebar is replaced by a 12px-padded top bar in the rail colour (wordmark left,
 profile and a circular chat button right) and a fixed bottom nav carrying the **first
 five** destinations only — Dashboard, Tasks, Habits, Pomodoro, Finance. Passwords and
 Chat are reached from the top bar and the command palette. Content padding drops to
@@ -353,9 +382,10 @@ no elevation scale; nothing hovers a few pixels off the page to suggest importan
 
 Shadows appear only where an element genuinely leaves the plane — Radix overlays
 (popover, select content, chart tooltip). Those carry `shadow-md`, or `shadow-xl` on the
-chart tooltip, alongside the same hairline ring the flat surfaces use. The sidebar and
-floating panels use `backdrop-blur-xl` over a 70%-opacity surface, which reads as
-translucency rather than as lift.
+chart tooltip, alongside the same hairline ring the flat surfaces use. Floating panels
+use `backdrop-blur-xl` over a translucent surface, which reads as translucency rather
+than as lift. The primary button's one-pixel inset top highlight is a bevel on the
+control itself, not elevation.
 
 This is strong guidance rather than an absolute ban: if a future surface has a real
 reason to introduce elevation, it needs a reason, and it should extend the vocabulary
@@ -404,15 +434,15 @@ Pills, pips, and dots report; rectangles with 10px corners are the things you cl
   `min(var(--radius-md), 12px)` at `sm`/`xs` so small controls stay proportional.
 - **Sizes:** Compact by default — 32px tall (`h-8`) with 10px horizontal padding.
   `sm` 28px, `xs` 24px, `lg` 36px. Square icon variants at each step.
-- **Primary:** Starlight Blue fill, `--color-primary-fg` text (near-black in night mode,
-  white in day). Hover drops the fill to 80% opacity.
+- **Primary:** Cobalt Blue fill with white text in both themes, and a one-pixel inset
+  top highlight. Hover drops the fill to 90% opacity.
 - **Outline:** Transparent over the page with a Hairline border; in night mode the fill
   becomes `input/30` and hovers to `input/50`.
 - **Ghost:** No chrome at rest; hovers to a muted fill. The default for row-level
   actions.
 - **Destructive:** Oxblood at 10% fill with Oxblood text (20% in night mode) — a tinted
   warning, never a solid red button.
-- **Focus:** A 3px `ring-ring/50` ring plus a border shift to Starlight Blue. Never
+- **Focus:** A 3px `ring-ring/50` ring plus a border shift to Cobalt Blue. Never
   removed.
 - **Press:** `translate-y-px` — a single pixel of travel, suppressed on menu triggers.
 - **Invalid:** `aria-invalid` switches the border and ring to Oxblood automatically.
@@ -435,7 +465,7 @@ Pills, pips, and dots report; rectangles with 10px corners are the things you cl
   horizontal padding. Night mode fills to `input/30`.
 - **Type size:** 16px on mobile dropping to 14px at `md` — deliberate, to stop iOS
   zooming the viewport on focus.
-- **Focus:** Border shifts to Starlight Blue with a 3px `ring-ring/50` ring.
+- **Focus:** Border shifts to Cobalt Blue with a 3px `ring-ring/50` ring.
 - **Error:** `aria-invalid` gives an Oxblood border and ring.
 - **Disabled:** 50% opacity, `not-allowed` cursor, and a filled background.
 
@@ -453,7 +483,7 @@ Pills, pips, and dots report; rectangles with 10px corners are the things you cl
 ### Badges
 
 - **Style:** 20px tall pill (`rounded-4xl`), 8px horizontal padding, 12px medium text.
-  Variants mirror the button set — default (Starlight fill), secondary, outline, ghost,
+  Variants mirror the button set — default (Cobalt fill), secondary, outline, ghost,
   and a 10%-fill destructive.
 
 ### Signature: The Breathing Timer
@@ -472,15 +502,15 @@ app to 0.01ms.
 ### Signature: Aurora Auth Field
 
 The login and register screens sit over a full-bleed WebGL field (`ColorBends`, Three.js
-fragment shader) rendered in `#3b6ea5`, `#0f8b8d`, `#1a3d6b` — slowly warping bands, an
+fragment shader) rendered in `#2f5bff`, `#1b2f8f`, `#0c0d10` — slowly warping bands, an
 aurora over the dark field. It is `pointer-events-none` and `aria-hidden`, sits at
 `-z-10`, and appears **only** on the unauthenticated layout. Inside the app the room is
 plain; the aurora is the threshold, not the environment.
 
 ### Signature: Spotlight Card
 
-An 18px-radius panel that tracks the cursor with a radial gradient in Starlight Blue at
-35% alpha, fading in to 0.6 opacity over 500ms on enter and focus. Used on the profile
+An 18px-radius panel that tracks the cursor with a radial gradient in Cobalt Blue at
+22% alpha, fading in to 0.6 opacity over 500ms on enter and focus. Used on the profile
 and pomodoro surfaces. It responds to keyboard focus as well as hover.
 
 ### Marquee
@@ -526,8 +556,11 @@ hover.
   caps it at roughly a tenth of a surface.
 - **Don't** create hierarchy by enlarging type below the display readout. Change weight
   and color; body, nav, and section headings share 14px.
-- **Don't** put pure white text on Deep Field. Readout White (`#e8e9ed`) exists because
-  pure white glares on a near-black field.
+- **Don't** put pure white text on Deep Field. Readout White (`#f1efea`) exists because
+  pure white glares on a near-black field. (White on a cobalt fill is the one exception.)
+- **Don't** use `--color-primary` for type or icons on a surface — that is what
+  `--color-primary-text` is for. The fill fails contrast as text on onyx.
+- **Don't** add a second accent hue to the chrome. The ten is cobalt and only cobalt.
 - **Don't** let the document scroll. Only `<main>` scrolls; the shell is exactly one
   viewport.
 - **Don't** add a sixth item to the mobile bottom nav.

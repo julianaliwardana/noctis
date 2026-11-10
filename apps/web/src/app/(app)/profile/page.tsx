@@ -12,6 +12,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import SpotlightCard from "@/shared/components/SpotlightCard";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { logoutAll } from "@/features/auth/api/auth.api";
 import { ApiError } from "@/lib/api";
@@ -114,7 +115,7 @@ export default function ProfilePage() {
           <SpotlightCard className="flex flex-col items-center justify-center gap-3 text-center">
             <div
               className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-2xl font-semibold text-[var(--color-primary-fg)] ring-4 ring-[var(--color-primary)]/15"
-              style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-finance))" }}
+              style={{ background: "linear-gradient(135deg, var(--color-primary), color-mix(in oklab, var(--color-primary), black 45%))" }}
               aria-hidden
             >
               {initialsOf(user.name, user.email)}
@@ -238,6 +239,18 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-medium text-[var(--color-text)]">Appearance</h2>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Light, dark, or whatever this device is set to. Saved on this device only.
+            </p>
+          </div>
+          <ThemeToggle showLabels className="w-full sm:w-72" />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

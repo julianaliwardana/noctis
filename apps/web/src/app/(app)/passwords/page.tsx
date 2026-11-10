@@ -79,7 +79,7 @@ export default function PasswordsPage() {
           <Button
             type="button"
             onClick={openNew}
-            style={{ ["--color-primary" as string]: "var(--color-passwords)" }}
+            style={{ ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" }}
           >
             <PlusIcon className="size-4" aria-hidden />
             Add

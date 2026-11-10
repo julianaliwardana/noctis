@@ -25,7 +25,7 @@ export function PlayerControls({ playing, ready, canPrev, canNext, loop, onPrev,
         disabled={!ready}
         aria-label={`Loop: ${loop}`}
         aria-pressed={loop !== "off"}
-        className={loop === "off" ? "text-white/40 hover:text-white" : "text-[var(--color-primary)]"}
+        className={loop === "off" ? "text-white/40 hover:text-white" : "text-[var(--color-primary-text)]"}
       >
         {loop === "one" ? <Repeat1 className="h-4 w-4" /> : <Repeat className="h-4 w-4" />}
       </Button>

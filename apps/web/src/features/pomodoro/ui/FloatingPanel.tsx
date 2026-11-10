@@ -75,7 +75,7 @@ export function FloatingPanel({ title, children, initial = { x: 24, y: 24 }, anc
   return (
     <div
       ref={panelRef}
-      className="absolute z-20 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/15 bg-black/30 text-[var(--color-text)] shadow-2xl backdrop-blur-xl"
+      className="theme-inverse absolute z-20 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/15 bg-black/30 text-[var(--color-text)] shadow-2xl backdrop-blur-xl"
       style={{ left: pos.x, top: pos.y }}
     >
       <div

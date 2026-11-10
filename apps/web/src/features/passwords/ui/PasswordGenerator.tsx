@@ -116,7 +116,7 @@ export function PasswordGenerator({ onGenerate }: { onGenerate: (value: string) 
               onGenerate(preview);
               setOpen(false);
             }}
-            style={{ ["--color-primary" as string]: "var(--color-passwords)" }}
+            style={{ ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" }}
           >
             Use this password
           </Button>

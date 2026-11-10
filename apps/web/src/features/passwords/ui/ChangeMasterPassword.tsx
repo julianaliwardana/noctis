@@ -123,7 +123,7 @@ export function ChangeMasterPassword({
             <Button
               type="submit"
               disabled={!ready}
-              style={{ ["--color-primary" as string]: "var(--color-passwords)" }}
+              style={{ ["--color-primary" as string]: "var(--color-passwords)", ["--color-primary-text" as string]: "var(--color-passwords)" }}
             >
               {saving ? "Changing…" : "Change password"}
             </Button>
