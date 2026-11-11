@@ -4,7 +4,18 @@
  */
 import assert from "node:assert/strict";
 import { format, subMonths } from "date-fns";
-import { categoryNames, categoryTotals, colorFor, monthlyCashflow, paletteVar, queryExpenses, sumSigned } from "./finance.lib";
+import {
+  categoryNames,
+  categoryTotals,
+  colorFor,
+  dueLabel,
+  monthlyCashflow,
+  paletteVar,
+  parseRupiah,
+  queryExpenses,
+  shortDay,
+  sumSigned,
+} from "./finance.lib";
 import type { CategoryDto, ExpenseDto } from "../api/finance.api";
 
 let seq = 0;
@@ -109,5 +120,30 @@ assert.equal(rows[0]?.title, "Coffee", "input array is not reordered");
 
 // sumSigned: income positive, expense negative.
 assert.equal(sumSigned(rows), 2000 - 5 - 900);
+
+// needsReview narrows to guessed categories and composes with the other filters.
+const guessed = [...rows, ex({ title: "Transfer to Budi", category: "Other", needsReview: true, date: "2026-01-04T00:00:00Z" })];
+assert.deepEqual(queryExpenses(guessed, { ...base, needsReview: true }).map((r) => r.title), ["Transfer to Budi"]);
+assert.equal(queryExpenses(guessed, { ...base, needsReview: true, category: "Food" }).length, 0);
+assert.equal(queryExpenses(guessed, { ...base, needsReview: false }).length, 4, "off means everything, not only settled rows");
+
+// parseRupiah: thousands separators in either style, whole rupiah only.
+assert.equal(parseRupiah("2.500.000"), 2500000);
+assert.equal(parseRupiah("2,500,000"), 2500000);
+assert.equal(parseRupiah("Rp 13.000.000"), 13000000);
+assert.equal(parseRupiah(" 800000 "), 800000);
+assert.equal(parseRupiah("abc"), null);
+assert.equal(parseRupiah(""), null);
+assert.equal(parseRupiah("0"), null, "a zero limit is not a limit");
+
+// shortDay must not slide a day in timezones behind UTC, which `new Date("2026-11-13")` would.
+assert.equal(shortDay("2026-11-13"), "13 Nov");
+assert.equal(shortDay("2027-02-28"), "28 Feb");
+
+assert.equal(dueLabel(0), "today");
+assert.equal(dueLabel(1), "tomorrow");
+assert.equal(dueLabel(19), "in 19 days");
+assert.equal(dueLabel(-1), "1 day ago");
+assert.equal(dueLabel(-6), "6 days ago");
 
 console.log("finance.lib: all checks passed");

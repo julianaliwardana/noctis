@@ -12,5 +12,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Self-checks run under tsx with Node's assert; this package has no Node types.
+  "exclude": ["src/**/*.check.ts"]
 }

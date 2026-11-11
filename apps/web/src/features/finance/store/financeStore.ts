@@ -6,16 +6,26 @@ import type {
   CreateExpenseInput,
   ExpenseDto,
   MonthlySummary,
+  IncomeSettings,
+  OverviewDto,
+  SubscriptionsDto,
+  UpdateExpenseInput,
 } from "../api/finance.api";
 
 interface FinanceState {
   expenses: ExpenseDto[];
   categories: CategoryDto[];
   summary: MonthlySummary | null;
+  overview: OverviewDto | null;
+  subscriptions: SubscriptionsDto | null;
   loading: boolean;
   fetchAll: () => Promise<void>;
   addExpense: (input: CreateExpenseInput) => Promise<void>;
   removeExpense: (id: string) => Promise<void>;
+  updateExpense: (id: string, input: UpdateExpenseInput) => Promise<void>;
+  setIncome: (settings: IncomeSettings) => Promise<void>;
+  logSalary: (amount: number, date?: string) => Promise<void>;
+  setBudget: (category: string, monthlyLimit: number | null) => Promise<void>;
   addCategory: (name: string, color: string) => Promise<void>;
   editCategory: (id: string, input: CategoryInput) => Promise<void>;
   removeCategory: (id: string) => Promise<void>;
@@ -25,17 +35,21 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   expenses: [],
   categories: [],
   summary: null,
+  overview: null,
+  subscriptions: null,
   loading: false,
 
   fetchAll: async () => {
     set({ loading: true });
     try {
-      const [expenses, summary, categories] = await Promise.all([
+      const [expenses, summary, categories, overview, subscriptions] = await Promise.all([
         financeApi.fetchExpenses(),
         financeApi.fetchSummary(),
         financeApi.fetchCategories(),
+        financeApi.fetchOverview(),
+        financeApi.fetchSubscriptions(),
       ]);
-      set({ expenses, summary, categories, loading: false });
+      set({ expenses, summary, categories, overview, subscriptions, loading: false });
     } catch {
       set({ loading: false });
     }
@@ -48,6 +62,32 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
   removeExpense: async (id) => {
     await financeApi.deleteExpense(id);
+    await get().fetchAll();
+  },
+
+  // The row changes at once so the table doesn't wait on the network; the refetch then brings
+  // the budgets and totals that moved with it (and undoes the change if the server refused).
+  updateExpense: async (id, input) => {
+    set({ expenses: get().expenses.map((expense) => (expense.id === id ? { ...expense, ...input } : expense)) });
+    try {
+      await financeApi.updateExpense(id, input);
+    } finally {
+      await get().fetchAll();
+    }
+  },
+
+  setIncome: async (settings) => {
+    await financeApi.setIncomeSettings(settings);
+    await get().fetchAll();
+  },
+
+  logSalary: async (amount, date) => {
+    await financeApi.logSalary(amount, date);
+    await get().fetchAll();
+  },
+
+  setBudget: async (category, monthlyLimit) => {
+    await financeApi.setBudget(category, monthlyLimit);
     await get().fetchAll();
   },
 

@@ -56,6 +56,11 @@ export interface Expense {
   category: string;
   type: "income" | "expense";
   date: Date;
+  source?: string | null;
+  /** How it was paid when not straight from the bank account, e.g. "gopay". */
+  paymentMethod?: string | null;
+  /** The category is a guess until the user confirms it. */
+  needsReview?: boolean;
 }
 
 /** Server-side shape of a vault entry: an opaque blob and its timestamps. */

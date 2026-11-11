@@ -1,5 +1,6 @@
 import { chatModels, handleChat, type ChatModel, type ChatResult } from "@noctis/agent";
 import type { ChatMessage, Conversation } from "@noctis/db";
+import { checkAllBudgetAlerts } from "../finance/finance.service";
 import * as aiRepository from "./ai.repository";
 import type { ChatDto } from "./ai.dto";
 
@@ -26,6 +27,10 @@ export async function sendMessage(userId: string, input: ChatDto): Promise<ChatR
   // The model runs before anything is written: a rate-limited retry would otherwise leave a trail
   // of empty conversations, and the client still holds the message to send again.
   const result = await handleChat(userId, input.message, { history, model: input.model });
+
+  // The agent writes transactions straight to the database, so the budget alarm has to be
+  // checked from here rather than from the finance service.
+  if (result.actions?.some((action) => action.type === "ADD_TRANSACTION")) await checkAllBudgetAlerts(userId);
 
   const conversation = existing ?? (await aiRepository.createConversation(userId, titleFrom(input.message)));
   await aiRepository.appendMessage(conversation.id, "user", input.message);

@@ -1,11 +1,14 @@
 import type { Category, Expense, Subscription } from "@noctis/db";
+import { SALARY_CATEGORY, currentSalaryCycle } from "@noctis/utils";
+import type { SalaryCycle } from "@noctis/utils";
 import { notify } from "../notifications/notifications.service";
 import * as financeRepository from "./finance.repository";
-import type { SubscriptionInput } from "./finance.repository";
+import type { IncomeSettings, SubscriptionInput } from "./finance.repository";
 import {
   alertDue,
   budgetStatus,
   categorySpend,
+  dayKey,
   daysInMonth,
   findRecurring,
   isWalletTopUpCategory,
@@ -138,6 +141,84 @@ export async function getMonthlySummary(userId: string, query: SummaryQueryDto):
 
 const rupiah = (amount: number): string => `Rp ${Math.round(amount).toLocaleString("id-ID")}`;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** How far back to look for the salary that opened the running cycle. Generous, so a long-late salary still counts. */
+const SALARY_LOOKBACK_DAYS = 120;
+
+/** The span budgets and "left of income" are measured over: a calendar month, or salary to salary. */
+export interface Period {
+  mode: "month" | "payday";
+  /** "YYYY-MM" for a month, the start day "YYYY-MM-DD" for a pay cycle. */
+  key: string;
+  start: Date;
+  /** Exclusive. A pay cycle has no fixed end: it runs until the next salary is logged. */
+  end: Date;
+  /** "this month" / "since 27 Oct", for notification text. */
+  label: string;
+  daysLeft: number;
+  /** Salary logged in this cycle, or the configured monthly income. */
+  income: number | null;
+  /** The configured monthly income, whatever was received. */
+  usualIncome: number | null;
+  payday: number | null;
+  cycle: SalaryCycle | null;
+}
+
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function shortDate(date: Date): string {
+  const { month, day } = jakartaDay(date);
+  return `${day} ${SHORT_MONTHS[month - 1]}`;
+}
+
+export async function currentPeriod(userId: string, now: Date = new Date()): Promise<Period> {
+  const settings = await financeRepository.findIncomeSettings(userId);
+  const today = jakartaDay(now);
+
+  if (settings.payday === null) {
+    const { start, end } = monthRange(today.year, today.month);
+    return {
+      mode: "month",
+      key: monthKey(now),
+      start,
+      end,
+      label: "this month",
+      daysLeft: daysInMonth(today.year, today.month) - today.day + 1,
+      income: settings.monthlyIncome,
+      usualIncome: settings.monthlyIncome,
+      payday: null,
+      cycle: null,
+    };
+  }
+
+  const salaries = await financeRepository.findSalaries(
+    userId,
+    SALARY_CATEGORY,
+    new Date(now.getTime() - SALARY_LOOKBACK_DAYS * DAY_MS),
+  );
+  const cycle = currentSalaryCycle(
+    salaries.map((salary) => salary.date),
+    settings.payday,
+    now,
+  );
+  const received = salaries
+    .filter((salary) => salary.date.getTime() >= cycle.start.getTime() && salary.date.getTime() <= now.getTime())
+    .reduce((sum, salary) => sum + salary.amount, 0);
+
+  return {
+    mode: "payday",
+    key: dayKey(cycle.start),
+    start: cycle.start,
+    // Open-ended: everything from the start belongs to this cycle until a new salary opens the next.
+    end: new Date(cycle.start.getTime() + 400 * DAY_MS),
+    label: `since ${shortDate(cycle.start)}`,
+    daysLeft: cycle.daysLeft,
+    income: received > 0 ? received : settings.monthlyIncome,
+    usualIncome: settings.monthlyIncome,
+    payday: settings.payday,
+    cycle,
+  };
+}
+
 /**
  * Pushes once when a category's spend for the current month crosses 80% and once at 100%.
  * Call it after anything that adds spend to a category. It never throws: a failed alert must
@@ -150,24 +231,24 @@ export async function checkBudgetAlert(
   now: Date = new Date(),
 ): Promise<BudgetThreshold | null> {
   try {
-    const month = monthKey(now);
-    if (monthKey(transactionDate) !== month) return null;
+    const period = await currentPeriod(userId, now);
+    if (transactionDate.getTime() < period.start.getTime()) return null;
 
     const category = await financeRepository.findCategoryByName(userId, categoryName);
     const budget = category && (await financeRepository.findBudgetByCategory(category.id));
     if (!budget) return null;
 
-    const today = jakartaDay(now);
-    const { start, end } = monthRange(today.year, today.month);
-    const spent = categorySpend(await financeRepository.findByUserInRange(userId, start, end), categoryName);
+    const spent = categorySpend(await financeRepository.findByUserInRange(userId, period.start, period.end), categoryName);
 
-    const threshold = alertDue(budget, spent, month);
-    if (!threshold || !(await financeRepository.claimBudgetAlert(budget.id, threshold, month))) return null;
+    // The alert columns hold the period key: "YYYY-MM" by calendar, the start day by pay cycle.
+    const threshold = alertDue(budget, spent, period.key);
+    if (!threshold || !(await financeRepository.claimBudgetAlert(budget.id, threshold, period.key))) return null;
 
-    const daysLeft = daysInMonth(today.year, today.month) - today.day + 1;
-    const spentOfLimit = `${rupiah(spent)} of ${rupiah(budget.monthlyLimit)} spent this month`;
+    const daysLeft = period.daysLeft;
+    const spentOfLimit = `${rupiah(spent)} of ${rupiah(budget.monthlyLimit)} spent ${period.label}`;
     if (threshold === 100) {
-      await notify(userId, `${categoryName} budget used up`, `${spentOfLimit}, with ${daysLeft} days to go.`, "finance");
+      const toGo = daysLeft > 0 ? `, with ${daysLeft} days to go` : "";
+      await notify(userId, `${categoryName} budget used up`, `${spentOfLimit}${toGo}.`, "finance");
     } else {
       const percent = Math.floor((spent / budget.monthlyLimit) * 100);
       await notify(
@@ -184,6 +265,21 @@ export async function checkBudgetAlert(
   }
 }
 
+/**
+ * Re-checks every budget for the current month. For writers that add transactions without going
+ * through this service (the in-app AI chat writes to the database directly) and so can't say
+ * which category they touched.
+ */
+export async function checkAllBudgetAlerts(userId: string): Promise<void> {
+  try {
+    const now = new Date();
+    const budgets = await financeRepository.findBudgets(userId);
+    for (const budget of budgets) await checkBudgetAlert(userId, budget.category.name, now, now);
+  } catch (error) {
+    console.error("Budget alert sweep failed", error);
+  }
+}
+
 export async function spendingSummary(userId: string, range: DateRange, groupBy: GroupBy): Promise<SpendSummary> {
   return summarize(await financeRepository.findByUserInRange(userId, range.start, range.end), groupBy);
 }
@@ -192,9 +288,9 @@ export interface CategoryBudget extends BudgetStatus {
   category: string;
 }
 
+/** For the current period by default; a calendar month when one is given. */
 export async function listBudgets(userId: string, year?: number, month?: number): Promise<CategoryBudget[]> {
-  const today = jakartaDay(new Date());
-  const { start, end } = monthRange(year ?? today.year, month ?? today.month);
+  const { start, end } = year !== undefined && month !== undefined ? monthRange(year, month) : await currentPeriod(userId);
   const [budgets, rows] = await Promise.all([
     financeRepository.findBudgets(userId),
     financeRepository.findByUserInRange(userId, start, end),
@@ -227,28 +323,116 @@ export async function setBudget(
   return { category: category.name, monthlyLimit: budget.monthlyLimit };
 }
 
+export interface PeriodView {
+  mode: "month" | "payday";
+  /** First day, "YYYY-MM-DD". */
+  start: string;
+  /** Pay cycle only: when the next salary is expected. */
+  expectedNext: string | null;
+  /** Pay cycle only: the expected payday has passed with no salary logged. */
+  salaryDue: boolean;
+  daysLate: number;
+  /** Pay cycle only: a salary has been logged for the running cycle. */
+  salaryLogged: boolean;
+  payday: number | null;
+  /** The configured monthly income; `monthlyIncome` is what this period actually counts. */
+  usualIncome: number | null;
+}
+
 export interface MonthOverviewWithBudgets extends MonthOverview {
   budgets: CategoryBudget[];
+  period: PeriodView;
 }
 
+/** The current period (pay cycle or month) by default; a past or future calendar month when given. */
 export async function getMonthOverview(userId: string, year?: number, month?: number): Promise<MonthOverviewWithBudgets> {
   const now = new Date();
-  const today = jakartaDay(now);
-  const targetYear = year ?? today.year;
-  const targetMonth = month ?? today.month;
-  const { start, end } = monthRange(targetYear, targetMonth);
 
-  const [rows, income, budgets] = await Promise.all([
-    financeRepository.findByUserInRange(userId, start, end),
-    financeRepository.findMonthlyIncome(userId),
-    listBudgets(userId, targetYear, targetMonth),
+  if (year !== undefined && month !== undefined) {
+    const { start, end } = monthRange(year, month);
+    const [rows, settings, budgets] = await Promise.all([
+      financeRepository.findByUserInRange(userId, start, end),
+      financeRepository.findIncomeSettings(userId),
+      listBudgets(userId, year, month),
+    ]);
+    return {
+      ...monthOverview(rows, settings.monthlyIncome, year, month, now),
+      budgets,
+      period: { mode: "month", start: dayKey(start), expectedNext: null, salaryDue: false, daysLate: 0, salaryLogged: false, payday: settings.payday, usualIncome: settings.monthlyIncome },
+    };
+  }
+
+  const period = await currentPeriod(userId, now);
+  const [rows, budgets] = await Promise.all([
+    financeRepository.findByUserInRange(userId, period.start, period.end),
+    listBudgets(userId),
   ]);
+  const { spent, walletTopUps } = summarize(rows, "category");
+  const remaining = period.income === null ? null : period.income - spent;
 
-  return { ...monthOverview(rows, income, targetYear, targetMonth, now), budgets };
+  return {
+    month: period.key,
+    monthlyIncome: period.income,
+    spent,
+    walletTopUps,
+    remaining,
+    daysLeft: period.daysLeft,
+    perDayLeft: remaining === null || period.daysLeft === 0 ? null : Math.round(remaining / period.daysLeft),
+    budgets,
+    period: {
+      mode: period.mode,
+      start: dayKey(period.start),
+      expectedNext: period.cycle ? dayKey(period.cycle.expectedNext) : null,
+      salaryDue: period.cycle?.salaryDue ?? false,
+      daysLate: period.cycle?.daysLate ?? 0,
+      salaryLogged: period.cycle?.fromSalary ?? false,
+      payday: period.payday,
+      usualIncome: period.usualIncome,
+    },
+  };
 }
 
-export function setMonthlyIncome(userId: string, monthlyIncome: number | null): Promise<unknown> {
-  return financeRepository.setMonthlyIncome(userId, monthlyIncome);
+export function setIncomeSettings(userId: string, settings: Partial<IncomeSettings>): Promise<IncomeSettings> {
+  return financeRepository.updateIncomeSettings(userId, settings);
+}
+
+const SALARY_COLOR = "#1baf7a";
+
+/**
+ * Logs a salary (income in the Salary category), which opens a new pay cycle when it lands near
+ * the expected payday. One per day: logging the same day twice returns the first.
+ */
+export async function logSalary(
+  userId: string,
+  amount: number,
+  date: Date,
+): Promise<{ status: "created" | "duplicate"; expense: Expense }> {
+  const categories = await listCategories(userId);
+  if (!categories.some((category) => category.name.toLowerCase() === SALARY_CATEGORY.toLowerCase())) {
+    await financeRepository.createCategories(userId, [{ name: SALARY_CATEGORY, color: SALARY_COLOR }]);
+  }
+
+  const externalId = `salary-${dayKey(date)}`;
+  const existing = await financeRepository.findByExternalId(userId, externalId);
+  if (existing) return { status: "duplicate", expense: existing };
+
+  try {
+    const expense = await financeRepository.createImported(userId, {
+      title: "Salary",
+      amount,
+      category: SALARY_CATEGORY,
+      type: "income",
+      date,
+      source: "manual",
+      externalId,
+    });
+    return { status: "created", expense };
+  } catch (error) {
+    // A double tap racing itself: the unique index keeps one.
+    const raced = await financeRepository.findByExternalId(userId, externalId);
+    if (raced) return { status: "duplicate", expense: raced };
+    throw error;
+  }
 }
 
 /**

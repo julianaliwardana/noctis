@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2 } from "lucide-react";
-import { formatCurrency } from "@noctis/utils";
-import { Badge } from "@/shared/components/ui/badge";
 import { Pagination } from "@/shared/components/ui/pagination";
 import { useAppearance } from "@/lib/appearanceStore";
+import { useMoney } from "@/lib/amountsPrivacy";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -22,7 +21,7 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { categoryNames, colorFor, queryExpenses, sumSigned, type SortKey } from "../lib/finance.lib";
-import type { CategoryDto, ExpenseDto } from "../api/finance.api";
+import type { CategoryDto, ExpenseDto, UpdateExpenseInput } from "../api/finance.api";
 
 const COLUMNS: { key: SortKey; label: string; className?: string }[] = [
   { key: "date", label: "Date" },
@@ -35,23 +34,27 @@ export interface TransactionTableProps {
   categories: CategoryDto[];
   expenses: ExpenseDto[];
   onDelete: (id: string) => void;
+  onUpdate: (id: string, input: UpdateExpenseInput) => void;
 }
 
-export function TransactionTable({ categories, expenses, onDelete }: TransactionTableProps) {
+export function TransactionTable({ categories, expenses, onDelete, onUpdate }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [type, setType] = useState("all");
+  const [reviewOnly, setReviewOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>("date");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   // Rows per page is an Appearance setting (Profile → Appearance → Rows per page).
   const pageSize = Number(useAppearance().pageSize);
+  const money = useMoney();
 
   const names = useMemo(() => categoryNames(categories, expenses), [categories, expenses]);
   const rows = useMemo(
-    () => queryExpenses(expenses, { search, category, type, sort, dir }),
-    [expenses, search, category, type, sort, dir],
+    () => queryExpenses(expenses, { search, category, type, sort, dir, needsReview: reviewOnly }),
+    [expenses, search, category, type, sort, dir, reviewOnly],
   );
+  const pending = useMemo(() => expenses.filter((expense) => expense.needsReview).length, [expenses]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const current = Math.min(page, pageCount - 1);
@@ -118,6 +121,19 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
               <SelectItem value="income">Income</SelectItem>
             </SelectContent>
           </Select>
+          {(pending > 0 || reviewOnly) && (
+            <Button
+              type="button"
+              variant={reviewOnly ? "secondary" : "outline"}
+              aria-pressed={reviewOnly}
+              onClick={() => reset(setReviewOnly)(!reviewOnly)}
+              className="shrink-0"
+            >
+              <span aria-hidden className="size-2 rounded-full bg-[var(--color-finance)]" />
+              Needs category
+              <span className="font-[family-name:var(--font-mono)] text-[var(--color-text-muted)]">{pending}</span>
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -168,25 +184,57 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
                   </TableCell>
                   <TableCell className="max-w-[16rem] truncate font-medium">{expense.title}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className="gap-1.5 text-[var(--color-text)]"
-                      style={{ backgroundColor: `color-mix(in srgb, ${colorFor(categories, expense.category)} 14%, transparent)` }}
-                    >
-                      <span
-                        aria-hidden
-                        className="size-2 rounded-full"
-                        style={{ backgroundColor: colorFor(categories, expense.category) }}
-                      />
-                      {expense.category}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {/* The chip is the control: picking a category here files the transaction and
+                          settles a guessed one. */}
+                      <Select
+                        value={expense.category}
+                        onValueChange={(next) => {
+                          if (next !== expense.category) onUpdate(expense.id, { category: next });
+                        }}
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          aria-label={`Category of ${expense.title}`}
+                          className="h-6! gap-1 rounded-4xl border-transparent py-0 pr-1.5 pl-2 text-xs font-medium dark:bg-transparent"
+                          style={{ backgroundColor: `color-mix(in srgb, ${colorFor(categories, expense.category)} 14%, transparent)` }}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {names.map((name) => (
+                            <SelectItem key={name} value={name}>
+                              <span
+                                aria-hidden
+                                className="size-2 rounded-full"
+                                style={{ backgroundColor: colorFor(categories, name) }}
+                              />
+                              {name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {expense.needsReview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => onUpdate(expense.id, { needsReview: false })}
+                          aria-label={`Keep ${expense.title} under ${expense.category}`}
+                          className="text-[var(--color-text-muted)]"
+                        >
+                          <span aria-hidden className="size-1.5 rounded-full bg-[var(--color-finance)]" />
+                          Keep
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell
                     className="text-right font-[family-name:var(--font-mono)]"
                     style={{ color: expense.type === "income" ? "var(--chart-income)" : undefined }}
                   >
                     {expense.type === "income" ? "+" : "−"}
-                    {formatCurrency(expense.amount)}
+                    {money(expense.amount)}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -209,7 +257,7 @@ export function TransactionTable({ categories, expenses, onDelete }: Transaction
               <TableRow>
                 <TableCell colSpan={3}>Net of {rows.length} filtered</TableCell>
                 <TableCell className="text-right font-[family-name:var(--font-mono)]">
-                  {formatCurrency(sumSigned(rows))}
+                  {money(sumSigned(rows))}
                 </TableCell>
                 <TableCell />
               </TableRow>
