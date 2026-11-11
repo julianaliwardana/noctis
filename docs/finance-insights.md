@@ -57,7 +57,8 @@ New columns are nullable or defaulted and the two tables are new, so nothing exi
 
 ## Finance page
 
-- Summary tiles follow the spend rule: **Spent**, **Wallet top-ups** (shown, not counted), **Left this month** with the per-day allowance. Income is edited on that tile.
+- Summary tiles follow the spend rule: **Spent**, **Wallet top-ups** (shown, not counted), **Left of income** with the per-day allowance. Income is edited on that tile. It is income minus this month's spend — an allowance that starts over each month, not the bank balance.
+- **Hide amounts** (page header) masks every money figure on the finance page and the dashboard as `Rp •••••`. Remembered per browser (`lib/amountsPrivacy.ts`); the server always renders masked so a hidden figure never flashes on load. Percentages and bar lengths stay visible.
 - **Budgets** card: a bar per category, finance gold while there is room and the destructive tone once over. Add, edit and remove limits there.
 - **Subscriptions** card: read-only. Registering one still goes through `upsert_subscription`.
 - **Transactions**: the category chip on every row is a select. Rows with a guessed category show **Keep** to confirm it, and the **Needs category** filter lists only those.

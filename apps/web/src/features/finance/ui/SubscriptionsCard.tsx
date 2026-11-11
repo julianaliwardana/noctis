@@ -1,4 +1,6 @@
-import { formatCurrency } from "@noctis/utils";
+"use client";
+
+import { useMoney } from "@/lib/amountsPrivacy";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { dueLabel, shortDay } from "../lib/finance.lib";
@@ -18,6 +20,7 @@ function whenLine(subscription: SubscriptionDto): string {
 }
 
 export function SubscriptionsCard({ report }: { report: SubscriptionsDto }) {
+  const money = useMoney();
   const active = report.subscriptions.filter((subscription) => subscription.active);
   if (active.length === 0) return null;
 
@@ -41,7 +44,7 @@ export function SubscriptionsCard({ report }: { report: SubscriptionsDto }) {
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="font-[family-name:var(--font-mono)] text-sm">{formatCurrency(amount)}</span>
+                  <span className="font-[family-name:var(--font-mono)] text-sm">{money(amount)}</span>
                   <Badge variant={status.variant}>{subscription.priceChanged ? "Price changed" : status.label}</Badge>
                 </div>
               </li>
@@ -51,7 +54,7 @@ export function SubscriptionsCard({ report }: { report: SubscriptionsDto }) {
 
         {report.dueSoon.map((due) => (
           <p key={due.paymentMethod} className="border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]">
-            Keep <span className="font-[family-name:var(--font-mono)] text-[var(--color-text)]">{formatCurrency(due.total)}</span>{" "}
+            Keep <span className="font-[family-name:var(--font-mono)] text-[var(--color-text)]">{money(due.total)}</span>{" "}
             ready in {due.paymentMethod} for {due.names.join(", ")}.
           </p>
         ))}

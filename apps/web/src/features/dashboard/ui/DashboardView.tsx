@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Flame, ListChecks, Timer, TrendingDown, TrendingUp } from "lucide-react";
-import { formatCurrency, formatDate } from "@noctis/utils";
+import { formatDate } from "@noctis/utils";
+import { useMoney } from "@/lib/amountsPrivacy";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { AnimatedNumber } from "@/shared/components/AnimatedNumber";
@@ -152,6 +153,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
   const { tasks, completeTask } = useTasks(initial?.tasks);
   const { habits, logs, serverLogs, logHabit } = useHabits(initial?.habits);
   const { summary, expenses } = useFinance(initial?.finance);
+  const money = useMoney();
   const { user } = useUser(initial?.user);
 
   const greetingName = user?.name || user?.email;
@@ -191,7 +193,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
         <StatTile
           label="Net this month"
           value={net}
-          format={(n) => formatCurrency(Math.round(n))}
+          format={(n) => money(Math.round(n))}
           hint={net < 0 ? "spending over income" : "income over spending"}
           tone={net < 0 ? "var(--chart-expense)" : "var(--chart-income)"}
           Icon={net < 0 ? TrendingDown : TrendingUp}
@@ -306,7 +308,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
                         className="truncate font-[family-name:var(--font-mono)] text-sm"
                         style={{ color: item.tone }}
                       >
-                        {formatCurrency(item.value)}
+                        {money(item.value)}
                       </p>
                     </div>
                   ))}
@@ -320,12 +322,12 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
                         <span
                           className="w-1/3 rounded-t-sm bg-[var(--chart-income)]"
                           style={{ height: `${Math.max((point.income / peak) * 100, 2)}%` }}
-                          title={`${point.label} income ${formatCurrency(point.income)}`}
+                          title={`${point.label} income ${money(point.income)}`}
                         />
                         <span
                           className="w-1/3 rounded-t-sm bg-[var(--chart-expense)]"
                           style={{ height: `${Math.max((point.expense / peak) * 100, 2)}%` }}
-                          title={`${point.label} expenses ${formatCurrency(point.expense)}`}
+                          title={`${point.label} expenses ${money(point.expense)}`}
                         />
                       </div>
                       <span className="text-xs text-[var(--color-text-muted)]">{point.label}</span>

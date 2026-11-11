@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { ArrowUpRight, Pencil, PiggyBank, Wallet } from "lucide-react";
-import { formatCurrency } from "@noctis/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { ApiError } from "@/lib/api";
+import { useAmountsHidden, useMoney } from "@/lib/amountsPrivacy";
 import { parseRupiah } from "../lib/finance.lib";
 import type { OverviewDto } from "../api/finance.api";
 
@@ -21,6 +21,7 @@ function IncomeEditor({ income, onSave }: { income: number | null; onSave: Summa
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hidden = useAmountsHidden();
 
   async function save(value: number | null): Promise<void> {
     setBusy(true);
@@ -47,7 +48,8 @@ function IncomeEditor({ income, onSave }: { income: number | null; onSave: Summa
       onOpenChange={(next) => {
         setOpen(next);
         if (next) {
-          setDraft(income === null ? "" : String(income));
+          // While amounts are hidden the field opens empty rather than spelling the income out.
+          setDraft(income === null || hidden ? "" : String(income));
           setError(null);
         }
       }}
@@ -90,7 +92,9 @@ function IncomeEditor({ income, onSave }: { income: number | null; onSave: Summa
             aria-invalid={error !== null}
             disabled={busy}
           />
-          <p className="text-xs text-[var(--color-text-muted)]">Take-home pay. What is left is this minus what you spent.</p>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Take-home pay. The tile shows this minus what you spent this month, not your bank balance.
+          </p>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
             {income !== null && (
@@ -146,22 +150,23 @@ const READOUT = "truncate font-[family-name:var(--font-mono)] text-lg";
 export function SummaryBar({ overview, onSetIncome }: SummaryBarProps) {
   const { spent, walletTopUps, remaining, perDayLeft, daysLeft, monthlyIncome } = overview;
   const overspent = remaining !== null && remaining < 0;
+  const money = useMoney();
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Tile label="Spent this month" color="var(--chart-expense)" Icon={ArrowUpRight}>
         <p className={READOUT} style={{ color: "var(--chart-expense)" }}>
-          {formatCurrency(spent)}
+          {money(spent)}
         </p>
       </Tile>
 
       <Tile label="Wallet top-ups" color="var(--color-text-muted)" Icon={Wallet}>
-        <p className={READOUT}>{formatCurrency(walletTopUps)}</p>
+        <p className={READOUT}>{money(walletTopUps)}</p>
         <p className="truncate text-xs text-[var(--color-text-muted)]">Not counted as spend</p>
       </Tile>
 
       <Tile
-        label="Left this month"
+        label="Left of income"
         color={overspent ? "var(--chart-expense)" : "var(--color-finance)"}
         Icon={PiggyBank}
         action={<IncomeEditor income={monthlyIncome} onSave={onSetIncome} />}
@@ -171,11 +176,11 @@ export function SummaryBar({ overview, onSetIncome }: SummaryBarProps) {
         ) : (
           <>
             <p className={READOUT} style={{ color: overspent ? "var(--chart-expense)" : undefined }}>
-              {formatCurrency(remaining)}
+              {money(remaining)}
             </p>
             {perDayLeft !== null && !overspent && (
               <p className="truncate text-xs text-[var(--color-text-muted)]">
-                {formatCurrency(perDayLeft)} a day for {daysLeft} {daysLeft === 1 ? "day" : "days"}
+                {money(perDayLeft)} a day for {daysLeft} {daysLeft === 1 ? "day" : "days"}
               </p>
             )}
           </>

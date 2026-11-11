@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, XAxis, YAxis } from "recharts";
-import { formatCurrency } from "@noctis/utils";
+import { useAmountsHidden, useMoney } from "@/lib/amountsPrivacy";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import {
   ChartContainer,
@@ -28,6 +28,8 @@ function compact(value: number): string {
 }
 
 export function FinanceCharts({ categories, expenses }: { categories: CategoryDto[]; expenses: ExpenseDto[] }) {
+  const hidden = useAmountsHidden();
+  const money = useMoney();
   const cashflow = useMemo(() => monthlyCashflow(expenses), [expenses]);
   // Colours come from the category record, so they survive deleting the last transaction in one.
   const slices = useMemo(
@@ -56,10 +58,10 @@ export function FinanceCharts({ categories, expenses }: { categories: CategoryDt
             <BarChart data={cashflow} barGap={2} margin={{ left: 4, right: 4 }}>
               <CartesianGrid vertical={false} strokeOpacity={0.4} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={compact} />
+              <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={(value: number) => (hidden ? "" : compact(value))} />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}
+                content={<ChartTooltipContent formatter={(value) => money(Number(value))} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
               <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
@@ -83,7 +85,7 @@ export function FinanceCharts({ categories, expenses }: { categories: CategoryDt
                 <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <ChartTooltip
                     content={
-                      <ChartTooltipContent nameKey="category" formatter={(value) => formatCurrency(Number(value))} />
+                      <ChartTooltipContent nameKey="category" formatter={(value) => money(Number(value))} />
                     }
                   />
                   <Pie
@@ -107,7 +109,7 @@ export function FinanceCharts({ categories, expenses }: { categories: CategoryDt
                 style={{ top: PIE_CY }}
               >
                 <p className="font-[family-name:var(--font-mono)] text-base text-[var(--color-text)]">
-                  {compact(spend)}
+                  {hidden ? "•••" : compact(spend)}
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)]">total spend</p>
               </div>

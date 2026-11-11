@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
-import { formatCurrency } from "@noctis/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { ApiError } from "@/lib/api";
+import { useAmountsHidden, useMoney } from "@/lib/amountsPrivacy";
 import { colorFor, parseRupiah } from "../lib/finance.lib";
 import type { BudgetDto, CategoryDto } from "../api/finance.api";
 
@@ -37,6 +37,7 @@ function BudgetEditor({ category, choices = [], limit, categories, onSet, childr
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hidden = useAmountsHidden();
 
   async function save(target: string, value: number | null): Promise<void> {
     setBusy(true);
@@ -65,7 +66,7 @@ function BudgetEditor({ category, choices = [], limit, categories, onSet, childr
         setOpen(next);
         if (next) {
           setPicked(category ?? choices[0] ?? "");
-          setDraft(limit === undefined ? "" : String(limit));
+          setDraft(limit === undefined || hidden ? "" : String(limit));
           setError(null);
         }
       }}
@@ -127,6 +128,7 @@ function BudgetRow({ budget, categories, onSet }: { budget: BudgetDto } & Pick<B
   const over = budget.state === "over";
   // Finance gold while there is room, the destructive tone once it is gone — never a third hue.
   const tone = over ? "var(--color-destructive)" : "var(--color-finance)";
+  const money = useMoney();
 
   return (
     <li className="group flex flex-col gap-1.5">
@@ -134,8 +136,8 @@ function BudgetRow({ budget, categories, onSet }: { budget: BudgetDto } & Pick<B
         <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: colorFor(categories, budget.category) }} />
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{budget.category}</span>
         <span className="shrink-0 font-[family-name:var(--font-mono)] text-sm">
-          {formatCurrency(budget.spent)}
-          <span className="text-[var(--color-text-muted)]"> / {formatCurrency(budget.limit)}</span>
+          {money(budget.spent)}
+          <span className="text-[var(--color-text-muted)]"> / {money(budget.limit)}</span>
         </span>
         <BudgetEditor category={budget.category} limit={budget.limit} categories={categories} onSet={onSet}>
           <Button
@@ -165,7 +167,7 @@ function BudgetRow({ budget, categories, onSet }: { budget: BudgetDto } & Pick<B
       <p className="text-xs text-[var(--color-text-muted)]">
         <span style={{ color: budget.state === "ok" ? undefined : tone }}>{Math.round(budget.percent)}% used</span>
         {" · "}
-        {over ? `${formatCurrency(-budget.remaining)} over` : `${formatCurrency(budget.remaining)} left`}
+        {over ? `${money(-budget.remaining)} over` : `${money(budget.remaining)} left`}
       </p>
     </li>
   );

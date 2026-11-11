@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2 } from "lucide-react";
-import { formatCurrency } from "@noctis/utils";
 import { Pagination } from "@/shared/components/ui/pagination";
 import { useAppearance } from "@/lib/appearanceStore";
+import { useMoney } from "@/lib/amountsPrivacy";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -47,6 +47,7 @@ export function TransactionTable({ categories, expenses, onDelete, onUpdate }: T
   const [page, setPage] = useState(0);
   // Rows per page is an Appearance setting (Profile → Appearance → Rows per page).
   const pageSize = Number(useAppearance().pageSize);
+  const money = useMoney();
 
   const names = useMemo(() => categoryNames(categories, expenses), [categories, expenses]);
   const rows = useMemo(
@@ -233,7 +234,7 @@ export function TransactionTable({ categories, expenses, onDelete, onUpdate }: T
                     style={{ color: expense.type === "income" ? "var(--chart-income)" : undefined }}
                   >
                     {expense.type === "income" ? "+" : "−"}
-                    {formatCurrency(expense.amount)}
+                    {money(expense.amount)}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -256,7 +257,7 @@ export function TransactionTable({ categories, expenses, onDelete, onUpdate }: T
               <TableRow>
                 <TableCell colSpan={3}>Net of {rows.length} filtered</TableCell>
                 <TableCell className="text-right font-[family-name:var(--font-mono)]">
-                  {formatCurrency(sumSigned(rows))}
+                  {money(sumSigned(rows))}
                 </TableCell>
                 <TableCell />
               </TableRow>
