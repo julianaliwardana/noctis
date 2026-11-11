@@ -3,6 +3,7 @@ import IORedis from "ioredis";
 import { db } from "@noctis/db";
 import type { NudgeSlot } from "@noctis/types";
 import { analyzeUser } from "./analyzer";
+import { remindPendingReviews } from "./reviewReminder";
 
 const QUEUE_NAME = "nudges";
 
@@ -31,7 +32,15 @@ export function startScheduler(): { queue: Queue<NudgeJobData>; worker: Worker<N
     QUEUE_NAME,
     async (job) => {
       const users = await db.user.findMany({ select: { id: true } });
-      await Promise.all(users.map((user) => analyzeUser(user.id, job.data.slot)));
+      try {
+        await Promise.all(users.map((user) => analyzeUser(user.id, job.data.slot)));
+      } finally {
+        // After the AI nudge, so this plain reminder can't trip its anti-spam window — and in a
+        // `finally`, so an LLM outage doesn't take the reminder down with it.
+        if (job.data.slot === "evening") {
+          await Promise.all(users.map((user) => remindPendingReviews(user.id)));
+        }
+      }
     },
     { connection },
   );
