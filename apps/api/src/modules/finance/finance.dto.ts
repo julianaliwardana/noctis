@@ -32,3 +32,23 @@ export const summaryQueryDto = z.object({
   year: z.coerce.number().int().optional(),
 });
 export type SummaryQueryDto = z.infer<typeof summaryQueryDto>;
+
+export const updateExpenseDto = z
+  .object({
+    category: z.string().trim().min(1).optional(),
+    title: z.string().trim().min(1).max(120).optional(),
+    needsReview: z.boolean().optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), { message: "Nothing to update" });
+export type UpdateExpenseDto = z.infer<typeof updateExpenseDto>;
+
+export const setBudgetDto = z.object({
+  category: z.string().trim().min(1),
+  /** null removes the budget. */
+  monthlyLimit: z.number().positive().nullable(),
+});
+
+export const setIncomeDto = z.object({
+  /** null clears it. */
+  monthlyIncome: z.number().positive().nullable(),
+});

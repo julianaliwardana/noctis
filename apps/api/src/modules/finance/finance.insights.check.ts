@@ -116,7 +116,8 @@ assert.equal(alertDue({ ...fresh, alerted100Month: "2026-11" }, 850_000, "2026-1
 assert.equal(alertDue({ ...fresh, monthlyLimit: 0 }, 5000, "2026-11"), null, "no limit, no alert");
 
 assert.deepEqual(budgetStatus(1_000_000, 850_000), { limit: 1_000_000, spent: 850_000, remaining: 150_000, percent: 85, state: "warning" });
-assert.equal(budgetStatus(1_000_000, 1_000_000).state, "over");
+assert.equal(budgetStatus(1_000_000, 1_000_000).state, "warning", "exactly on the limit is used up, not over");
+assert.equal(budgetStatus(1_000_000, 1_000_001).state, "over");
 assert.equal(budgetStatus(300_000, 100_000).percent, 33.3);
 
 // ── Month overview ──

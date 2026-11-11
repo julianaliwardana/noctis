@@ -8,7 +8,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 export default function FinancePage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Finance" description="This month's income, expenses, and net." />
+      <PageHeader title="Finance" description="This month's spending, budgets, and what is left." />
       <Suspense fallback={<FinanceSkeleton />}>
         <FinanceData />
       </Suspense>

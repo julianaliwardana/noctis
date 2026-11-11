@@ -184,6 +184,21 @@ export async function checkBudgetAlert(
   }
 }
 
+/**
+ * Re-checks every budget for the current month. For writers that add transactions without going
+ * through this service (the in-app AI chat writes to the database directly) and so can't say
+ * which category they touched.
+ */
+export async function checkAllBudgetAlerts(userId: string): Promise<void> {
+  try {
+    const now = new Date();
+    const budgets = await financeRepository.findBudgets(userId);
+    for (const budget of budgets) await checkBudgetAlert(userId, budget.category.name, now, now);
+  } catch (error) {
+    console.error("Budget alert sweep failed", error);
+  }
+}
+
 export async function spendingSummary(userId: string, range: DateRange, groupBy: GroupBy): Promise<SpendSummary> {
   return summarize(await financeRepository.findByUserInRange(userId, range.start, range.end), groupBy);
 }

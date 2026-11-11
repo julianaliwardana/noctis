@@ -208,7 +208,8 @@ export function budgetStatus(limit: number, spent: number): BudgetStatus {
     spent,
     remaining: limit - spent,
     percent,
-    state: spent >= limit ? "over" : spent >= limit * 0.8 ? "warning" : "ok",
+    // Exactly on the limit (rent paid in full) is used up, not overspent.
+    state: spent > limit ? "over" : spent >= limit * 0.8 ? "warning" : "ok",
   };
 }
 

@@ -1,8 +1,7 @@
 # Finance insights (budgets, subscriptions, review flag)
 
 Backend and MCP support for: weekly money review, budget alarm, subscription hunter and
-"can I afford X?". The UI (budget screen, inline category edit, income field) is not in yet —
-until then budgets, income and subscriptions are set through the MCP tools.
+"can I afford X?", and the finance page that shows them.
 
 ## Rules
 
@@ -46,9 +45,30 @@ New columns are nullable or defaulted and the two tables are new, so nothing exi
 | `list_recurring` | Repeating charges and Subscriptions-category candidates. |
 | `list_subscriptions` / `upsert_subscription` | The registry, each with this cycle's status, plus `dueSoon` per payment method. |
 
+## REST (finance page)
+
+| Route | Purpose |
+|---|---|
+| `GET /finance/overview` | Spent, wallet top-ups, income, remaining, days left, budgets. |
+| `PUT /finance/income` | `{ monthlyIncome }`, null clears. |
+| `PUT /finance/budgets` | `{ category, monthlyLimit }`, null removes. 409 for the top-up category. |
+| `GET /finance/subscriptions` | Registry with status and `dueSoon`. |
+| `PATCH /finance/:id` | `{ category?, title?, needsReview? }`. Choosing a category clears the review flag. |
+
+## Finance page
+
+- Summary tiles follow the spend rule: **Spent**, **Wallet top-ups** (shown, not counted), **Left this month** with the per-day allowance. Income is edited on that tile.
+- **Budgets** card: a bar per category, finance gold while there is room and the destructive tone once over. Add, edit and remove limits there.
+- **Subscriptions** card: read-only. Registering one still goes through `upsert_subscription`.
+- **Transactions**: the category chip on every row is a select. Rows with a guessed category show **Keep** to confirm it, and the **Needs category** filter lists only those.
+
+The in-app AI chat writes transactions directly to the database, so `ai.service` re-checks every
+budget after a chat turn that added one (`checkAllBudgetAlerts`).
+
 ## Checks
 
 ```sh
 cd apps/api  && pnpm exec tsx src/modules/finance/finance.insights.check.ts
 cd ai/agent  && pnpm exec tsx src/reviewReminder.check.ts
+cd apps/web  && pnpm dlx tsx src/features/finance/lib/finance.lib.check.ts
 ```

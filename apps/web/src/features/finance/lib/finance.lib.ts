@@ -91,6 +91,8 @@ export interface TableQuery {
   type: string;
   sort: SortKey;
   dir: "asc" | "desc";
+  /** Only rows whose category is still a guess. */
+  needsReview?: boolean;
 }
 
 function compare(a: ExpenseDto, b: ExpenseDto, key: SortKey): number {
@@ -106,6 +108,7 @@ export function queryExpenses(expenses: ExpenseDto[], query: TableQuery): Expens
     (expense) =>
       (query.category === "all" || expense.category === query.category) &&
       (query.type === "all" || expense.type === query.type) &&
+      (!query.needsReview || expense.needsReview === true) &&
       (search === "" ||
         expense.title.toLowerCase().includes(search) ||
         expense.category.toLowerCase().includes(search)),
@@ -117,4 +120,25 @@ export function queryExpenses(expenses: ExpenseDto[], query: TableQuery): Expens
 
 export function sumSigned(expenses: ExpenseDto[]): number {
   return expenses.reduce((net, e) => net + (e.type === "income" ? e.amount : -e.amount), 0);
+}
+
+/** Whole rupiah from what someone typed: "2.500.000", "2,500,000" and "2500000" all mean the same. */
+export function parseRupiah(input: string): number | null {
+  const digits = input.replace(/[^\d]/g, "");
+  if (digits === "") return null;
+  const value = Number(digits);
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+/** "13 Nov" from a "YYYY-MM-DD" day, without letting the browser's timezone shift it. */
+export function shortDay(day: string): string {
+  const [year, month, date] = day.split("-").map(Number);
+  return format(new Date(year as number, (month as number) - 1, date as number), "d MMM");
+}
+
+export function dueLabel(daysUntilDue: number): string {
+  if (daysUntilDue === 0) return "today";
+  if (daysUntilDue === 1) return "tomorrow";
+  if (daysUntilDue > 1) return `in ${daysUntilDue} days`;
+  return daysUntilDue === -1 ? "1 day ago" : `${-daysUntilDue} days ago`;
 }

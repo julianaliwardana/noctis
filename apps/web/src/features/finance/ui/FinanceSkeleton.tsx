@@ -18,6 +18,20 @@ export function FinanceSkeleton() {
           </Card>
         ))}
       </div>
+      <div className="order-1 grid gap-4 md:order-none md:grid-cols-2">
+        {Array.from({ length: 2 }, (_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-5 w-28" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
       <Card className="order-3 md:order-none">
         <CardHeader>
           <Skeleton className="h-5 w-36" />
