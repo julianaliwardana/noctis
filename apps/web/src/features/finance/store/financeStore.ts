@@ -6,6 +6,7 @@ import type {
   CreateExpenseInput,
   ExpenseDto,
   MonthlySummary,
+  IncomeSettings,
   OverviewDto,
   SubscriptionsDto,
   UpdateExpenseInput,
@@ -22,7 +23,8 @@ interface FinanceState {
   addExpense: (input: CreateExpenseInput) => Promise<void>;
   removeExpense: (id: string) => Promise<void>;
   updateExpense: (id: string, input: UpdateExpenseInput) => Promise<void>;
-  setIncome: (monthlyIncome: number | null) => Promise<void>;
+  setIncome: (settings: IncomeSettings) => Promise<void>;
+  logSalary: (amount: number, date?: string) => Promise<void>;
   setBudget: (category: string, monthlyLimit: number | null) => Promise<void>;
   addCategory: (name: string, color: string) => Promise<void>;
   editCategory: (id: string, input: CategoryInput) => Promise<void>;
@@ -74,8 +76,13 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  setIncome: async (monthlyIncome) => {
-    await financeApi.setMonthlyIncome(monthlyIncome);
+  setIncome: async (settings) => {
+    await financeApi.setIncomeSettings(settings);
+    await get().fetchAll();
+  },
+
+  logSalary: async (amount, date) => {
+    await financeApi.logSalary(amount, date);
     await get().fetchAll();
   },
 

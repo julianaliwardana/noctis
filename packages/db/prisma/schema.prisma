@@ -17,6 +17,9 @@ model User {
   dateOfBirth      DateTime?
   /// Take-home pay per month in IDR, typed in by the user. Powers "can I afford X?".
   monthlyIncome    Float?
+  /// Day of the month salary is expected (1-31). Set: budgets and the overview run from salary to
+  /// salary instead of by calendar month. Null: calendar months.
+  payday           Int?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   tasks            Task[]

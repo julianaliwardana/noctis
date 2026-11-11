@@ -48,7 +48,17 @@ export const setBudgetDto = z.object({
   monthlyLimit: z.number().positive().nullable(),
 });
 
-export const setIncomeDto = z.object({
-  /** null clears it. */
-  monthlyIncome: z.number().positive().nullable(),
+export const setIncomeDto = z
+  .object({
+    /** null clears it. */
+    monthlyIncome: z.number().positive().nullable().optional(),
+    /** Expected salary day; null switches back to calendar months. */
+    payday: z.number().int().min(1).max(31).nullable().optional(),
+  })
+  .refine((body) => body.monthlyIncome !== undefined || body.payday !== undefined, { message: "Nothing to update" });
+
+export const logSalaryDto = z.object({
+  amount: z.number().positive(),
+  /** Defaults to now. */
+  date: z.coerce.date().optional(),
 });

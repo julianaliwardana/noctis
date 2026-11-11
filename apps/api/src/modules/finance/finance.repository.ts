@@ -188,11 +188,25 @@ export function upsertSubscription(userId: string, { name, ...rest }: Subscripti
   });
 }
 
-export async function findMonthlyIncome(userId: string): Promise<number | null> {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { monthlyIncome: true } });
-  return user?.monthlyIncome ?? null;
+export interface IncomeSettings {
+  monthlyIncome: number | null;
+  payday: number | null;
 }
 
-export function setMonthlyIncome(userId: string, monthlyIncome: number | null): Promise<unknown> {
-  return db.user.update({ where: { id: userId }, data: { monthlyIncome }, select: { id: true } });
+export async function findIncomeSettings(userId: string): Promise<IncomeSettings> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { monthlyIncome: true, payday: true } });
+  return { monthlyIncome: user?.monthlyIncome ?? null, payday: user?.payday ?? null };
+}
+
+/** Only the fields given change. */
+export function updateIncomeSettings(userId: string, settings: Partial<IncomeSettings>): Promise<IncomeSettings> {
+  return db.user.update({ where: { id: userId }, data: settings, select: { monthlyIncome: true, payday: true } });
+}
+
+/** Salary rows since `since`, oldest first. */
+export function findSalaries(userId: string, category: string, since: Date): Promise<Expense[]> {
+  return db.expense.findMany({
+    where: { userId, type: "income", category: { equals: category, mode: "insensitive" }, date: { gte: since } },
+    orderBy: { date: "asc" },
+  });
 }

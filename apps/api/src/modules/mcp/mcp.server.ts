@@ -58,7 +58,7 @@ function isUniqueViolation(error: unknown): boolean {
  * token belongs to — no tool takes a user id, so the model can't act as anyone else.
  */
 export function buildMcpServer(userId: string): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.1.0" });
+  const server = new McpServer({ name: "noctis", version: "1.2.0" });
 
   server.registerTool(
     "list_categories",
@@ -293,10 +293,10 @@ export function buildMcpServer(userId: string): McpServer {
   server.registerTool(
     "get_month_overview",
     {
-      title: "Month overview",
+      title: "Pay cycle / month overview",
       description:
-        "One call for 'can I afford X?': the month's income (as set by the user), spend so far, what is left, days left, and every category budget with its usage. `remaining` is null until an income has been set with set_monthly_income.",
-      inputSchema: { month: MONTH.optional() },
+        "One call for 'can I afford X?': income, spend so far, what is left, days left and every category budget with its usage — for the current period. With a payday set, the period is a pay cycle running from the last logged salary until the next one (`period.start`, `period.expectedNext`; `period.salaryDue` means payday passed with no salary logged). Without, it is the calendar month. `monthlyIncome` is the salary logged this cycle, or the configured income. `remaining` is null until an income is known. Pass `month` for a past calendar month instead.",
+      inputSchema: { month: MONTH.optional().describe("A calendar month, YYYY-MM. Omit for the current period.") },
       annotations: { readOnlyHint: true },
     },
     async ({ month }) => {
@@ -309,16 +309,47 @@ export function buildMcpServer(userId: string): McpServer {
   server.registerTool(
     "set_monthly_income",
     {
-      title: "Set monthly income",
-      description: "Stores the user's take-home pay per month in IDR, used by get_month_overview. Only set it to a figure the user gave you.",
+      title: "Set income and payday",
+      description:
+        "Stores the user's usual take-home pay per month in IDR (the fallback before a salary is logged) and/or the day of the month salary is expected. Setting a payday switches budgets and the overview to pay cycles that run from salary to salary. Only set figures the user gave you.",
       inputSchema: {
-        monthlyIncome: z.number().positive().nullable().describe("IDR per month, or null to clear it"),
+        monthlyIncome: z.number().positive().nullable().optional().describe("IDR per month, or null to clear it"),
+        payday: z.number().int().min(1).max(31).nullable().optional().describe("Expected salary day, or null for calendar months"),
       },
       annotations: { idempotentHint: true },
     },
-    async ({ monthlyIncome }) => {
-      await financeService.setMonthlyIncome(userId, monthlyIncome);
-      return json({ status: "saved", monthlyIncome });
+    async ({ monthlyIncome, payday }) => {
+      if (monthlyIncome === undefined && payday === undefined) return fail("Give monthlyIncome, payday, or both.");
+      const saved = await financeService.setIncomeSettings(userId, {
+        ...(monthlyIncome !== undefined ? { monthlyIncome } : {}),
+        ...(payday !== undefined ? { payday } : {}),
+      });
+      return json({ status: "saved", ...saved });
+    },
+  );
+
+  server.registerTool(
+    "log_salary",
+    {
+      title: "Log salary",
+      description:
+        "Records that salary arrived (income in the Salary category). With a payday set, a salary near its expected date starts a new pay cycle, so budgets and 'left of income' reset from that day. Only call it when the user says their salary came in. One per day: logging the same day again returns 'duplicate'.",
+      inputSchema: {
+        amount: z.number().positive().describe("IDR received"),
+        date: z
+          .string()
+          .datetime({ offset: true })
+          .optional()
+          .describe("When it arrived, ISO 8601 with offset. Defaults to now."),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async ({ amount, date }) => {
+      const when = date ? new Date(date) : new Date();
+      if (when.getTime() > Date.now() + 24 * 60 * 60 * 1000) return fail("That date is in the future.");
+      const { status, expense } = await financeService.logSalary(userId, amount, when);
+      const overview = await financeService.getMonthOverview(userId);
+      return json({ status, transaction: transactionView(expense), period: overview.period });
     },
   );
 
@@ -327,8 +358,8 @@ export function buildMcpServer(userId: string): McpServer {
     {
       title: "List budgets",
       description:
-        "Every category budget with this month's spend, what is left, percent used and state (ok / warning from 80% / over). Noctis itself notifies the user at 80% and 100%, so there is no need to alert again.",
-      inputSchema: { month: MONTH.optional() },
+        "Every category budget with the current period's spend (pay cycle when a payday is set, else this month), what is left, percent used and state (ok / warning from 80% / over). Noctis itself notifies the user at 80% and 100%, so there is no need to alert again.",
+      inputSchema: { month: MONTH.optional().describe("A calendar month, YYYY-MM. Omit for the current period.") },
       annotations: { readOnlyHint: true },
     },
     async ({ month }) => {

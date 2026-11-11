@@ -64,7 +64,22 @@ export interface BudgetDto {
   state: "ok" | "warning" | "over";
 }
 
-/** This month under the spend rule: expenses minus refunds, wallet top-ups left out. */
+export interface PeriodDto {
+  mode: "month" | "payday";
+  /** First day of the period, "YYYY-MM-DD". */
+  start: string;
+  /** Pay cycle only: when the next salary is expected. */
+  expectedNext: string | null;
+  /** Payday has passed and no salary has been logged. */
+  salaryDue: boolean;
+  daysLate: number;
+  salaryLogged: boolean;
+  payday: number | null;
+  /** The configured monthly income; `OverviewDto.monthlyIncome` is what the period counts (salary received, else this). */
+  usualIncome: number | null;
+}
+
+/** The current period (pay cycle or month) under the spend rule: expenses minus refunds, wallet top-ups left out. */
 export interface OverviewDto {
   month: string;
   monthlyIncome: number | null;
@@ -74,6 +89,7 @@ export interface OverviewDto {
   daysLeft: number;
   perDayLeft: number | null;
   budgets: BudgetDto[];
+  period: PeriodDto;
 }
 
 export interface SubscriptionChargeDto {
@@ -119,8 +135,17 @@ export function updateExpense(id: string, input: UpdateExpenseInput): Promise<Ex
   return api.patch<ExpenseDto>(`/finance/${id}`, input);
 }
 
-export function setMonthlyIncome(monthlyIncome: number | null): Promise<{ monthlyIncome: number | null }> {
-  return api.put<{ monthlyIncome: number | null }>("/finance/income", { monthlyIncome });
+export interface IncomeSettings {
+  monthlyIncome?: number | null;
+  payday?: number | null;
+}
+
+export function setIncomeSettings(settings: IncomeSettings): Promise<IncomeSettings> {
+  return api.put<IncomeSettings>("/finance/income", settings);
+}
+
+export function logSalary(amount: number, date?: string): Promise<ExpenseDto> {
+  return api.post<ExpenseDto>("/finance/salary", { amount, date });
 }
 
 export function setBudget(category: string, monthlyLimit: number | null): Promise<unknown> {

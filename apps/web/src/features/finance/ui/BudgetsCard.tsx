@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
@@ -16,6 +16,8 @@ export interface BudgetsCardProps {
   budgets: BudgetDto[];
   categories: CategoryDto[];
   onSet: (category: string, monthlyLimit: number | null) => Promise<void>;
+  /** "This month" or "Since 27 Oct". */
+  periodLabel?: string;
 }
 
 /** Wallet top-ups never count as spend, so the server refuses a budget on them. */
@@ -173,7 +175,7 @@ function BudgetRow({ budget, categories, onSet }: { budget: BudgetDto } & Pick<B
   );
 }
 
-export function BudgetsCard({ budgets, categories, onSet }: BudgetsCardProps) {
+export function BudgetsCard({ budgets, categories, onSet, periodLabel }: BudgetsCardProps) {
   const taken = new Set(budgets.map((budget) => budget.category));
   const choices = categories
     .map((category) => category.name)
@@ -183,6 +185,7 @@ export function BudgetsCard({ budgets, categories, onSet }: BudgetsCardProps) {
     <Card>
       <CardHeader>
         <CardTitle>Budgets</CardTitle>
+        {periodLabel && <CardDescription>{periodLabel}</CardDescription>}
         {choices.length > 0 && (
           <CardAction>
             <BudgetEditor choices={choices} categories={categories} onSet={onSet}>

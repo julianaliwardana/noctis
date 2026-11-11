@@ -26,6 +26,7 @@ export function useFinance(initial?: FinanceSnapshot | null) {
   const removeExpense = useFinanceStore((state) => state.removeExpense);
   const updateExpense = useFinanceStore((state) => state.updateExpense);
   const setIncome = useFinanceStore((state) => state.setIncome);
+  const logSalary = useFinanceStore((state) => state.logSalary);
   const setBudget = useFinanceStore((state) => state.setBudget);
   const addCategory = useFinanceStore((state) => state.addCategory);
   const editCategory = useFinanceStore((state) => state.editCategory);
@@ -48,6 +49,7 @@ export function useFinance(initial?: FinanceSnapshot | null) {
     removeExpense,
     updateExpense,
     setIncome,
+    logSalary,
     setBudget,
     addCategory,
     editCategory,

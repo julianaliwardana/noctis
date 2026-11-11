@@ -3,6 +3,7 @@ import {
   createCategoryDto,
   createExpenseDto,
   setBudgetDto,
+  logSalaryDto,
   setIncomeDto,
   summaryQueryDto,
   updateCategoryDto,
@@ -34,9 +35,19 @@ export const financeRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.put("/income", async (request) => {
-    const { monthlyIncome } = setIncomeDto.parse(request.body);
-    await financeService.setMonthlyIncome(request.user.userId, monthlyIncome);
-    return { monthlyIncome };
+    const body = setIncomeDto.parse(request.body);
+    return financeService.setIncomeSettings(request.user.userId, {
+      ...(body.monthlyIncome !== undefined ? { monthlyIncome: body.monthlyIncome } : {}),
+      ...(body.payday !== undefined ? { payday: body.payday } : {}),
+    });
+  });
+
+  fastify.post("/salary", async (request, reply) => {
+    const body = logSalaryDto.parse(request.body);
+    const date = body.date ?? new Date();
+    if (date.getTime() > Date.now() + 24 * 60 * 60 * 1000) return reply.code(400).send({ error: "That date is in the future" });
+    const { status, expense } = await financeService.logSalary(request.user.userId, body.amount, date);
+    return reply.code(status === "created" ? 201 : 200).send(expense);
   });
 
   fastify.put("/budgets", async (request, reply) => {

@@ -28,3 +28,6 @@ export function formatDate(date: Date | string, locale = "id-ID"): string {
     timeStyle: "short",
   }).format(d);
 }
+// Named, not `export *`: this package is loaded as CommonJS, where a star re-export hides the names from ESM importers.
+export { SALARY_CATEGORY, currentSalaryCycle, cycleStarts, expectedPayday } from "./salaryCycle";
+export type { SalaryCycle } from "./salaryCycle";

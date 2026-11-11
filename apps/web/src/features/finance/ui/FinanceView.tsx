@@ -9,6 +9,7 @@ import { CategoryManager } from "./CategoryManager";
 import { BudgetsCard } from "./BudgetsCard";
 import { SubscriptionsCard } from "./SubscriptionsCard";
 import { useFinance, type FinanceSnapshot } from "../hooks/useFinance";
+import { shortDay } from "../lib/finance.lib";
 
 export function FinanceView({ initial }: { initial: FinanceSnapshot | null }) {
   const {
@@ -21,6 +22,7 @@ export function FinanceView({ initial }: { initial: FinanceSnapshot | null }) {
     removeExpense,
     updateExpense,
     setIncome,
+    logSalary,
     setBudget,
     addCategory,
     editCategory,
@@ -29,11 +31,16 @@ export function FinanceView({ initial }: { initial: FinanceSnapshot | null }) {
 
   return (
     <>
-      {overview && <SummaryBar overview={overview} onSetIncome={setIncome} />}
+      {overview && <SummaryBar overview={overview} onSetIncome={setIncome} onLogSalary={logSalary} />}
 
       {overview && (
         <div className="order-1 grid items-start gap-4 md:order-none md:grid-cols-2">
-          <BudgetsCard budgets={overview.budgets} categories={categories} onSet={setBudget} />
+          <BudgetsCard
+            budgets={overview.budgets}
+            categories={categories}
+            onSet={setBudget}
+            periodLabel={overview.period.mode === "payday" ? `Since ${shortDay(overview.period.start)}` : "This month"}
+          />
           {subscriptions && <SubscriptionsCard report={subscriptions} />}
         </div>
       )}

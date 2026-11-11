@@ -4,6 +4,7 @@ import { db } from "@noctis/db";
 import type { NudgeSlot } from "@noctis/types";
 import { analyzeUser } from "./analyzer";
 import { remindPendingReviews } from "./reviewReminder";
+import { remindSalaryDue } from "./salaryReminder";
 
 const QUEUE_NAME = "nudges";
 
@@ -39,6 +40,7 @@ export function startScheduler(): { queue: Queue<NudgeJobData>; worker: Worker<N
         // `finally`, so an LLM outage doesn't take the reminder down with it.
         if (job.data.slot === "evening") {
           await Promise.all(users.map((user) => remindPendingReviews(user.id)));
+          await Promise.all(users.map((user) => remindSalaryDue(user.id)));
         }
       }
     },

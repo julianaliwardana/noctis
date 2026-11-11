@@ -9,7 +9,7 @@ import { AmountsToggle } from "@/shared/components/AmountsToggle";
 export default function FinancePage() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Finance" description="This month's spending, budgets, and what is left." actions={<AmountsToggle />} />
+      <PageHeader title="Finance" description="Spending, budgets, and what is left of your income." actions={<AmountsToggle />} />
       <Suspense fallback={<FinanceSkeleton />}>
         <FinanceData />
       </Suspense>
