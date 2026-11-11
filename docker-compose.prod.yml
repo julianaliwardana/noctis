@@ -36,7 +36,10 @@ services:
 
   api:
     <<: *app
-    command: pnpm --filter @noctis/api start
+    # Schema first, then the server: a deploy that adds columns needs no manual step. `db push`
+    # refuses anything that would lose data unless told otherwise, so a destructive change stops
+    # the api here (see its logs) instead of dropping a column.
+    command: sh -c "pnpm --filter @noctis/db exec prisma db push && pnpm --filter @noctis/api start"
 
   agent:
     <<: *app

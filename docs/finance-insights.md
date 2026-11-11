@@ -24,13 +24,7 @@ until then budgets, income and subscriptions are set through the MCP tools.
 - `Expense.paymentMethod`, `Expense.needsReview`, index on `(userId, date)`
 - `User.monthlyIncome`
 
-Apply after deploy, inside the api container:
-
-```sh
-pnpm --filter @noctis/db exec prisma db push
-```
-
-New columns are nullable or defaulted and the two tables are new, so nothing existing is rewritten.
+Applied automatically: the api container runs `prisma db push` before it starts. New columns are nullable or defaulted and the two tables are new, so nothing existing is rewritten.
 
 ## MCP tools (server 1.1.0)
 

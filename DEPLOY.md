@@ -155,10 +155,10 @@ The first build compiles Next.js on two ARM cores — expect **8–12 minutes**.
 are faster: the Dockerfile copies package manifests before source, so the dependency
 install stays cached unless a dependency actually changed.
 
-Then create the schema:
+The `api` container applies the schema itself (`prisma db push`) before it starts, so there is
+nothing to run by hand:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec api pnpm --filter @noctis/db exec prisma db push
 docker compose -f docker-compose.prod.yml ps
 ```
 
@@ -201,8 +201,15 @@ Don't run `docker image prune -a` — it deletes the images you'd roll back to. 
 
 ### Schema change
 
+Nothing to do: every start of the `api` container runs `prisma db push` first, so `./deploy.sh`
+(or a redeploy from Dokploy) brings the database up to the deployed schema.
+
+It only applies changes that keep data. If a change would drop a column or table, `db push`
+exits with an error, the api does not start, and the reason is in `logs api`. To go ahead on
+purpose, run it once by hand with the flag, then redeploy:
+
 ```bash
-docker compose -f docker-compose.prod.yml exec api pnpm --filter @noctis/db exec prisma db push
+docker compose -f docker-compose.prod.yml run --rm api pnpm --filter @noctis/db exec prisma db push --accept-data-loss
 ```
 
 ### Logs
