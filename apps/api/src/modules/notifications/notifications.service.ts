@@ -27,3 +27,17 @@ export async function sendPush(userId: string, title: string, message: string): 
   const subscription = JSON.parse(record.subscription) as webpush.PushSubscription;
   await webpush.sendNotification(subscription, JSON.stringify({ title, message }));
 }
+
+/**
+ * A notification the app raises itself (a budget crossed, transfers waiting for a category):
+ * stored as a nudge so it shows in the app, and pushed when the user has a subscription.
+ * A dead push endpoint must not fail the request that triggered it.
+ */
+export async function notify(userId: string, title: string, message: string, type: string): Promise<void> {
+  await db.nudge.create({ data: { userId, title, message, type } });
+  try {
+    await sendPush(userId, title, message);
+  } catch (error) {
+    console.error("Push delivery failed", error);
+  }
+}

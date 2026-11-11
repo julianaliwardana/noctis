@@ -8,15 +8,17 @@ datasource db {
 }
 
 model User {
-  id               String             @id @default(cuid())
-  email            String             @unique
+  id               String            @id @default(cuid())
+  email            String            @unique
   passwordHash     String
   /// Bumped to revoke every refresh token issued so far (sign out everywhere).
-  tokenVersion     Int                @default(0)
+  tokenVersion     Int               @default(0)
   name             String?
   dateOfBirth      DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  /// Take-home pay per month in IDR, typed in by the user. Powers "can I afford X?".
+  monthlyIncome    Float?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   tasks            Task[]
   habits           Habit[]
   expenses         Expense[]
@@ -27,6 +29,8 @@ model User {
   pomodoroSessions PomodoroSession[]
   pushSubscription PushSubscription?
   conversations    Conversation[]
+  budgets          Budget[]
+  subscriptions    Subscription[]
 }
 
 model Conversation {
@@ -97,25 +101,69 @@ model Category {
   name      String
   color     String   @default("#2a78d6")
   createdAt DateTime @default(now())
+  budget    Budget?
+
+  @@unique([userId, name])
+}
+
+/// A standing monthly limit for one category. Deleting the category deletes its budget.
+model Budget {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  categoryId      String   @unique
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  monthlyLimit    Float
+  /// Month ("YYYY-MM", Asia/Jakarta) whose 80% push already went out. One push per threshold per month.
+  alerted80Month  String?
+  alerted100Month String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// A subscription the user expects to be charged for. Bank titles hide the product
+/// ("Google Play"), so this is what gives a charge its name and makes a missing one visible.
+model Subscription {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  name           String
+  expectedAmount Float
+  /// Day of the month it bills, 1-31; clamped to the month's last day.
+  billingDay     Int
+  /// Case-insensitive substring of the transaction title that marks a charge. Defaults to `name`.
+  matchTitle     String?
+  paymentMethod  String?
+  note           String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([userId, name])
 }
 
 model Expense {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  title      String
-  amount     Float
-  category   String
-  type       String   @default("expense")
-  date       DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  title         String
+  amount        Float
+  category      String
+  type          String   @default("expense")
+  date          DateTime @default(now())
   /// Where the entry came from when it wasn't typed in the app, e.g. "bca-email".
-  source     String?
+  source        String?
   /// Id in the source system (the Gmail message id for "bca-email"). Makes imports idempotent.
-  externalId String?
+  externalId    String?
+  /// How it was paid when that isn't the bank account, e.g. "gopay" or "cash".
+  paymentMethod String?
+  /// The category is a guess (a transfer to someone new, an unnamed store charge) until the user confirms it.
+  needsReview   Boolean  @default(false)
 
   @@unique([userId, externalId])
+  @@index([userId, date])
 }
 
 model VaultKey {

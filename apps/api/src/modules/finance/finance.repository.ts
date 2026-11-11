@@ -1,5 +1,5 @@
 import { db } from "@noctis/db";
-import type { Category, Expense, Prisma } from "@noctis/db";
+import type { Budget, Category, Expense, Prisma, Subscription } from "@noctis/db";
 import type { CreateExpenseDto } from "./finance.dto";
 
 export function findAllByUser(userId: string): Promise<Expense[]> {
@@ -7,7 +7,7 @@ export function findAllByUser(userId: string): Promise<Expense[]> {
 }
 
 export function findByUserInRange(userId: string, start: Date, end: Date): Promise<Expense[]> {
-  return db.expense.findMany({ where: { userId, date: { gte: start, lt: end } } });
+  return db.expense.findMany({ where: { userId, date: { gte: start, lt: end } }, orderBy: { date: "desc" } });
 }
 
 export function findById(id: string, userId: string): Promise<Expense | null> {
@@ -26,6 +26,8 @@ export interface ImportedExpenseInput {
   date: Date;
   source: string;
   externalId: string;
+  paymentMethod?: string;
+  needsReview?: boolean;
 }
 
 export function createImported(userId: string, data: ImportedExpenseInput): Promise<Expense> {
@@ -40,10 +42,46 @@ export function findByExternalId(userId: string, externalId: string): Promise<Ex
   return db.expense.findUnique({ where: { userId_externalId: { userId, externalId } } });
 }
 
-export function searchByTitle(userId: string, query: string | undefined, take: number): Promise<Expense[]> {
+export interface ExpenseSearch {
+  query?: string;
+  category?: string;
+  start?: Date;
+  /** Exclusive. */
+  end?: Date;
+  minAmount?: number;
+  needsReview?: boolean;
+  /** Id of the last row of the previous page. */
+  cursor?: string;
+}
+
+/** Newest first. The id breaks ties, so paging never skips or repeats rows that share a timestamp. */
+export function search(userId: string, filters: ExpenseSearch, take: number): Promise<Expense[]> {
   const where: Prisma.ExpenseWhereInput = { userId };
-  if (query) where.title = { contains: query, mode: "insensitive" };
-  return db.expense.findMany({ where, orderBy: { date: "desc" }, take });
+  if (filters.query) where.title = { contains: filters.query, mode: "insensitive" };
+  if (filters.category) where.category = { equals: filters.category, mode: "insensitive" };
+  if (filters.start || filters.end) where.date = { gte: filters.start, lt: filters.end };
+  if (filters.minAmount !== undefined) where.amount = { gte: filters.minAmount };
+  if (filters.needsReview !== undefined) where.needsReview = filters.needsReview;
+
+  return db.expense.findMany({
+    where,
+    orderBy: [{ date: "desc" }, { id: "desc" }],
+    take,
+    ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+  });
+}
+
+/** Rows matching the title whose category the user has settled (or never had in doubt). */
+export function countReviewedByTitle(userId: string, query: string): Promise<number> {
+  return db.expense.count({ where: { userId, needsReview: false, title: { contains: query, mode: "insensitive" } } });
+}
+
+export function countNeedingReview(userId: string): Promise<number> {
+  return db.expense.count({ where: { userId, needsReview: true } });
+}
+
+export function update(id: string, data: Prisma.ExpenseUpdateInput): Promise<Expense> {
+  return db.expense.update({ where: { id }, data });
 }
 
 export function remove(id: string): Promise<Expense> {
@@ -89,4 +127,72 @@ export function deleteCategory(id: string, userId: string, name: string, fallbac
     db.expense.updateMany({ where: { userId, category: name }, data: { category: fallback } }),
     db.category.delete({ where: { id } }),
   ]);
+}
+
+export type BudgetWithCategory = Budget & { category: Category };
+
+export function findBudgets(userId: string): Promise<BudgetWithCategory[]> {
+  return db.budget.findMany({ where: { userId }, include: { category: true }, orderBy: { createdAt: "asc" } });
+}
+
+export function findBudgetByCategory(categoryId: string): Promise<Budget | null> {
+  return db.budget.findUnique({ where: { categoryId } });
+}
+
+export function upsertBudget(userId: string, categoryId: string, monthlyLimit: number): Promise<Budget> {
+  return db.budget.upsert({
+    where: { categoryId },
+    create: { userId, categoryId, monthlyLimit },
+    update: { monthlyLimit },
+  });
+}
+
+export async function deleteBudget(categoryId: string): Promise<boolean> {
+  const { count } = await db.budget.deleteMany({ where: { categoryId } });
+  return count > 0;
+}
+
+/**
+ * Marks a threshold as alerted for `month` and reports whether this call was the one that did it.
+ * Two imports landing together both see the budget crossed; only the one that wins this update pushes.
+ */
+export async function claimBudgetAlert(budgetId: string, threshold: 80 | 100, month: string): Promise<boolean> {
+  const field = threshold === 100 ? "alerted100Month" : "alerted80Month";
+  const { count } = await db.budget.updateMany({
+    // `not: month` alone would skip rows where the column is still null.
+    where: { id: budgetId, OR: [{ [field]: null }, { [field]: { not: month } }] },
+    data: threshold === 100 ? { alerted100Month: month, alerted80Month: month } : { alerted80Month: month },
+  });
+  return count > 0;
+}
+
+export function findSubscriptions(userId: string): Promise<Subscription[]> {
+  return db.subscription.findMany({ where: { userId }, orderBy: { billingDay: "asc" } });
+}
+
+export interface SubscriptionInput {
+  name: string;
+  expectedAmount: number;
+  billingDay: number;
+  matchTitle?: string | null;
+  paymentMethod?: string | null;
+  note?: string | null;
+  active?: boolean;
+}
+
+export function upsertSubscription(userId: string, { name, ...rest }: SubscriptionInput): Promise<Subscription> {
+  return db.subscription.upsert({
+    where: { userId_name: { userId, name } },
+    create: { userId, name, ...rest },
+    update: rest,
+  });
+}
+
+export async function findMonthlyIncome(userId: string): Promise<number | null> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { monthlyIncome: true } });
+  return user?.monthlyIncome ?? null;
+}
+
+export function setMonthlyIncome(userId: string, monthlyIncome: number | null): Promise<unknown> {
+  return db.user.update({ where: { id: userId }, data: { monthlyIncome }, select: { id: true } });
 }

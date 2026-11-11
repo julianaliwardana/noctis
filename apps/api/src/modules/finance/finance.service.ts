@@ -1,5 +1,33 @@
-import type { Category, Expense } from "@noctis/db";
+import type { Category, Expense, Subscription } from "@noctis/db";
+import { notify } from "../notifications/notifications.service";
 import * as financeRepository from "./finance.repository";
+import type { SubscriptionInput } from "./finance.repository";
+import {
+  alertDue,
+  budgetStatus,
+  categorySpend,
+  daysInMonth,
+  findRecurring,
+  isWalletTopUpCategory,
+  jakartaDay,
+  lastMonthsRange,
+  monthKey,
+  monthOverview,
+  monthRange,
+  subscriptionStatus,
+  summarize,
+  transferPerson,
+} from "./finance.insights";
+import type {
+  BudgetStatus,
+  BudgetThreshold,
+  DateRange,
+  GroupBy,
+  MonthOverview,
+  RecurringReport,
+  SpendSummary,
+  SubscriptionStatus,
+} from "./finance.insights";
 import type { CreateCategoryDto, CreateExpenseDto, SummaryQueryDto, UpdateCategoryDto } from "./finance.dto";
 
 /** Seeded once per user; the hexes are the validated categorical palette used by the charts. */
@@ -24,8 +52,10 @@ export function listExpenses(userId: string): Promise<Expense[]> {
   return financeRepository.findAllByUser(userId);
 }
 
-export function addExpense(userId: string, dto: CreateExpenseDto): Promise<Expense> {
-  return financeRepository.create(userId, dto);
+export async function addExpense(userId: string, dto: CreateExpenseDto): Promise<Expense> {
+  const expense = await financeRepository.create(userId, dto);
+  await checkBudgetAlert(userId, expense.category, expense.date);
+  return expense;
 }
 
 export async function deleteExpense(id: string, userId: string): Promise<boolean> {
@@ -89,11 +119,9 @@ export async function deleteCategory(id: string, userId: string): Promise<boolea
 }
 
 export async function getMonthlySummary(userId: string, query: SummaryQueryDto): Promise<MonthlySummary> {
-  const now = new Date();
-  const year = query.year ?? now.getFullYear();
-  const month = (query.month ?? now.getMonth() + 1) - 1;
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 1);
+  // Jakarta months, not the server's: in UTC the first seven hours of every month landed in the previous one.
+  const today = jakartaDay(new Date());
+  const { start, end } = monthRange(query.year ?? today.year, query.month ?? today.month);
 
   const expenses = await financeRepository.findByUserInRange(userId, start, end);
 
@@ -106,4 +134,227 @@ export async function getMonthlySummary(userId: string, query: SummaryQueryDto):
     },
     { income: 0, expense: 0, net: 0 },
   );
+}
+
+const rupiah = (amount: number): string => `Rp ${Math.round(amount).toLocaleString("id-ID")}`;
+
+/**
+ * Pushes once when a category's spend for the current month crosses 80% and once at 100%.
+ * Call it after anything that adds spend to a category. It never throws: a failed alert must
+ * not undo the transaction that caused it.
+ */
+export async function checkBudgetAlert(
+  userId: string,
+  categoryName: string,
+  transactionDate: Date,
+  now: Date = new Date(),
+): Promise<BudgetThreshold | null> {
+  try {
+    const month = monthKey(now);
+    if (monthKey(transactionDate) !== month) return null;
+
+    const category = await financeRepository.findCategoryByName(userId, categoryName);
+    const budget = category && (await financeRepository.findBudgetByCategory(category.id));
+    if (!budget) return null;
+
+    const today = jakartaDay(now);
+    const { start, end } = monthRange(today.year, today.month);
+    const spent = categorySpend(await financeRepository.findByUserInRange(userId, start, end), categoryName);
+
+    const threshold = alertDue(budget, spent, month);
+    if (!threshold || !(await financeRepository.claimBudgetAlert(budget.id, threshold, month))) return null;
+
+    const daysLeft = daysInMonth(today.year, today.month) - today.day + 1;
+    const spentOfLimit = `${rupiah(spent)} of ${rupiah(budget.monthlyLimit)} spent this month`;
+    if (threshold === 100) {
+      await notify(userId, `${categoryName} budget used up`, `${spentOfLimit}, with ${daysLeft} days to go.`, "finance");
+    } else {
+      const percent = Math.floor((spent / budget.monthlyLimit) * 100);
+      await notify(
+        userId,
+        `${categoryName} budget at ${percent}%`,
+        `${spentOfLimit}. ${rupiah(budget.monthlyLimit - spent)} left for ${daysLeft} days.`,
+        "finance",
+      );
+    }
+    return threshold;
+  } catch (error) {
+    console.error("Budget alert failed", error);
+    return null;
+  }
+}
+
+export async function spendingSummary(userId: string, range: DateRange, groupBy: GroupBy): Promise<SpendSummary> {
+  return summarize(await financeRepository.findByUserInRange(userId, range.start, range.end), groupBy);
+}
+
+export interface CategoryBudget extends BudgetStatus {
+  category: string;
+}
+
+export async function listBudgets(userId: string, year?: number, month?: number): Promise<CategoryBudget[]> {
+  const today = jakartaDay(new Date());
+  const { start, end } = monthRange(year ?? today.year, month ?? today.month);
+  const [budgets, rows] = await Promise.all([
+    financeRepository.findBudgets(userId),
+    financeRepository.findByUserInRange(userId, start, end),
+  ]);
+
+  return budgets.map((budget) => ({
+    category: budget.category.name,
+    ...budgetStatus(budget.monthlyLimit, categorySpend(rows, budget.category.name)),
+  }));
+}
+
+/** `monthlyLimit` null removes the budget. */
+export async function setBudget(
+  userId: string,
+  categoryName: string,
+  monthlyLimit: number | null,
+): Promise<{ category: string; monthlyLimit: number | null } | "unknown-category" | "wallet-category"> {
+  const categories = await listCategories(userId);
+  const category = categories.find((entry) => entry.name.toLowerCase() === categoryName.trim().toLowerCase());
+  if (!category) return "unknown-category";
+
+  if (monthlyLimit === null) {
+    await financeRepository.deleteBudget(category.id);
+    return { category: category.name, monthlyLimit: null };
+  }
+  // Top-ups never count as spend, so a budget on them would sit at 0% forever.
+  if (isWalletTopUpCategory(category.name)) return "wallet-category";
+
+  const budget = await financeRepository.upsertBudget(userId, category.id, monthlyLimit);
+  return { category: category.name, monthlyLimit: budget.monthlyLimit };
+}
+
+export interface MonthOverviewWithBudgets extends MonthOverview {
+  budgets: CategoryBudget[];
+}
+
+export async function getMonthOverview(userId: string, year?: number, month?: number): Promise<MonthOverviewWithBudgets> {
+  const now = new Date();
+  const today = jakartaDay(now);
+  const targetYear = year ?? today.year;
+  const targetMonth = month ?? today.month;
+  const { start, end } = monthRange(targetYear, targetMonth);
+
+  const [rows, income, budgets] = await Promise.all([
+    financeRepository.findByUserInRange(userId, start, end),
+    financeRepository.findMonthlyIncome(userId),
+    listBudgets(userId, targetYear, targetMonth),
+  ]);
+
+  return { ...monthOverview(rows, income, targetYear, targetMonth, now), budgets };
+}
+
+export function setMonthlyIncome(userId: string, monthlyIncome: number | null): Promise<unknown> {
+  return financeRepository.setMonthlyIncome(userId, monthlyIncome);
+}
+
+/**
+ * Whether a new transaction's category is a guess the user should confirm: a transfer filed
+ * under "Other" to someone with no settled history. Once the user has picked a category for
+ * that person (or confirmed "Other"), later transfers stop being flagged; while an earlier one
+ * is still waiting, new ones wait with it.
+ */
+export async function isUnreviewedTransfer(userId: string, title: string, category: string): Promise<boolean> {
+  const person = transferPerson(title);
+  if (!person || category.trim().toLowerCase() !== "other") return false;
+  return (await financeRepository.countReviewedByTitle(userId, person)) === 0;
+}
+
+export interface UpdateTransactionInput {
+  category?: string;
+  title?: string;
+  needsReview?: boolean;
+}
+
+export async function updateTransaction(
+  userId: string,
+  id: string,
+  input: UpdateTransactionInput,
+): Promise<{ expense: Expense; budgetAlert: BudgetThreshold | null } | "not-found" | { unknownCategory: string[] }> {
+  const existing = await financeRepository.findById(id, userId);
+  if (!existing) return "not-found";
+
+  let category: string | undefined;
+  if (input.category !== undefined) {
+    const categories = await listCategories(userId);
+    const match = categories.find((entry) => entry.name.toLowerCase() === input.category!.trim().toLowerCase());
+    if (!match) return { unknownCategory: categories.map((entry) => entry.name) };
+    category = match.name;
+  }
+
+  const expense = await financeRepository.update(id, {
+    ...(category !== undefined ? { category } : {}),
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    // Choosing a category is the review. An explicit flag still wins ("keep as Other").
+    ...(input.needsReview !== undefined
+      ? { needsReview: input.needsReview }
+      : category !== undefined
+        ? { needsReview: false }
+        : {}),
+  });
+
+  const moved = category !== undefined && category !== existing.category;
+  const budgetAlert = moved ? await checkBudgetAlert(userId, expense.category, expense.date) : null;
+  return { expense, budgetAlert };
+}
+
+export async function recurringReport(userId: string, months: number): Promise<RecurringReport> {
+  const { start, end } = lastMonthsRange(new Date(), months);
+  return findRecurring(await financeRepository.findByUserInRange(userId, start, end));
+}
+
+export interface SubscriptionWithStatus extends SubscriptionStatus {
+  name: string;
+  expectedAmount: number;
+  billingDay: number;
+  matchTitle: string | null;
+  paymentMethod: string | null;
+  note: string | null;
+  active: boolean;
+}
+
+export interface SubscriptionsReport {
+  subscriptions: SubscriptionWithStatus[];
+  /** Still to be charged within the next 7 days or already overdue, per payment method: what to keep funded. */
+  dueSoon: { paymentMethod: string; total: number; names: string[] }[];
+}
+
+const DUE_SOON_DAYS = 7;
+
+export async function listSubscriptions(userId: string, now: Date = new Date()): Promise<SubscriptionsReport> {
+  const { start, end } = lastMonthsRange(now, 4);
+  const [subscriptions, rows] = await Promise.all([
+    financeRepository.findSubscriptions(userId),
+    financeRepository.findByUserInRange(userId, start, end),
+  ]);
+
+  const withStatus = subscriptions.map((subscription: Subscription): SubscriptionWithStatus => ({
+    name: subscription.name,
+    expectedAmount: subscription.expectedAmount,
+    billingDay: subscription.billingDay,
+    matchTitle: subscription.matchTitle,
+    paymentMethod: subscription.paymentMethod,
+    note: subscription.note,
+    active: subscription.active,
+    ...subscriptionStatus(subscription, rows, now),
+  }));
+
+  const dueSoon = new Map<string, { paymentMethod: string; total: number; names: string[] }>();
+  for (const subscription of withStatus) {
+    if (!subscription.active || subscription.status === "paid" || subscription.daysUntilDue > DUE_SOON_DAYS) continue;
+    const paymentMethod = subscription.paymentMethod ?? "unknown";
+    const bucket = dueSoon.get(paymentMethod) ?? { paymentMethod, total: 0, names: [] };
+    bucket.total += subscription.expectedAmount;
+    bucket.names.push(subscription.name);
+    dueSoon.set(paymentMethod, bucket);
+  }
+
+  return { subscriptions: withStatus, dueSoon: Array.from(dueSoon.values()) };
+}
+
+export function upsertSubscription(userId: string, input: SubscriptionInput): Promise<Subscription> {
+  return financeRepository.upsertSubscription(userId, input);
 }

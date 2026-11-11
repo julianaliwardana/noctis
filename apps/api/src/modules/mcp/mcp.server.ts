@@ -3,8 +3,43 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import * as financeRepository from "../finance/finance.repository";
 import * as financeService from "../finance/finance.service";
+import { dayKey, dayRange, jakartaDay, monthRange, parseMonthKey } from "../finance/finance.insights";
+import type { DateRange } from "../finance/finance.insights";
+import type { Expense } from "@noctis/db";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+const DAY = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .describe("A Jakarta calendar day, YYYY-MM-DD");
+const MONTH = z
+  .string()
+  .regex(/^\d{4}-\d{2}$/)
+  .describe("A Jakarta calendar month, YYYY-MM. Defaults to the current month.");
+
+function transactionView(expense: Expense) {
+  return {
+    id: expense.id,
+    title: expense.title,
+    amount: expense.amount,
+    category: expense.category,
+    type: expense.type,
+    date: expense.date.toISOString(),
+    source: expense.source,
+    paymentMethod: expense.paymentMethod,
+    needsReview: expense.needsReview,
+  };
+}
+
+/** `from`/`to` (both included) when given, otherwise the current Jakarta month. */
+function resolveRange(from: string | undefined, to: string | undefined): DateRange | string {
+  if (!from && !to) {
+    const today = jakartaDay(new Date());
+    return monthRange(today.year, today.month);
+  }
+  if (!from || !to) return "Give both `from` and `to`, or neither for the current month.";
+  return dayRange(from, to) ?? `Invalid range ${from}..${to}: both must be real dates and \`to\` must not be before \`from\`.`;
+}
 
 function json(value: unknown): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
@@ -23,7 +58,7 @@ function isUniqueViolation(error: unknown): boolean {
  * token belongs to — no tool takes a user id, so the model can't act as anyone else.
  */
 export function buildMcpServer(userId: string): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.0.0" });
+  const server = new McpServer({ name: "noctis", version: "1.1.0" });
 
   server.registerTool(
     "list_categories",
@@ -82,27 +117,36 @@ export function buildMcpServer(userId: string): McpServer {
   server.registerTool(
     "search_transactions",
     {
-      title: "Search past transactions",
+      title: "Search transactions",
       description:
-        "Recent transactions, newest first, optionally filtered by a case-insensitive title substring. Use it to see how a merchant or person was categorized before, and stay consistent with that.",
+        "Transactions, newest first. Filter by title substring, category, date range, minimum amount or the needs-review flag; page with `cursor`. Use it to see how a merchant or person was categorized before (search the person's name alone, without the remark) and stay consistent with that. For totals use get_spending_summary instead of adding rows up.",
       inputSchema: {
-        query: z.string().trim().min(1).optional().describe("Substring of the title, e.g. 'INDOMARET'"),
-        limit: z.number().int().min(1).max(50).default(20),
+        query: z.string().trim().min(1).optional().describe("Case-insensitive substring of the title, e.g. 'indomaret' or a person's name"),
+        category: z.string().trim().min(1).optional().describe("Exact category name, case-insensitive"),
+        from: DAY.optional(),
+        to: DAY.optional().describe("Last day to include, YYYY-MM-DD. Give it together with `from`."),
+        minAmount: z.number().positive().optional().describe("Only rows of at least this many IDR"),
+        needsReview: z.boolean().optional().describe("true: only rows whose category is still a guess"),
+        limit: z.number().int().min(1).max(100).default(20),
+        cursor: z.string().min(1).optional().describe("`nextCursor` from the previous page"),
       },
       annotations: { readOnlyHint: true },
     },
-    async ({ query, limit }) => {
-      const expenses = await financeRepository.searchByTitle(userId, query, limit);
-      return json(
-        expenses.map(({ title, amount, category, type, date, source }) => ({
-          title,
-          amount,
-          category,
-          type,
-          date: date.toISOString(),
-          source,
-        })),
+    async ({ query, category, from, to, minAmount, needsReview, limit, cursor }) => {
+      const range = from || to ? resolveRange(from, to) : undefined;
+      if (typeof range === "string") return fail(range);
+
+      // One extra row tells us whether another page exists without a second query.
+      const rows = await financeRepository.search(
+        userId,
+        { query, category, start: range?.start, end: range?.end, minAmount, needsReview, cursor },
+        limit + 1,
       );
+      const page = rows.slice(0, limit);
+      return json({
+        transactions: page.map(transactionView),
+        nextCursor: rows.length > limit ? (page[page.length - 1] as Expense).id : null,
+      });
     },
   );
 
@@ -111,7 +155,7 @@ export function buildMcpServer(userId: string): McpServer {
     {
       title: "Add transaction",
       description:
-        "Logs one transaction. Idempotent on externalId: calling it again for the same email returns status 'duplicate' instead of creating a second entry. The category must already exist (see list_categories / create_category).",
+        "Logs one transaction. Idempotent on externalId: calling it again for the same source returns status 'duplicate' instead of creating a second entry. The category must already exist (see list_categories / create_category). A transfer filed under 'Other' to someone never paid before is flagged needsReview automatically. The result's `budgetAlert` is 80 or 100 when this transaction pushed its category past that share of its monthly budget (the user has already been notified).",
       inputSchema: {
         title: z
           .string()
@@ -125,13 +169,27 @@ export function buildMcpServer(userId: string): McpServer {
         date: z
           .string()
           .datetime({ offset: true })
-          .describe("Transaction time from the email, ISO 8601 with offset, e.g. 2026-11-09T10:36:24+07:00"),
-        externalId: z.string().min(1).describe("Gmail message id of the source email"),
+          .describe("Transaction time from the source, ISO 8601 with offset, e.g. 2026-11-09T10:36:24+07:00"),
+        externalId: z
+          .string()
+          .min(1)
+          .describe("Stable id in the source system: the Gmail message id for an email, or 'receipt-<date>-<amount>-<merchant>' for a photo"),
         source: z.string().trim().min(1).max(40).default("bca-email"),
+        paymentMethod: z
+          .string()
+          .trim()
+          .min(1)
+          .max(20)
+          .optional()
+          .describe("How it was paid when not straight from the bank account: 'gopay', 'cash', ..."),
+        needsReview: z
+          .boolean()
+          .optional()
+          .describe("true when the category is a guess the user should confirm (e.g. an unnamed app-store charge). Omit to let the server decide."),
       },
       annotations: { idempotentHint: true },
     },
-    async ({ title, amount, category, type, date, externalId, source }) => {
+    async ({ title, amount, category, type, date, externalId, source, paymentMethod, needsReview }) => {
       const existing = await financeRepository.findByExternalId(userId, externalId);
       if (existing) return json({ status: "duplicate", id: existing.id, category: existing.category });
 
@@ -143,6 +201,9 @@ export function buildMcpServer(userId: string): McpServer {
         );
       }
 
+      const flagged =
+        needsReview ?? (type === "expense" && (await financeService.isUnreviewedTransfer(userId, title, match.name)));
+
       try {
         const expense = await financeRepository.createImported(userId, {
           title,
@@ -152,13 +213,206 @@ export function buildMcpServer(userId: string): McpServer {
           date: new Date(date),
           source,
           externalId,
+          paymentMethod,
+          needsReview: flagged,
         });
-        return json({ status: "created", id: expense.id, title: expense.title, category: expense.category });
+        const budgetAlert = await financeService.checkBudgetAlert(userId, expense.category, expense.date);
+        return json({
+          status: "created",
+          id: expense.id,
+          title: expense.title,
+          category: expense.category,
+          needsReview: expense.needsReview,
+          budgetAlert,
+        });
       } catch (error) {
         // Two runs racing on the same email: the unique index decides, the loser reports a duplicate.
         if (isUniqueViolation(error)) return json({ status: "duplicate" });
         throw error;
       }
+    },
+  );
+
+  server.registerTool(
+    "update_transaction",
+    {
+      title: "Update transaction",
+      description:
+        "Changes a transaction's category and/or title (ids come from search_transactions). Setting a category clears needsReview; pass needsReview: false alone to confirm the current category as-is. Only call this when the user asked for the change in this conversation — in an unattended run, report the suggestion instead.",
+      inputSchema: {
+        id: z.string().min(1),
+        category: z.string().trim().min(1).optional().describe("An existing category name"),
+        title: z.string().trim().min(1).max(120).optional(),
+        needsReview: z.boolean().optional(),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async ({ id, category, title, needsReview }) => {
+      if (category === undefined && title === undefined && needsReview === undefined) return fail("Nothing to update.");
+
+      const result = await financeService.updateTransaction(userId, id, { category, title, needsReview });
+      if (result === "not-found") return fail(`No transaction with id "${id}".`);
+      if ("unknownCategory" in result) {
+        return fail(`Unknown category "${category}". Pick one of: ${result.unknownCategory.join(", ")} — or call create_category first.`);
+      }
+      return json({ status: "updated", transaction: transactionView(result.expense), budgetAlert: result.budgetAlert });
+    },
+  );
+
+  server.registerTool(
+    "get_spending_summary",
+    {
+      title: "Spending summary",
+      description:
+        "Totals for a date range (default: the current month), grouped by category, merchant or day. `spent` is expenses minus refunds; e-wallet top-ups are reported separately as `walletTopUps` and are not spend. Compare two periods by calling it twice.",
+      inputSchema: {
+        from: DAY.optional(),
+        to: DAY.optional().describe("Last day to include, YYYY-MM-DD. Give it together with `from`."),
+        groupBy: z.enum(["category", "merchant", "day"]).default("category"),
+        top: z.number().int().min(1).max(100).default(25).describe("How many groups to return, biggest first (days are never cut)"),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ from, to, groupBy, top }) => {
+      const range = resolveRange(from, to);
+      if (typeof range === "string") return fail(range);
+
+      const summary = await financeService.spendingSummary(userId, range, groupBy);
+      const groups = groupBy === "day" ? summary.groups : summary.groups.slice(0, top);
+      return json({
+        from: dayKey(range.start),
+        // `end` is exclusive: one millisecond earlier is the last included day.
+        to: dayKey(new Date(range.end.getTime() - 1)),
+        ...summary,
+        groups,
+        groupsOmitted: summary.groups.length - groups.length,
+      });
+    },
+  );
+
+  server.registerTool(
+    "get_month_overview",
+    {
+      title: "Month overview",
+      description:
+        "One call for 'can I afford X?': the month's income (as set by the user), spend so far, what is left, days left, and every category budget with its usage. `remaining` is null until an income has been set with set_monthly_income.",
+      inputSchema: { month: MONTH.optional() },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ month }) => {
+      const parsed = month ? parseMonthKey(month) : undefined;
+      if (parsed === null) return fail(`Invalid month "${month}".`);
+      return json(await financeService.getMonthOverview(userId, parsed?.year, parsed?.month));
+    },
+  );
+
+  server.registerTool(
+    "set_monthly_income",
+    {
+      title: "Set monthly income",
+      description: "Stores the user's take-home pay per month in IDR, used by get_month_overview. Only set it to a figure the user gave you.",
+      inputSchema: {
+        monthlyIncome: z.number().positive().nullable().describe("IDR per month, or null to clear it"),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async ({ monthlyIncome }) => {
+      await financeService.setMonthlyIncome(userId, monthlyIncome);
+      return json({ status: "saved", monthlyIncome });
+    },
+  );
+
+  server.registerTool(
+    "list_budgets",
+    {
+      title: "List budgets",
+      description:
+        "Every category budget with this month's spend, what is left, percent used and state (ok / warning from 80% / over). Noctis itself notifies the user at 80% and 100%, so there is no need to alert again.",
+      inputSchema: { month: MONTH.optional() },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ month }) => {
+      const parsed = month ? parseMonthKey(month) : undefined;
+      if (parsed === null) return fail(`Invalid month "${month}".`);
+      return json(await financeService.listBudgets(userId, parsed?.year, parsed?.month));
+    },
+  );
+
+  server.registerTool(
+    "set_budget",
+    {
+      title: "Set budget",
+      description: "Sets or removes the monthly spending limit of one category. Only set a limit the user gave you.",
+      inputSchema: {
+        category: z.string().trim().min(1).describe("An existing category name"),
+        monthlyLimit: z.number().positive().nullable().describe("IDR per month, or null to remove the budget"),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async ({ category, monthlyLimit }) => {
+      const result = await financeService.setBudget(userId, category, monthlyLimit);
+      if (result === "unknown-category") return fail(`Unknown category "${category}". See list_categories.`);
+      if (result === "wallet-category") {
+        return fail(`"${category}" holds e-wallet top-ups, which are not counted as spend, so a budget on it would never move.`);
+      }
+      return json({ status: result.monthlyLimit === null ? "removed" : "saved", ...result });
+    },
+  );
+
+  server.registerTool(
+    "list_recurring",
+    {
+      title: "Find recurring charges",
+      description:
+        "Scans the last few months for charges that repeat. `recurring`: same title and amount in two or more months at a monthly rhythm. `candidates`: charges in the Subscriptions category not yet seen twice. `duplicateMonths` marks a month where the same charge appears more than once. Compare with list_subscriptions to spot ones the user hasn't registered.",
+      inputSchema: {
+        months: z.number().int().min(1).max(12).default(3).describe("How many months back to scan, the current one included"),
+      },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ months }) => json(await financeService.recurringReport(userId, months)),
+  );
+
+  server.registerTool(
+    "list_subscriptions",
+    {
+      title: "List subscriptions",
+      description:
+        "The user's registered subscriptions with this cycle's status: paid (with the charge, and priceChanged when the amount differs), upcoming, due, or missing (overdue with no matching charge). `dueSoon` totals what is still to be charged within 7 days or overdue, per payment method — e.g. how much the e-wallet needs.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => json(await financeService.listSubscriptions(userId)),
+  );
+
+  server.registerTool(
+    "upsert_subscription",
+    {
+      title: "Add or update subscription",
+      description:
+        "Registers a subscription, or updates the one with the same name. A charge counts for it when the transaction title contains `matchTitle` (default: the name), so log the charge with a title that includes it. Only register subscriptions the user confirmed.",
+      inputSchema: {
+        name: z.string().trim().min(1).max(60).describe("e.g. 'YouTube Premium'"),
+        expectedAmount: z.number().positive().describe("IDR per charge, tax included"),
+        billingDay: z.number().int().min(1).max(31).describe("Day of the month it bills"),
+        matchTitle: z.string().trim().min(1).max(60).nullable().optional().describe("Title substring that identifies its charges"),
+        paymentMethod: z.string().trim().min(1).max(20).nullable().optional().describe("e.g. 'gopay'"),
+        note: z.string().trim().max(200).nullable().optional(),
+        active: z.boolean().optional().describe("false once cancelled"),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async (input) => {
+      const subscription = await financeService.upsertSubscription(userId, input);
+      return json({
+        status: "saved",
+        name: subscription.name,
+        expectedAmount: subscription.expectedAmount,
+        billingDay: subscription.billingDay,
+        matchTitle: subscription.matchTitle,
+        paymentMethod: subscription.paymentMethod,
+        active: subscription.active,
+      });
     },
   );
 
