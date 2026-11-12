@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { bearerFrom, tokenMatches } from "./mcp.auth";
+import { bearerFrom, matchToken, parseTokens } from "./mcp.auth";
 import { buildMcpServer } from "./mcp.server";
 import { findUserByEmail } from "../auth/auth.service";
 
@@ -10,17 +10,18 @@ import { findUserByEmail } from "../auth/auth.service";
  * so nothing is kept between calls and any replica can answer.
  */
 export const mcpModule: FastifyPluginAsync = async (fastify) => {
-  const token = process.env.MCP_TOKEN?.trim();
+  // Throws on a malformed MCP_TOKENS or a short token: better a failed start than a weak endpoint.
+  const tokens = parseTokens(process.env);
   // Prefer the account id: it never changes, whereas editing your email on the profile page used to
   // silently break MCP_USER_EMAIL and with it every scheduled import.
   const userId = process.env.MCP_USER_ID?.trim();
   const email = process.env.MCP_USER_EMAIL?.trim();
 
-  if (!token || (!userId && !email)) {
-    fastify.log.info("MCP endpoint disabled: set MCP_TOKEN and MCP_USER_ID (or MCP_USER_EMAIL) to enable it");
+  if (tokens.size === 0 || (!userId && !email)) {
+    fastify.log.info("MCP endpoint disabled: set MCP_TOKENS (or MCP_TOKEN) and MCP_USER_ID (or MCP_USER_EMAIL) to enable it");
     return;
   }
-  if (token.length < 32) throw new Error("MCP_TOKEN must be at least 32 characters");
+  fastify.log.info({ clients: [...tokens.keys()] }, "MCP endpoint enabled");
   if (!userId) fastify.log.warn("MCP is bound by MCP_USER_EMAIL; set MCP_USER_ID instead so an email change can't break it");
 
   async function resolveUserId(): Promise<string | null> {
@@ -32,9 +33,11 @@ export const mcpModule: FastifyPluginAsync = async (fastify) => {
   }
 
   fastify.post("/", async (request, reply) => {
-    if (!tokenMatches(bearerFrom(request.headers.authorization), token)) {
+    const client = matchToken(bearerFrom(request.headers.authorization), tokens);
+    if (!client) {
       return reply.code(401).header("WWW-Authenticate", 'Bearer realm="noctis-mcp"').send({ error: "Unauthorized" });
     }
+    request.log.info({ mcpClient: client }, "MCP call");
 
     const boundUserId = await resolveUserId();
     if (!boundUserId) {

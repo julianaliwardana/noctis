@@ -10,6 +10,7 @@ Gmail (connector) ──► Claude ──► POST https://noctis-api.julianwarda
                                    find_imported · add_transaction
 ```
 
+Several clients can connect with their own tokens; see [mcp-dev-tools.md](mcp-dev-tools.md).
 Budgets, subscriptions, summaries and the review flag built on top of this are described in
 [finance-insights.md](finance-insights.md). `search_transactions` now returns
 `{ transactions, nextCursor }` rather than a bare array.
@@ -22,7 +23,7 @@ Budgets, subscriptions, summaries and the review flag built on top of this are d
 | `packages/db/prisma/schema.prisma` | `Expense.source`, `Expense.externalId`, unique `(userId, externalId)` |
 | `apps/api/src/modules/finance/finance.repository.ts` | `createImported`, `findByExternalId(s)`, `search` |
 
-The endpoint is **off** unless `MCP_TOKEN` and `MCP_USER_ID` (or the older `MCP_USER_EMAIL`)
+The endpoint is **off** unless a token (`MCP_TOKENS`, or the single `MCP_TOKEN`) and `MCP_USER_ID` (or the older `MCP_USER_EMAIL`)
 are set. Every tool acts as that one account; no tool takes a user id. Prefer `MCP_USER_ID`: an
 email binding breaks the moment you change your login email.
 

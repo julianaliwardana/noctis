@@ -1,14 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import * as financeRepository from "../finance/finance.repository";
 import * as financeService from "../finance/finance.service";
 import { dayKey, dayRange, jakartaDay, monthRange, parseMonthKey } from "../finance/finance.insights";
 import type { DateRange } from "../finance/finance.insights";
-import type { Expense, Task } from "@noctis/db";
+import type { Expense } from "@noctis/db";
 import type Redis from "ioredis";
 import { collectHealth } from "../health/health.service";
 import * as tasksRepository from "../tasks/tasks.repository";
+import { registerDevTools } from "./mcp.devtools";
+import { registerPrompts } from "./mcp.prompts";
+import { registerResources } from "./mcp.resources";
+import { fail, json, taskView } from "./mcp.views";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const DAY = z
@@ -44,14 +47,6 @@ function resolveRange(from: string | undefined, to: string | undefined): DateRan
   return dayRange(from, to) ?? `Invalid range ${from}..${to}: both must be real dates and \`to\` must not be before \`from\`.`;
 }
 
-function json(value: unknown): CallToolResult {
-  return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
-}
-
-function fail(message: string): CallToolResult {
-  return { content: [{ type: "text", text: message }], isError: true };
-}
-
 function isUniqueViolation(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002";
 }
@@ -65,7 +60,7 @@ export interface McpDependencies {
 }
 
 export function buildMcpServer(userId: string, deps: McpDependencies): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.3.0" });
+  const server = new McpServer({ name: "noctis", version: "1.4.0" });
 
   server.registerTool(
     "list_categories",
@@ -487,16 +482,10 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
     },
   );
 
+  registerDevTools(server, userId);
+  registerResources(server, userId);
+  registerPrompts(server);
+
   return server;
 }
 
-function taskView(task: Task) {
-  return {
-    id: task.id,
-    title: task.title,
-    notes: task.notes,
-    dueAt: task.dueAt?.toISOString() ?? null,
-    completed: task.completed,
-    createdAt: task.createdAt.toISOString(),
-  };
-}

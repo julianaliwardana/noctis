@@ -8,7 +8,7 @@ Claude scheduled task ──► Noctis MCP (bearer token) ──► server_healt
                                                     └─► add_task   (only when a check fails)
 ```
 
-No new public endpoint: health is an MCP tool behind the existing `MCP_TOKEN`, so nothing about the
+No new public endpoint: health is an MCP tool behind the existing MCP tokens (`MCP_TOKENS` / `MCP_TOKEN`), so nothing about the
 server is reachable without it, and the Dokploy API stays private.
 
 ## What is checked
