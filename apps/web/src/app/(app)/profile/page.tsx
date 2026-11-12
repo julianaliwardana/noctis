@@ -13,6 +13,7 @@ import { Calendar } from "@/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import SpotlightCard from "@/shared/components/SpotlightCard";
 import { AppearancePanel } from "@/features/appearance/ui/AppearancePanel";
+import { ConnectedApps } from "@/features/oauth/ui/ConnectedApps";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { logoutAll } from "@/features/auth/api/auth.api";
 import { ApiError } from "@/lib/api";
@@ -235,6 +236,8 @@ export default function ProfilePage() {
       </div>
 
       <AppearancePanel />
+
+      <ConnectedApps />
 
       <Card>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

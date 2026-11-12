@@ -1,7 +1,8 @@
 # Noctis MCP from the code editor (Claude Code, VS Code)
 
 The same MCP endpoint Claude.ai uses also serves Claude Code and any other MCP client. No extra
-server: each client connects to `https://noctis-api.julianwardana.dev/mcp` with its own token.
+server: each client connects to `https://noctis-api.julianwardana.dev/mcp` with its own token, or by
+signing in (see [mcp-oauth.md](./mcp-oauth.md)).
 
 ```
 Claude Code (terminal / VS Code) ─┐
@@ -26,7 +27,7 @@ MCP_TOKENS=claude-ai:<token>,mac:<token>
   out. If Redis is down the limiter lets requests through. For floods, add a Cloudflare rate-limiting
   rule on `/mcp`.
 
-## What clients get (server 1.4.0)
+## What clients get (server 1.5.0)
 
 **Tools**
 
@@ -66,6 +67,8 @@ claude mcp add --scope user --transport http noctis \
 
 `--scope user` makes it available in every project and keeps the token in `~/.claude.json`, out of
 any repository. The Claude Code extension in VS Code uses the same configuration. Check with `/mcp`.
+
+Or skip the token: add it without `--header` and sign in from `/mcp` (see [mcp-oauth.md](./mcp-oauth.md)).
 
 ## Checks
 

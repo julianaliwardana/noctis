@@ -15,6 +15,13 @@ const ALLOWED_FETCH_SITES = new Set(["same-origin", "none"]);
  * Non-browser callers (curl, the MCP connector) send neither header and aren't cookie-authenticated
  * anyway, so they pass through untouched.
  */
+const TOKEN_ENDPOINTS = ["/mcp", "/oauth/token", "/oauth/register", "/oauth/revoke"];
+
+function isTokenEndpoint(url: string): boolean {
+  const path = url.split("?")[0] ?? url;
+  return TOKEN_ENDPOINTS.some((endpoint) => path === endpoint || (endpoint === "/mcp" && path.startsWith("/mcp/")));
+}
+
 const csrfPlugin: FastifyPluginAsync<{ allowedOrigins: string[] }> = async (fastify, { allowedOrigins }) => {
   const origins = new Set(allowedOrigins);
 
@@ -29,8 +36,8 @@ const csrfPlugin: FastifyPluginAsync<{ allowedOrigins: string[] }> = async (fast
 
   fastify.addHook("onRequest", async (request, reply) => {
     if (!UNSAFE_METHODS.has(request.method)) return;
-    // Bearer-token endpoint, called server-to-server; cookies play no part in it.
-    if (request.url === "/mcp" || request.url.startsWith("/mcp/") || request.url.startsWith("/mcp?")) return;
+    // Bearer-token and OAuth client endpoints, called by MCP clients; cookies play no part in them.
+    if (isTokenEndpoint(request.url)) return;
 
     if (crossOrigin(request)) {
       request.log.warn({ origin: request.headers.origin, site: request.headers["sec-fetch-site"] }, "blocked cross-origin request");

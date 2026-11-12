@@ -19,6 +19,7 @@ import { userRoutes } from "./modules/user/user.router";
 import { aiModule } from "./modules/ai/ai.module";
 import { youtubeModule } from "./modules/youtube/youtube.module";
 import { mcpModule } from "./modules/mcp/mcp.module";
+import { oauthModule } from "./modules/oauth/oauth.module";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
@@ -59,6 +60,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(aiModule, { prefix: "/ai" });
   await app.register(youtubeModule, { prefix: "/youtube" });
   await app.register(mcpModule, { prefix: "/mcp" });
+  // No prefix: serves /.well-known/* and /oauth/*.
+  await app.register(oauthModule);
 
   return app;
 }

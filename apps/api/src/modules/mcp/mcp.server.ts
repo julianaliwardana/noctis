@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import * as financeRepository from "../finance/finance.repository";
 import * as financeService from "../finance/finance.service";
@@ -57,10 +58,29 @@ function isUniqueViolation(error: unknown): boolean {
  */
 export interface McpDependencies {
   redis: Redis;
+  /**
+   * May the caller change data? Static tokens always can; an OAuth connection only with the
+   * noctis:write scope. Without it every tool not marked readOnlyHint is switched off, so it is
+   * neither listed nor callable.
+   */
+  canWrite?: boolean;
+}
+
+/** Records every tool as it is registered, so write tools can be switched off afterwards. */
+function trackTools(server: McpServer): Array<{ tool: RegisteredTool; readOnly: boolean }> {
+  const tracked: Array<{ tool: RegisteredTool; readOnly: boolean }> = [];
+  const register = server.registerTool.bind(server) as (...args: unknown[]) => RegisteredTool;
+  server.registerTool = ((name: string, config: { annotations?: { readOnlyHint?: boolean } }, callback: unknown) => {
+    const tool = register(name, config, callback);
+    tracked.push({ tool, readOnly: config.annotations?.readOnlyHint === true });
+    return tool;
+  }) as typeof server.registerTool;
+  return tracked;
 }
 
 export function buildMcpServer(userId: string, deps: McpDependencies): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.4.0" });
+  const server = new McpServer({ name: "noctis", version: "1.5.0" });
+  const tools = trackTools(server);
 
   server.registerTool(
     "list_categories",
@@ -485,6 +505,10 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
   registerDevTools(server, userId);
   registerResources(server, userId);
   registerPrompts(server);
+
+  if (deps.canWrite === false) {
+    for (const { tool, readOnly } of tools) if (!readOnly) tool.disable();
+  }
 
   return server;
 }

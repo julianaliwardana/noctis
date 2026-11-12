@@ -34,6 +34,8 @@ model User {
   conversations    Conversation[]
   budgets          Budget[]
   subscriptions    Subscription[]
+  oauthCodes       OAuthCode[]
+  oauthGrants      OAuthGrant[]
 }
 
 model Conversation {
@@ -220,4 +222,67 @@ model PushSubscription {
   userId       String @unique
   user         User   @relation(fields: [userId], references: [id])
   subscription String
+}
+
+/// An app registered through OAuth dynamic client registration (Claude.ai, Claude Code, …).
+/// Public clients only: no secret, PKCE required. `id` is the client_id.
+model OAuthClient {
+  id           String       @id
+  name         String
+  redirectUris String[]
+  createdAt    DateTime     @default(now())
+  codes        OAuthCode[]
+  grants       OAuthGrant[]
+}
+
+/// A one-time authorization code, valid for minutes. Only its hash is stored.
+model OAuthCode {
+  id            String      @id @default(cuid())
+  codeHash      String      @unique
+  clientId      String
+  client        OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redirectUri   String
+  scope         String
+  codeChallenge String
+  resource      String?
+  expiresAt     DateTime
+  usedAt        DateTime?
+  /// The grant this code was exchanged for; revoked if the code is ever presented again.
+  grantId       String?
+  createdAt     DateTime    @default(now())
+}
+
+/// One connected app for one user: what "Connected apps" lists and what Revoke ends. Every access
+/// and refresh token issued through it belongs to it.
+model OAuthGrant {
+  id         String       @id @default(cuid())
+  clientId   String
+  client     OAuthClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope      String
+  resource   String?
+  createdAt  DateTime     @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  tokens     OAuthToken[]
+
+  @@index([userId])
+}
+
+/// An access token (hour) or refresh token (month). Only the hash is stored.
+model OAuthToken {
+  id        String     @id @default(cuid())
+  tokenHash String     @unique
+  /// "access" | "refresh"
+  kind      String
+  grantId   String
+  grant     OAuthGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime   @default(now())
+
+  @@index([grantId])
 }
