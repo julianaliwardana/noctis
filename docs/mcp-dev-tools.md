@@ -20,6 +20,11 @@ MCP_TOKENS=claude-ai:<token>,mac:<token>
 - Revoke one client by removing its entry and redeploying; the others keep working.
 - The older single `MCP_TOKEN` still works, as client `default`.
 - Every call logs `mcpClient` with the name, so the api logs show who called.
+- Wrong tokens are rate-limited per IP (Cloudflare's `CF-Connecting-IP`): after 20 in 10 minutes the
+  IP gets `429` with `Retry-After` instead of `401`, and one warning is logged. A valid token is never
+  refused — Claude calls from shared cloud IPs, so blocking a whole IP would let anyone lock Claude
+  out. If Redis is down the limiter lets requests through. For floods, add a Cloudflare rate-limiting
+  rule on `/mcp`.
 
 ## What clients get (server 1.4.0)
 

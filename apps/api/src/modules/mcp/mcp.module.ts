@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerFrom, matchToken, parseTokens } from "./mcp.auth";
+import { recordMcpFailure } from "./mcp.rateLimit";
 import { buildMcpServer } from "./mcp.server";
 import { findUserByEmail } from "../auth/auth.service";
 
@@ -35,6 +36,10 @@ export const mcpModule: FastifyPluginAsync = async (fastify) => {
   fastify.post("/", async (request, reply) => {
     const client = matchToken(bearerFrom(request.headers.authorization), tokens);
     if (!client) {
+      const retryAfter = await recordMcpFailure(request);
+      if (retryAfter !== null) {
+        return reply.code(429).header("Retry-After", String(retryAfter)).send({ error: "Too many requests", retryAfter });
+      }
       return reply.code(401).header("WWW-Authenticate", 'Bearer realm="noctis-mcp"').send({ error: "Unauthorized" });
     }
     request.log.info({ mcpClient: client }, "MCP call");
