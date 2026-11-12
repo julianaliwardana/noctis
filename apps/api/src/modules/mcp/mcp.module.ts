@@ -42,7 +42,7 @@ export const mcpModule: FastifyPluginAsync = async (fastify) => {
       return reply.code(500).send({ error: "MCP user not found" });
     }
 
-    const server = buildMcpServer(boundUserId);
+    const server = buildMcpServer(boundUserId, { redis: fastify.redis });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
 
     // The transport writes the response itself, so Fastify must step aside.
