@@ -5,6 +5,7 @@ import type { NudgeSlot } from "@noctis/types";
 import { analyzeUser } from "./analyzer";
 import { remindPendingReviews } from "./reviewReminder";
 import { remindSalaryDue } from "./salaryReminder";
+import { startHeartbeat } from "./heartbeat";
 
 const QUEUE_NAME = "nudges";
 
@@ -24,6 +25,7 @@ export function startScheduler(): { queue: Queue<NudgeJobData>; worker: Worker<N
   });
 
   const queue = new Queue<NudgeJobData>(QUEUE_NAME, { connection });
+  startHeartbeat(connection);
 
   for (const { slot, cron } of SCHEDULES) {
     queue.upsertJobScheduler(`nudge-${slot}`, { pattern: cron }, { name: slot, data: { slot } });

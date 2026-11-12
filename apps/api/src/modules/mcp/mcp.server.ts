@@ -5,7 +5,10 @@ import * as financeRepository from "../finance/finance.repository";
 import * as financeService from "../finance/finance.service";
 import { dayKey, dayRange, jakartaDay, monthRange, parseMonthKey } from "../finance/finance.insights";
 import type { DateRange } from "../finance/finance.insights";
-import type { Expense } from "@noctis/db";
+import type { Expense, Task } from "@noctis/db";
+import type Redis from "ioredis";
+import { collectHealth } from "../health/health.service";
+import * as tasksRepository from "../tasks/tasks.repository";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const DAY = z
@@ -57,8 +60,12 @@ function isUniqueViolation(error: unknown): boolean {
  * One server per request (the transport is stateless), already bound to the Noctis account the
  * token belongs to — no tool takes a user id, so the model can't act as anyone else.
  */
-export function buildMcpServer(userId: string): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.2.0" });
+export interface McpDependencies {
+  redis: Redis;
+}
+
+export function buildMcpServer(userId: string, deps: McpDependencies): McpServer {
+  const server = new McpServer({ name: "noctis", version: "1.3.0" });
 
   server.registerTool(
     "list_categories",
@@ -447,5 +454,49 @@ export function buildMcpServer(userId: string): McpServer {
     },
   );
 
+  server.registerTool(
+    "server_health",
+    {
+      title: "Server health",
+      description:
+        "Health of the server Noctis runs on (\"maverick\") as seen from the Noctis API: disk, memory, load, database, Redis, the agent's heartbeat, and how fresh the bank-email import is. Each check is ok / warn / critical with a one-line detail; `level` is the worst of them. If this tool cannot be reached at all, the API itself is down.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    async () => json(await collectHealth(userId, deps.redis)),
+  );
+
+  server.registerTool(
+    "add_task",
+    {
+      title: "Add task",
+      description:
+        "Adds a task to the user's Noctis task list. If an unfinished task with the same title already exists, nothing is added and status is 'exists' — so a repeated check can call it every run without piling up duplicates. Keep titles short and specific, e.g. 'Maverick: disk 91% full'.",
+      inputSchema: {
+        title: z.string().trim().min(1).max(120),
+        notes: z.string().trim().max(2000).optional(),
+        dueAt: z.string().datetime({ offset: true }).optional().describe("ISO 8601 with offset"),
+      },
+      annotations: { idempotentHint: true },
+    },
+    async ({ title, notes, dueAt }) => {
+      const open = await tasksRepository.findOpenByTitle(userId, title);
+      if (open) return json({ status: "exists", task: taskView(open) });
+      const task = await tasksRepository.create(userId, { title, notes, dueAt: dueAt ? new Date(dueAt) : undefined });
+      return json({ status: "created", task: taskView(task) });
+    },
+  );
+
   return server;
+}
+
+function taskView(task: Task) {
+  return {
+    id: task.id,
+    title: task.title,
+    notes: task.notes,
+    dueAt: task.dueAt?.toISOString() ?? null,
+    completed: task.completed,
+    createdAt: task.createdAt.toISOString(),
+  };
 }
