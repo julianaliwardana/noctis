@@ -47,6 +47,7 @@ export const mcpModule: FastifyPluginAsync = async (fastify) => {
 
     let canWrite = true;
     const client = matchToken(presented, tokens);
+    let clientName = client ?? "unknown";
     if (client) {
       request.log.info({ mcpClient: client }, "MCP call");
     } else {
@@ -65,10 +66,11 @@ export const mcpModule: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).header("WWW-Authenticate", challenge(presented ? "invalid_token" : undefined)).send({ error: "Unauthorized" });
       }
       canWrite = check.scopes.has(SCOPE_WRITE);
+      clientName = `oauth:${check.grantId}`;
       request.log.info({ mcpClient: `oauth:${check.grantId}`, canWrite }, "MCP call");
     }
 
-    const server = buildMcpServer(boundUserId, { redis: fastify.redis, canWrite });
+    const server = buildMcpServer(boundUserId, { redis: fastify.redis, canWrite, client: clientName });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
 
     // The transport writes the response itself, so Fastify must step aside.

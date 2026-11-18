@@ -28,6 +28,8 @@ export interface ImportedExpenseInput {
   externalId: string;
   paymentMethod?: string;
   needsReview?: boolean;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export function createImported(userId: string, data: ImportedExpenseInput): Promise<Expense> {

@@ -7,11 +7,13 @@ import { dayKey, dayRange, jakartaDay, monthRange, parseMonthKey } from "../fina
 import type { DateRange } from "../finance/finance.insights";
 import type { Expense } from "@noctis/db";
 import type Redis from "ioredis";
+import { CURRENCY, rateToIdr, toIdr } from "../finance/finance.fx";
 import { collectHealth } from "../health/health.service";
 import * as tasksRepository from "../tasks/tasks.repository";
 import { registerDevTools } from "./mcp.devtools";
 import { registerPrompts } from "./mcp.prompts";
 import { registerResources } from "./mcp.resources";
+import { registerUsageTools } from "./mcp.usage";
 import { fail, json, taskView } from "./mcp.views";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -35,6 +37,7 @@ function transactionView(expense: Expense) {
     source: expense.source,
     paymentMethod: expense.paymentMethod,
     needsReview: expense.needsReview,
+    original: expense.originalCurrency ? { amount: expense.originalAmount, currency: expense.originalCurrency } : null,
   };
 }
 
@@ -64,6 +67,8 @@ export interface McpDependencies {
    * neither listed nor callable.
    */
   canWrite?: boolean;
+  /** Name of the token's client (or `oauth:<grant>`), stored on reported runs. */
+  client?: string;
 }
 
 /** Records every tool as it is registered, so write tools can be switched off afterwards. */
@@ -79,7 +84,7 @@ function trackTools(server: McpServer): Array<{ tool: RegisteredTool; readOnly: 
 }
 
 export function buildMcpServer(userId: string, deps: McpDependencies): McpServer {
-  const server = new McpServer({ name: "noctis", version: "1.5.0" });
+  const server = new McpServer({ name: "noctis", version: "1.6.0" });
   const tools = trackTools(server);
 
   server.registerTool(
@@ -177,7 +182,7 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
     {
       title: "Add transaction",
       description:
-        "Logs one transaction. Idempotent on externalId: calling it again for the same source returns status 'duplicate' instead of creating a second entry. The category must already exist (see list_categories / create_category). A transfer filed under 'Other' to someone never paid before is flagged needsReview automatically. The result's `budgetAlert` is 80 or 100 when this transaction pushed its category past that share of its monthly budget (the user has already been notified).",
+        "Logs one transaction. Idempotent on externalId: calling it again for the same source returns status 'duplicate' instead of creating a second entry. The category must already exist (see list_categories / create_category). A transfer filed under 'Other' to someone never paid before is flagged needsReview automatically. A charge in another currency (e.g. a debit-card email showing 'USD 22,2'): pass `originalAmount` + `originalCurrency` and leave out `amount` — the server converts at today's rate and flags it for review, since the bank's rupiah figure isn't in the email. Never skip such a charge. The result's `budgetAlert` is 80 or 100 when this transaction pushed its category past that share of its monthly budget (the user has already been notified).",
       inputSchema: {
         title: z
           .string()
@@ -185,7 +190,19 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
           .min(1)
           .max(120)
           .describe("Merchant or recipient, readable, e.g. 'Indomaret' or 'Transfer to Marzelline — laundry'"),
-        amount: z.number().positive().describe("Amount in IDR as a plain number, fees included, e.g. 26000"),
+        amount: z
+          .number()
+          .positive()
+          .optional()
+          .describe("Amount in IDR as a plain number, fees included, e.g. 26000. Omit only for a foreign-currency charge."),
+        originalAmount: z.number().positive().optional().describe("What the source charged when not IDR, e.g. 22.2"),
+        originalCurrency: z
+          .string()
+          .trim()
+          .toUpperCase()
+          .regex(CURRENCY)
+          .optional()
+          .describe("ISO 4217 code of originalAmount, e.g. 'USD'"),
         category: z.string().trim().min(1).describe("An existing category name"),
         type: z.enum(["expense", "income"]).default("expense"),
         date: z
@@ -211,7 +228,13 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
       },
       annotations: { idempotentHint: true },
     },
-    async ({ title, amount, category, type, date, externalId, source, paymentMethod, needsReview }) => {
+    async ({ title, amount, originalAmount, originalCurrency, category, type, date, externalId, source, paymentMethod, needsReview }) => {
+      if ((originalAmount === undefined) !== (originalCurrency === undefined)) {
+        return fail("Give originalAmount and originalCurrency together.");
+      }
+      const foreign = originalCurrency !== undefined && originalCurrency !== "IDR";
+      if (amount === undefined && !foreign) return fail("Give `amount` in IDR, or originalAmount + originalCurrency for a foreign charge.");
+
       const existing = await financeRepository.findByExternalId(userId, externalId);
       if (existing) return json({ status: "duplicate", id: existing.id, category: existing.category });
 
@@ -223,13 +246,26 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
         );
       }
 
+      let idr = amount;
+      let rate: number | null = null;
+      if (idr === undefined) {
+        rate = await rateToIdr(deps.redis, originalCurrency as string);
+        if (rate === null) {
+          return fail(`Couldn't get today's ${originalCurrency}→IDR rate. Retry later, or pass \`amount\` in IDR yourself.`);
+        }
+        idr = toIdr(originalAmount as number, rate);
+      }
+
+      // An estimated rupiah figure always waits for the user to check it against the mutation.
       const flagged =
-        needsReview ?? (type === "expense" && (await financeService.isUnreviewedTransfer(userId, title, match.name)));
+        (rate !== null ? true : needsReview) ??
+        (type === "expense" && (await financeService.isUnreviewedTransfer(userId, title, match.name)));
 
       try {
         const expense = await financeRepository.createImported(userId, {
           title,
-          amount,
+          amount: idr,
+          ...(foreign ? { originalAmount, originalCurrency } : {}),
           category: match.name,
           type,
           date: new Date(date),
@@ -245,6 +281,8 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
           title: expense.title,
           category: expense.category,
           needsReview: expense.needsReview,
+          amount: expense.amount,
+          ...(rate !== null ? { estimate: { rate, from: originalCurrency } } : {}),
           budgetAlert,
         });
       } catch (error) {
@@ -260,19 +298,22 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
     {
       title: "Update transaction",
       description:
-        "Changes a transaction's category and/or title (ids come from search_transactions). Setting a category clears needsReview; pass needsReview: false alone to confirm the current category as-is. Only call this when the user asked for the change in this conversation — in an unattended run, report the suggestion instead.",
+        "Changes a transaction's category, title and/or IDR amount (ids come from search_transactions). Use `amount` to replace the estimate on a foreign-currency charge with what the bank actually debited. Setting a category clears needsReview; pass needsReview: false alone to confirm the current category as-is. Only call this when the user asked for the change in this conversation — in an unattended run, report the suggestion instead.",
       inputSchema: {
         id: z.string().min(1),
         category: z.string().trim().min(1).optional().describe("An existing category name"),
         title: z.string().trim().min(1).max(120).optional(),
+        amount: z.number().positive().optional().describe("IDR"),
         needsReview: z.boolean().optional(),
       },
       annotations: { idempotentHint: true },
     },
-    async ({ id, category, title, needsReview }) => {
-      if (category === undefined && title === undefined && needsReview === undefined) return fail("Nothing to update.");
+    async ({ id, category, title, amount, needsReview }) => {
+      if (category === undefined && title === undefined && amount === undefined && needsReview === undefined) {
+        return fail("Nothing to update.");
+      }
 
-      const result = await financeService.updateTransaction(userId, id, { category, title, needsReview });
+      const result = await financeService.updateTransaction(userId, id, { category, title, amount, needsReview });
       if (result === "not-found") return fail(`No transaction with id "${id}".`);
       if ("unknownCategory" in result) {
         return fail(`Unknown category "${category}". Pick one of: ${result.unknownCategory.join(", ")} — or call create_category first.`);
@@ -503,6 +544,7 @@ export function buildMcpServer(userId: string, deps: McpDependencies): McpServer
   );
 
   registerDevTools(server, userId);
+  registerUsageTools(server, userId, deps.client);
   registerResources(server, userId);
   registerPrompts(server);
 

@@ -36,6 +36,7 @@ model User {
   subscriptions    Subscription[]
   oauthCodes       OAuthCode[]
   oauthGrants      OAuthGrant[]
+  agentRuns        AgentRun[]
 }
 
 model Conversation {
@@ -166,6 +167,10 @@ model Expense {
   paymentMethod String?
   /// The category is a guess (a transfer to someone new, an unnamed store charge) until the user confirms it.
   needsReview   Boolean  @default(false)
+  /// What the source charged when it wasn't rupiah, e.g. 22.2 with originalCurrency "USD". `amount` stays IDR.
+  originalAmount   Float?
+  /// ISO 4217 code of `originalAmount`, e.g. "USD".
+  originalCurrency String?
 
   @@unique([userId, externalId])
   @@index([userId, date])
@@ -285,4 +290,27 @@ model OAuthToken {
   createdAt DateTime   @default(now())
 
   @@index([grantId])
+}
+
+/// One run of a Claude scheduled task (BCA import, weekly review, ...) as reported by Claude itself
+/// through the MCP `report_run` tool. Token counts are Claude's own estimates. No price: the Pro plan
+/// doesn't bill per token, and Anthropic publishes no price API to keep a cost figure honest.
+model AgentRun {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  /// Which scheduled task, e.g. "BCA import".
+  task          String
+  model         String?
+  status        String   @default("ok")
+  /// Tokens in the context window at the end of the run.
+  contextTokens Int?
+  inputTokens   Int?
+  outputTokens  Int?
+  summary       String?
+  /// Mirrors the MCP client name of the token that reported it.
+  client        String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

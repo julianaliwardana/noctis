@@ -451,6 +451,8 @@ export interface UpdateTransactionInput {
   category?: string;
   title?: string;
   needsReview?: boolean;
+  /** IDR — e.g. the real debit of a foreign-currency charge that was logged at an estimated rate. */
+  amount?: number;
 }
 
 export async function updateTransaction(
@@ -472,16 +474,19 @@ export async function updateTransaction(
   const expense = await financeRepository.update(id, {
     ...(category !== undefined ? { category } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
-    // Choosing a category is the review. An explicit flag still wins ("keep as Other").
+    ...(input.amount !== undefined ? { amount: input.amount } : {}),
+    // Choosing a category is the review, and so is entering the real debit of a foreign charge.
+    // An explicit flag still wins ("keep as Other").
     ...(input.needsReview !== undefined
       ? { needsReview: input.needsReview }
-      : category !== undefined
+      : category !== undefined || (input.amount !== undefined && existing.originalCurrency)
         ? { needsReview: false }
         : {}),
   });
 
   const moved = category !== undefined && category !== existing.category;
-  const budgetAlert = moved ? await checkBudgetAlert(userId, expense.category, expense.date) : null;
+  const grew = input.amount !== undefined && input.amount > existing.amount;
+  const budgetAlert = moved || grew ? await checkBudgetAlert(userId, expense.category, expense.date) : null;
   return { expense, budgetAlert };
 }
 
