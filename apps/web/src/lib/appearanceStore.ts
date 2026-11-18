@@ -16,8 +16,7 @@ function readRaw(): string | null {
   }
 }
 
-// useSyncExternalStore needs the same object back while nothing changed, so the parsed value is
-// cached against the raw string it came from.
+// useSyncExternalStore needs a stable object, so the parse is cached by raw string.
 let cachedRaw: string | null | undefined;
 let cached: Appearance = DEFAULT_APPEARANCE;
 

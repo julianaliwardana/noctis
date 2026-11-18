@@ -16,8 +16,7 @@ export function CommandPalette() {
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      // ⌘K is a scratchpad, not a way back into the last chat — every open starts fresh. The
-      // conversation it creates still lands in history, so nothing typed here is lost.
+      // Every open starts a fresh chat; it still lands in history.
       if (next) startNewChat();
       setOpen(next);
     },

@@ -2,7 +2,7 @@
 
 Claude reads BCA "Internet Transaction Journal" emails through its Gmail connector, picks or
 creates a category, and logs each one through the Noctis MCP endpoint. Runs as a Claude
-scheduled task (hourly).
+scheduled task, three times a day (12:00, 18:00, 23:00 WIB).
 
 ```
 Gmail (connector) ──► Claude ──► POST https://noctis-api.julianwardana.dev/mcp
@@ -55,7 +55,7 @@ through an explicit `create_category` call.
    - URL: `https://noctis-api.julianwardana.dev/mcp`
    - Request header: `Authorization` = `Bearer <MCP_TOKEN>`
 6. Gmail: create the label `noctis-imported` (Claude can do this too).
-7. Create the scheduled task with the prompt below (hourly).
+7. Create the scheduled task with the prompt below (12:00, 18:00, 23:00 WIB). The live prompt in Claude has grown since (debit-card emails, Google Play receipts, refunds, USD charges); treat the one below as the starting point.
 
 ## Scheduled task prompt
 

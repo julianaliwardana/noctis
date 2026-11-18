@@ -6,10 +6,7 @@ function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-/**
- * One-step recipes. In Claude Code they appear in the / menu, e.g. /mcp__noctis__weekly_review.
- * MCP prompt arguments are always strings, so amounts arrive as text ("1.2jt") for the model to read.
- */
+/** Prompt arguments are always strings, so amounts arrive as text ("1.2jt"). */
 export function registerPrompts(server: McpServer): void {
   server.registerPrompt(
     "weekly_review",

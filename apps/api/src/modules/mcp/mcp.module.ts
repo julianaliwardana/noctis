@@ -8,12 +8,7 @@ import { SCOPE_WRITE } from "../oauth/oauth.core";
 import { checkAccessToken } from "../oauth/oauth.service";
 import { metadataUrls, oauthUrls } from "../oauth/oauth.urls";
 
-/**
- * Remote MCP endpoint for Claude. Two ways in: a static token from MCP_TOKENS (sent as an
- * `Authorization: Bearer` header), or an OAuth access token from signing in through the consent
- * page. Stateless Streamable HTTP: every POST gets a fresh server and transport, so nothing is kept
- * between calls and any replica can answer.
- */
+/** MCP endpoint, by static token or OAuth access token. Stateless: a fresh server per POST. */
 export const mcpModule: FastifyPluginAsync = async (fastify) => {
   // Throws on a malformed MCP_TOKENS or a short token: better a failed start than a weak endpoint.
   const tokens = parseTokens(process.env);

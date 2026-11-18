@@ -65,9 +65,7 @@ function SelectContent({
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
-  // Profile → Appearance → Menus: a dropdown under the trigger, or an overlay that opens with the
-  // chosen item sitting on the trigger (macOS style). Only rendered while open, so reading the
-  // stored choice here can't disagree with the server render.
+  // Appearance → Menus: dropdown or macOS-style overlay. Read only while open, so SSR can't disagree.
   const { menu } = useAppearance()
   const position = positionProp ?? (menu === "overlay" ? "item-aligned" : "popper")
   return (

@@ -1,6 +1,5 @@
 /**
- * Live check for the OmniRoute provider — proves the gateway is reachable, the key is accepted and
- * each allowlisted model answers both ways chat.ts uses it: single-intent JSON and tool calls.
+ * Live check: gateway reachable, key accepted, each allowlisted model answers JSON and tool calls.
  * Run from ai/agent: pnpm exec tsx --env-file=../../apps/api/.env src/llm/omniroute.check.ts
  */
 import assert from "node:assert/strict";

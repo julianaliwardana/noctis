@@ -81,7 +81,7 @@ async function searchViaInnerTube(query: string): Promise<YouTubeResult[]> {
   return results;
 }
 
-// --- YouTube Music (WEB_REMIX) -------------------------------------------------
+// YouTube Music (WEB_REMIX)
 
 const DURATION_RE = /^\d{1,2}(:\d{2}){1,2}$/;
 

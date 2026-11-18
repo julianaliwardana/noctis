@@ -37,10 +37,7 @@ function errorMessage(error: unknown): string {
   return "Something went wrong. Try connecting again from the app.";
 }
 
-/**
- * Consent screen for an MCP client (Claude, Claude Code…) asking to reach Noctis. Signed-out
- * visitors never see it: the proxy sends them to /login?next=… and back here afterwards.
- */
+/** Consent screen for MCP clients. The proxy sends signed-out visitors to /login first. */
 export default function AuthorizePage() {
   const [info, setInfo] = useState<AuthorizeInfo | null>(null);
   const [error, setError] = useState<string | null>(null);

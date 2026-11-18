@@ -1,10 +1,6 @@
 import type Redis from "ioredis";
 
-/**
- * Rupiah value of a foreign-currency charge. BCA's debit-card emails show only the original amount
- * ("USD 22,2"), never what left the account, so this is an estimate at the market rate — the
- * transaction is flagged for review and the user corrects it from the mutation (update_transaction).
- */
+/** Estimated IDR for a foreign charge: BCA emails show only the original amount. The row is flagged for review. */
 const RATE_URL = "https://open.er-api.com/v6/latest/";
 const CACHE_SECONDS = 6 * 60 * 60;
 const TIMEOUT_MS = 8_000;

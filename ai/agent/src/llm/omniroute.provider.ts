@@ -12,16 +12,10 @@ interface ChatCompletionResponse {
   choices?: { message?: { content?: string | null; tool_calls?: ToolCall[] } }[];
 }
 
-/**
- * OmniRoute is a self-hosted, OpenAI-compatible gateway — one key, many upstreams (GLM, DeepSeek,
- * OpenCode free models, combos). A model is whatever id or combo name the gateway lists under
- * GET /v1/models; there is no sane default, so an unset model is a config error, not a guess.
- * The base URL defaults to the public gateway — the same URL from a laptop in dev and from the
- * containers in prod.
- */
+/** Self-hosted OpenAI-compatible gateway. The model is an id or combo from GET /v1/models; there is no default. */
 const DEFAULT_BASE_URL = "https://omniroute.julianwardana.dev/v1";
 
-/** Free upstreams behind a gateway can hang; a held-open request is worse than a fast failure. */
+/** Free upstreams can hang; fail fast instead. */
 const TIMEOUT_MS = 60_000;
 
 /** Reasoning models (DeepSeek-R1, GLM thinking) inline their chain of thought before the answer. */
@@ -44,11 +38,7 @@ function labelFrom(id: string): string {
     .join(" ");
 }
 
-/**
- * Models the chat may pick from: OMNIROUTE_MODELS as "id=Label,id=Label" (first is the default),
- * else OMNIROUTE_MODEL alone. This list is the guard on where finance data can go — the client
- * only ever chooses from it, so keep it to providers you trust with that data.
- */
+/** Chat model allowlist: OMNIROUTE_MODELS ("id=Label,...", first is the default), else OMNIROUTE_MODEL. Keep it to providers trusted with finance data. */
 export function omniRouteModels(): ChatModel[] {
   const raw = process.env.OMNIROUTE_MODELS || process.env.OMNIROUTE_MODEL || "";
   return raw
@@ -63,11 +53,11 @@ export function omniRouteModels(): ChatModel[] {
 }
 
 export function createOmniRouteProvider(requestedModel?: string): ToolCapableProvider {
-  // `||`, not `??` — an unset var in .env reads as "".
+  // `||`, not `??`: an unset .env var reads as "".
   const baseUrl = (process.env.OMNIROUTE_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
   const apiKey = process.env.OMNIROUTE_API_KEY || "";
   const allowed = omniRouteModels();
-  // Anything not on the allowlist — a stale choice, a hand-crafted request — gets the default.
+  // Anything off the allowlist gets the default.
   const model = allowed.find((entry) => entry.id === requestedModel)?.id ?? allowed[0]?.id ?? "";
 
   async function post(body: Record<string, unknown>): Promise<Response> {
@@ -103,8 +93,7 @@ export function createOmniRouteProvider(requestedModel?: string): ToolCapablePro
         { role: "user", content: user },
       ];
 
-      // Every prompt here asks for a JSON object. Not every upstream behind the gateway accepts
-      // response_format, so a 400/422 earns one retry without it — safeParseJSON copes with fences.
+      // Not every upstream accepts response_format: retry once without it on 400/422.
       let res = await post({ messages, response_format: { type: "json_object" } });
       if (res.status === 400 || res.status === 422) res = await post({ messages });
 

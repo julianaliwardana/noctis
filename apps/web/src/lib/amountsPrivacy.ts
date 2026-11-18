@@ -1,11 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { formatCurrency } from "@noctis/utils";
 
-/**
- * "Hide amounts": every money figure on the finance page and the dashboard is masked until the
- * user turns it back on. A per-browser preference (localStorage), for screen sharing and
- * shoulder surfing — it hides what is drawn, not what the page has loaded.
- */
+/** "Hide amounts": a per-browser mask on money figures. Hides what is drawn, not what is loaded. */
 const STORAGE_KEY = "noctis:hide-amounts";
 export const AMOUNT_MASK = "Rp •••••";
 
@@ -42,10 +38,7 @@ export function setAmountsHidden(hidden: boolean): void {
   listeners.forEach((listener) => listener());
 }
 
-/**
- * The server can't know the preference, so it renders masked: someone who hid their amounts
- * must never see them flash on screen before the browser catches up.
- */
+/** The server renders masked, so hidden amounts never flash. */
 const hiddenOnServer = (): boolean => true;
 
 export function useAmountsHidden(): boolean {

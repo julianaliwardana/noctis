@@ -1,12 +1,4 @@
-/**
- * Pay cycles that follow the salary rather than the calendar. A cycle starts on the day a salary
- * is logged and runs until the next one is — so a late salary stretches the cycle instead of
- * handing out a fresh month on a fixed date. The configured payday is only the expectation used
- * for "days left" and for noticing a salary that hasn't arrived.
- *
- * Shared by the API (budgets, overview) and the agent (the "salary not logged" reminder). All
- * calendar maths is Asia/Jakarta, a fixed UTC+7 with no daylight saving.
- */
+/** Pay cycles that follow the salary: one starts when a salary is logged; the payday is only the expectation. Asia/Jakarta, UTC+7. */
 
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;

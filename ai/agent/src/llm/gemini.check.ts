@@ -1,6 +1,5 @@
 /**
- * Live check for the Gemini provider — model ids get retired without warning, so this is the
- * fastest way to tell whether the configured model still answers in the shape chat.ts expects.
+ * Live check: does the configured Gemini model still answer?
  * Run from ai/agent: pnpm exec tsx --env-file=../../apps/api/.env src/llm/gemini.check.ts
  */
 import assert from "node:assert/strict";

@@ -12,10 +12,7 @@ export async function createVaultKey(userId: string, dto: VaultKeyDto): Promise<
   return passwordsRepository.createKey(userId, dto);
 }
 
-/**
- * Master password change. The client re-wraps the same vault key, so items stay valid and
- * the server has nothing to verify — it could not check the old password even if it wanted to.
- */
+/** The client re-wraps the same vault key, so there is nothing for the server to verify. */
 export async function rotateVaultKey(userId: string, dto: VaultKeyDto): Promise<VaultKey | null> {
   if (!(await passwordsRepository.findKey(userId))) return null;
   return passwordsRepository.updateKey(userId, dto);

@@ -4,17 +4,10 @@ interface GeminiResponse {
   candidates?: { content: { parts: { text?: string; thought?: boolean }[] } }[];
 }
 
-/**
- * Pinned versions get retired — gemini-2.5-flash started 404ing for new keys — so the default is
- * the floating alias. Set GEMINI_MODEL to pin a version when a prompt change needs a fixed target.
- */
+/** Floating alias by default, since pinned versions get retired. Set GEMINI_MODEL to pin one. */
 const DEFAULT_MODEL = "gemini-flash-latest";
 
-/**
- * A 429 is either the per-minute bucket (worth waiting out) or the per-day allowance — currently
- * 20 requests/day/model on the free tier. Google reports "retry in ~50s" for both, so the quotaId
- * in the violation details is the only honest way to tell them apart.
- */
+/** Google reports "retry in ~50s" for both the minute and the day cap; only quotaId tells them apart. */
 function parseQuota(body: string): { retryAfterSeconds: number; daily: boolean } {
   const seconds = /retry in ([\d.]+)s/.exec(body)?.[1];
   return {
@@ -24,7 +17,7 @@ function parseQuota(body: string): { retryAfterSeconds: number; daily: boolean }
 }
 
 export function createGeminiProvider(): LLMProvider {
-  // `||`, not `??` — an unset key in .env reads as "", which would build a URL with no model.
+  // `||`, not `??`: an unset .env var reads as "".
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
@@ -39,8 +32,7 @@ export function createGeminiProvider(): LLMProvider {
         system_instruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: user }] }],
         generationConfig: {
-          // Every prompt here asks for a JSON object, so pin the output to JSON and skip the
-          // reasoning pass — intent classification does not need it, and it costs latency.
+          // JSON only, no reasoning pass: intent classification doesn't need it.
           responseMimeType: "application/json",
           temperature: 0.2,
           thinkingConfig: { thinkingLevel: "low" },

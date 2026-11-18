@@ -6,15 +6,7 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 /** Browser-only header; anything other than these means another site started the request. */
 const ALLOWED_FETCH_SITES = new Set(["same-origin", "none"]);
 
-/**
- * SameSite=Lax stops cross-*site* requests, but every *.julianwardana.dev host counts as the same
- * site — so a page on omniroute or the portfolio could still POST to Noctis with the session
- * cookies attached. The browser's Sec-Fetch-Site / Origin headers say where a request really came
- * from, and neither can be set by page script.
- *
- * Non-browser callers (curl, the MCP connector) send neither header and aren't cookie-authenticated
- * anyway, so they pass through untouched.
- */
+/** SameSite can't stop sibling *.julianwardana.dev hosts; Sec-Fetch-Site and Origin can. Non-browser callers send neither and pass. */
 const TOKEN_ENDPOINTS = ["/mcp", "/oauth/token", "/oauth/register", "/oauth/revoke"];
 
 function isTokenEndpoint(url: string): boolean {

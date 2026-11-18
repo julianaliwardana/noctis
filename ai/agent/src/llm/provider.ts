@@ -10,17 +10,11 @@ export function isProviderName(value: unknown): value is ProviderName {
   return PROVIDERS.includes(value as ProviderName);
 }
 
-/**
- * Free tiers are small — Gemini flash allows a handful of requests per minute — so a quota refusal
- * is normal traffic, not a crash. It carries the wait so the UI can count down instead of guessing.
- */
+/** A quota refusal is normal on free tiers. Carries the wait so the UI can count down. */
 export class RateLimitError extends Error {
   provider: ProviderName;
   retryAfterSeconds: number;
-  /**
-   * "minute" refills on its own, so waiting works. "day" does not — Google still reports a
-   * retry-in of a few seconds on a daily cap, and counting down to it just walks into another 429.
-   */
+  /** "day" caps don't refill soon, even when the upstream says to retry in seconds. */
   scope: "minute" | "day";
 
   constructor(provider: ProviderName, retryAfterSeconds: number, scope: "minute" | "day" = "minute") {
@@ -60,7 +54,7 @@ export interface ToolSpec {
 export interface ToolTurn {
   content: string;
   toolCalls: ToolCall[];
-  /** What the gateway says answered — for a combo, the upstream model that actually ran. */
+  /** For a combo, the upstream model that actually ran. */
   model?: string;
 }
 

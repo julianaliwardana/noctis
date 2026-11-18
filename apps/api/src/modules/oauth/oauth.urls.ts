@@ -1,10 +1,4 @@
-/**
- * Where things live. The API host serves the MCP endpoint, the token endpoint and the metadata;
- * the consent screen is a page of the web app so it can reuse the normal login. Both come from env
- * rather than request headers: the consent page reaches the API through the web app's /api
- * rewrite, where Host is the web host, and an issuer that changed with the route would break every
- * client's metadata check.
- */
+/** Public URLs come from env, not Host: through the /api rewrite Host is the web host, which would break the issuer. */
 export interface OAuthUrls {
   /** Authorization server issuer and protected-resource origin, e.g. https://noctis-api.julianwardana.dev */
   api: string;

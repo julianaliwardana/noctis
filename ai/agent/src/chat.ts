@@ -8,10 +8,7 @@ import type { ChatResult } from "./tools";
 
 export type { ChatAction, ChatResult } from "./tools";
 
-/**
- * Intents are addressed by name, never by id — see tools.resolveByName for why.
- * Anything the model gets wrong is caught by runIntent's guards and falls back to a plain reply.
- */
+/** Intents address records by name, never by id (see tools.resolveByName). */
 type RawIntent = { intent: string } & Record<string, unknown>;
 
 function isChatIntent(value: unknown): value is RawIntent {
@@ -28,10 +25,7 @@ export interface ChatOptions {
   model?: string;
 }
 
-/**
- * Tool-capable providers (OmniRoute) run the multi-step tool loop; the rest — and any upstream
- * that refuses the `tools` field — answer with one JSON intent, as before.
- */
+/** Tool-capable providers run the tool loop; the rest, or an upstream that refuses `tools`, answer with one JSON intent. */
 export async function handleChat(userId: string, message: string, options: ChatOptions = {}): Promise<ChatResult> {
   const context = await gatherContext(userId);
   const provider = createProvider(options.model);
@@ -60,10 +54,7 @@ function optStr(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() !== "" ? value : undefined;
 }
 
-/**
- * Every action, from either path, goes through these guards before it touches the database.
- * Arguments are untyped model output, so each is coerced here rather than trusted downstream.
- */
+/** Guards every action from either path. Model arguments are untyped, so they are coerced here. */
 async function runIntent(userId: string, parsed: RawIntent): Promise<ChatResult> {
   switch (parsed.intent) {
     case "CREATE_TASK":

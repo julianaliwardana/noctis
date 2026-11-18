@@ -33,11 +33,7 @@ interface PaginationProps {
 const stepButton =
   "press inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 text-sm font-medium text-[var(--color-text)] outline-none hover:bg-[var(--color-border)]/50 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40 pg-compact:w-8 pg-compact:justify-center pg-compact:px-0";
 
-/**
- * Three layouts from one markup (Profile → Appearance → Pagination), switched in CSS so the server
- * render always matches: numbered (page buttons, active page on a sliding pill), simple
- * (Previous / Next + "Page 2 of 6"), compact (arrows + "2 / 6").
- */
+/** Numbered, simple or compact (an Appearance setting), switched in CSS so SSR always matches. */
 export function Pagination({ page, pageCount, onPageChange, summary, className }: PaginationProps) {
   const id = useId();
   const atStart = page <= 0;

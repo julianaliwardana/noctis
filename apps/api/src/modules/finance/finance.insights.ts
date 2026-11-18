@@ -1,11 +1,4 @@
-/**
- * Pure money logic: no database, no clock of its own. Everything here takes rows and a `now`,
- * so the rules (what counts as spend, when a budget alerts, what a subscription owes) can be
- * checked without a server — see finance.insights.check.ts.
- *
- * All calendar maths is Asia/Jakarta. WIB is a fixed UTC+7 with no daylight saving, so a plain
- * offset is exact and needs no timezone database.
- */
+/** Pure money logic: no database, no clock. All calendar maths is Asia/Jakarta, a fixed UTC+7. */
 
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -18,8 +11,6 @@ export interface InsightRow {
   type: string;
   date: Date;
 }
-
-// ── Calendar ────────────────────────────────────────────────────────────────────────────────
 
 export interface JakartaDay {
   year: number;
@@ -101,13 +92,7 @@ export function dayRange(from: string, to: string): DateRange | null {
   return end > start ? { start, end } : null;
 }
 
-// ── What counts as spend ────────────────────────────────────────────────────────────────────
-
-/**
- * Money moved into an e-wallet hasn't been spent yet — it is spent when the wallet pays for
- * something, and those payments are logged as their own transactions (from the receipt).
- * Counting the top-up too would count the same rupiah twice.
- */
+/** Top-ups aren't spend: what the wallet pays for is logged separately. */
 const WALLET_TOP_UP_CATEGORIES = new Set(["top-up"]);
 
 export function isWalletTopUpCategory(category: string): boolean {
@@ -188,8 +173,6 @@ export function summarize(rows: InsightRow[], groupBy: GroupBy): SpendSummary {
   return summary;
 }
 
-// ── Budgets ─────────────────────────────────────────────────────────────────────────────────
-
 export type BudgetThreshold = 80 | 100;
 
 export interface BudgetStatus {
@@ -219,10 +202,7 @@ export interface BudgetAlertState {
   alerted100Month: string | null;
 }
 
-/**
- * The push still owed for `month`, if any. Each threshold fires once a month; jumping straight
- * past 100% sends only the 100% push, and the 80% one is never sent late.
- */
+/** The alert still owed this month. Each threshold fires once; jumping past 100% sends only that one. */
 export function alertDue(budget: BudgetAlertState, spent: number, month: string): BudgetThreshold | null {
   if (budget.monthlyLimit <= 0) return null;
   if (spent >= budget.monthlyLimit) return budget.alerted100Month === month ? null : 100;
@@ -231,8 +211,6 @@ export function alertDue(budget: BudgetAlertState, spent: number, month: string)
   }
   return null;
 }
-
-// ── Month overview ──────────────────────────────────────────────────────────────────────────
 
 export interface MonthOverview {
   month: string;
@@ -272,15 +250,9 @@ export function monthOverview(
   };
 }
 
-// ── Transfers to people ─────────────────────────────────────────────────────────────────────
-
 const TRANSFER_TITLE = /^(?:qris\s+)?transfer\s+to\s+(.+)$/i;
 
-/**
- * The person a transfer went to, without the remark or the bank: both
- * "Transfer to Marzelline Churnia — laundry" and "QRIS transfer to Marzelline Churnia" give
- * "Marzelline Churnia". Null when the title isn't a transfer.
- */
+/** The recipient of a transfer title, without remark or bank. Null when it isn't a transfer. */
 export function transferPerson(title: string): string | null {
   const match = TRANSFER_TITLE.exec(title.trim());
   if (!match) return null;
@@ -290,8 +262,6 @@ export function transferPerson(title: string): string | null {
     .trim();
   return person.length > 0 ? person : null;
 }
-
-// ── Recurring charges ───────────────────────────────────────────────────────────────────────
 
 export interface ChargeGroup {
   title: string;
@@ -348,8 +318,6 @@ export function findRecurring(rows: InsightRow[]): RecurringReport {
   report.candidates.sort(byAmount);
   return report;
 }
-
-// ── Subscription registry ───────────────────────────────────────────────────────────────────
 
 export interface SubscriptionRule {
   name: string;

@@ -20,14 +20,7 @@ import { ApiError } from "@/lib/api";
 import { loginUrl } from "@/lib/authRedirect";
 import { restoreSession, useSessionStore } from "@/lib/session";
 
-/**
- * Shown when the refresh token is gone (expired, or revoked by "sign out everywhere"). Signing in
- * right here restores the session without leaving the page: requests that hit the dead session
- * are parked and replay as soon as this succeeds, so nothing typed or half-loaded is lost.
- *
- * It can't be dismissed. A dead session can't do anything, so closing the dialog only led to the
- * next click failing again.
- */
+/** Shown when the refresh token is dead. Signing in here replays parked requests. Not dismissable: nothing works without a session. */
 export function SessionExpiredDialog() {
   const router = useRouter();
   const expired = useSessionStore((state) => state.expired);

@@ -17,10 +17,7 @@ function storedModel(): string | null {
   }
 }
 
-/**
- * The assistant only ever proposes a delete. Confirming runs it through the same store action the
- * UI uses, so the list on screen updates and ownership is checked server-side as usual.
- */
+/** The assistant only proposes deletes; confirming runs the normal store action. */
 const runDelete: Record<PendingDelete["kind"], (id: string) => Promise<void>> = {
   task: (id) => useTasksStore.getState().removeTask(id),
   habit: (id) => useHabitsStore.getState().deleteHabit(id),
@@ -34,7 +31,7 @@ function toChatMessage(stored: StoredMessage): ChatMessage {
     id: stored.id,
     role: stored.role === "user" ? "user" : "assistant",
     content: stored.content,
-    // Stored one action per line, since the column predates multi-action replies.
+    // Stored one action per line.
     actions: stored.actionLabel ? stored.actionLabel.split("\n").filter(Boolean) : undefined,
   };
 }

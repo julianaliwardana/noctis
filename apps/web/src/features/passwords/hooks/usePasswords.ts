@@ -6,10 +6,7 @@ import { usePasswordsStore } from "../store/passwordsStore";
 
 const TICK_MS = 15_000;
 
-/**
- * Drives the vault's lifecycle: fetch the key material once, load and decrypt items each
- * time it unlocks, drop them the moment it locks, and run the idle timer.
- */
+/** Vault lifecycle: load key material, decrypt on unlock, drop on lock, idle timer. */
 export function useVault() {
   const status = useVaultStore((state) => state.status);
   const key = useVaultStore((state) => state.key);

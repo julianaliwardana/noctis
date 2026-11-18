@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Ids that have finished typing. Module-level so reopening the command palette — which unmounts
- * the whole list — replays the conversation as it was rather than retyping every reply.
- */
+/** Finished ids, module-level so reopening the palette doesn't retype old replies. */
 const finished = new Set<string>();
 
 /** Long replies would crawl at a fixed rate, so the rate scales to keep them under ~2 seconds. */

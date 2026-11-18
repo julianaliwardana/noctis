@@ -40,11 +40,7 @@ function add(totals: Totals, run: AgentRun): void {
   totals.maxContextTokens = Math.max(totals.maxContextTokens, run.contextTokens ?? 0);
 }
 
-/**
- * Usage reporting for Claude's scheduled tasks. Claude reports at the end of each run; the user (or
- * the weekly review) reads it back. Claude can't read exact token counts from inside a claude.ai
- * run, so these are its own estimates — useful for spotting a task that grew heavy, not for billing.
- */
+/** Token reports from Claude's scheduled tasks: Claude's own estimates, not exact counts. */
 export function registerUsageTools(server: McpServer, userId: string, client?: string): void {
   server.registerTool(
     "report_run",

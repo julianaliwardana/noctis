@@ -76,15 +76,13 @@ const TICKS = 44;
 const R_INNER = 76;
 const R_OUTER = 92;
 
-// Ring lights from the accent (start) to the tasks amber (end), VU-meter style — follows the
-// user's accent choice because it is mixed in CSS, not computed here.
+// The ring blends accent → amber in CSS, so it follows the accent setting.
 function lerpColor(t: number): string {
   const amber = Math.round(t * 100);
   return `color-mix(in oklab, var(--color-primary-text), var(--color-tasks) ${amber}%)`;
 }
 
-// Rounded so the server's and the browser's Math.cos agree to the last digit — they didn't, and
-// every tick was a hydration mismatch.
+// Rounded so server and browser Math.cos agree (hydration).
 function coord(value: number): number {
   return Math.round(value * 1000) / 1000;
 }

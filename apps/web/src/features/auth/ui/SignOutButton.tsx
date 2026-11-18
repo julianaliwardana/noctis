@@ -7,8 +7,7 @@ import { logout } from "@/features/auth/api/auth.api";
 export function SignOutButton() {
   const router = useRouter();
 
-  // Awaited, not fired and forgotten: the cookies must be gone before the navigation, or the
-  // proxy (src/proxy.ts) still sees a session and bounces the user straight back to /dashboard.
+  // Awaited: the cookies must be gone before navigating, or the proxy bounces back to /dashboard.
   async function handleSignOut(): Promise<void> {
     await logout().catch(() => {});
     router.replace("/login");

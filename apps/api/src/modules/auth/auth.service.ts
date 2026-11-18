@@ -8,13 +8,7 @@ const SALT_ROUNDS = 12;
 
 const isProduction = process.env.NODE_ENV === "production";
 
-/**
- * `__Host-` makes the browser itself enforce what the options below promise: Secure, Path=/ and
- * no Domain, so the cookie can only ever go back to the exact host that set it. Production only —
- * Safari won't store a Secure cookie on http://localhost, so dev keeps the bare names.
- *
- * The web app's middleware has to read the same name; see apps/web/src/lib/authCookies.ts.
- */
+/** `__Host-` in production pins cookies to this host. Dev uses bare names (Safari drops Secure cookies on http://localhost). Must match apps/web/src/lib/authCookies.ts. */
 const COOKIE_PREFIX = isProduction ? "__Host-" : "";
 export const ACCESS_COOKIE = `${COOKIE_PREFIX}noctis_access`;
 export const REFRESH_COOKIE = `${COOKIE_PREFIX}noctis_refresh`;
@@ -22,15 +16,7 @@ export const REFRESH_COOKIE = `${COOKIE_PREFIX}noctis_refresh`;
 const ACCESS_MAX_AGE = 15 * 60;
 const REFRESH_MAX_AGE = 30 * 24 * 60 * 60;
 
-/**
- * Host-only on purpose. The browser talks to this API through the web app's own origin
- * (Next rewrites /api/* to it), so there is no second host the cookies need to reach — and a
- * parent-domain cookie would also be sent to every sibling subdomain (omniroute, cdn, …).
- *
- * `httpOnly`: an XSS payload can ride the session while the page is open, but can't read the
- * tokens out and keep them. CSRF from sibling subdomains (which SameSite treats as same-site) is
- * handled separately by the csrf plugin.
- */
+/** Host-only (the browser reaches the API through the web app's /api) and httpOnly. CSRF is handled by the csrf plugin. */
 const cookieOptions: CookieSerializeOptions = {
   httpOnly: true,
   secure: isProduction,
@@ -39,12 +25,7 @@ const cookieOptions: CookieSerializeOptions = {
   path: "/",
 };
 
-/**
- * Before the move to host-only cookies they were set on COOKIE_DOMAIN (e.g. julianwardana.dev).
- * Those copies live up to 30 days in existing browsers and keep leaking to sibling subdomains, so
- * every login/logout/failed refresh also expires them. Drop COOKIE_DOMAIN from the env once the
- * last old cookie has aged out.
- */
+/** Expires the old parent-domain cookies on COOKIE_DOMAIN. Remove once they've aged out (after 2026-12-10). */
 const LEGACY_COOKIE_DOMAIN = isProduction ? process.env.COOKIE_DOMAIN?.trim() || undefined : undefined;
 const LEGACY_COOKIES = ["noctis_access", "noctis_refresh"];
 
@@ -53,10 +34,7 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/**
- * Case-insensitive so accounts created before emails were normalised (e.g. `Julian@…`) still
- * match their lowercased input.
- */
+/** Case-insensitive, so older mixed-case emails still match. */
 export function findUserByEmail(email: string): Promise<User | null> {
   return db.user.findFirst({ where: { email: { equals: normalizeEmail(email), mode: "insensitive" } } });
 }
@@ -70,10 +48,7 @@ export async function createUser(email: string, password: string): Promise<User>
   return db.user.create({ data: { email: normalizeEmail(email), passwordHash } });
 }
 
-/**
- * Compared against when the email is unknown, so a miss costs the same bcrypt time as a wrong
- * password and response timing doesn't reveal which emails have accounts.
- */
+/** Compared against unknown emails, so response timing doesn't reveal which accounts exist. */
 const DUMMY_HASH = bcrypt.hashSync("noctis-timing-equaliser", SALT_ROUNDS);
 
 export async function verifyCredentials(email: string, password: string): Promise<User | null> {
@@ -132,11 +107,7 @@ export function verifyRefreshToken(app: FastifyInstance, token: string): Refresh
   }
 }
 
-/**
- * Kills every outstanding refresh token for this user: the next /auth/refresh compares the token's
- * `ver` against this counter and refuses. Access tokens already issued keep working until they
- * lapse (≤15 min) — checking them would cost a DB read on every request.
- */
+/** Revokes every refresh token (checked through `ver`). Issued access tokens live out their 15 minutes. */
 export async function revokeAllSessions(userId: string): Promise<User> {
   return db.user.update({ where: { id: userId }, data: { tokenVersion: { increment: 1 } } });
 }

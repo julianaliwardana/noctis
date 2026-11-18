@@ -12,13 +12,9 @@ export interface ChatResult {
   action?: ChatAction;
   /** Everything this reply did, in order — one entry per tool that changed something. */
   actions?: ChatAction[];
-  /** The model that answered, as the gateway reports it (for a combo, the upstream that ran). */
+  /** As the gateway reports it (for a combo, the upstream that ran). */
   model?: string;
-  /**
-   * Deletes are proposed, never executed here. A misheard "hapus" against a habit streak is
-   * unrecoverable, so the model only names the record and the client confirms it through the
-   * normal REST endpoint — which re-checks ownership anyway.
-   */
+  /** Proposed, never executed here: the client confirms through the REST endpoint. */
   pendingDelete?: PendingDelete;
 }
 
@@ -46,11 +42,7 @@ function isConsecutiveDay(previous: Date, current: Date): boolean {
 
 export type Resolution<T> = { ok: true; item: T } | { ok: false; message: string };
 
-/**
- * Turns the name the model said into one of the user's records. The model is never given ids —
- * small models echo cuids unreliably — so everything is addressed by name and resolved here.
- * An exact match wins; failing that a unique substring match; anything else asks rather than guesses.
- */
+/** Resolves a spoken name to a record (small models echo ids badly): exact match, else a unique substring, else ask. */
 export function resolveByName<T>(
   items: T[],
   nameOf: (item: T) => string,
@@ -204,7 +196,7 @@ export async function addTransaction(
       userId,
       title: input.title,
       amount: input.amount,
-      // An unmatched category is not worth blocking the entry — it falls back and is backfilled on listing.
+      // An unknown category doesn't block the entry; it falls back and is backfilled on listing.
       category: found.ok ? found.item.name : input.category,
       type,
       ...(when && !Number.isNaN(when.getTime()) ? { date: when } : {}),

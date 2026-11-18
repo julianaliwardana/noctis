@@ -154,10 +154,7 @@ export async function deleteBudget(categoryId: string): Promise<boolean> {
   return count > 0;
 }
 
-/**
- * Marks a threshold as alerted for `month` and reports whether this call was the one that did it.
- * Two imports landing together both see the budget crossed; only the one that wins this update pushes.
- */
+/** Claims a threshold for `month`; true only for the caller that wins the race. */
 export async function claimBudgetAlert(budgetId: string, threshold: 80 | 100, month: string): Promise<boolean> {
   const field = threshold === 100 ? "alerted100Month" : "alerted80Month";
   const { count } = await db.budget.updateMany({

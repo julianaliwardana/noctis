@@ -1,5 +1,4 @@
-// YouTube IFrame player plumbing + track-metadata helpers for the music panel.
-// Kept out of the component so MusicPanel is only state + render.
+// YouTube IFrame player and track-metadata helpers for MusicPanel.
 
 export interface YTPlayer {
   playVideo(): void;

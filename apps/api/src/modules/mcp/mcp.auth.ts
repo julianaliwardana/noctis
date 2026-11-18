@@ -16,12 +16,7 @@ export function tokenMatches(presented: string | undefined, expected: string): b
 /** Shortest token accepted; `openssl rand -hex 32` gives 64 characters. */
 export const MIN_TOKEN_LENGTH = 32;
 
-/**
- * The tokens allowed to call the MCP endpoint, by client name. `MCP_TOKENS` is a comma-separated
- * list of `name:token` pairs (e.g. `claude-ai:<t1>,mac:<t2>`), so one leaked token can be revoked
- * without breaking the other clients. The older single `MCP_TOKEN` still works, as client `default`.
- * Throws on a malformed entry, a duplicate name, or a token under MIN_TOKEN_LENGTH.
- */
+/** Parses MCP_TOKENS ("name:token,...") plus the legacy MCP_TOKEN as "default". Throws on bad entries, duplicates or short tokens. */
 export function parseTokens(env: { MCP_TOKEN?: string; MCP_TOKENS?: string }): Map<string, string> {
   const tokens = new Map<string, string>();
 
@@ -46,10 +41,7 @@ export function parseTokens(env: { MCP_TOKEN?: string; MCP_TOKENS?: string }): M
   return tokens;
 }
 
-/**
- * Name of the client whose token matches, or null. Every token is compared, with no early exit,
- * so the response time doesn't reveal how far down the list a guess got.
- */
+/** The matching client name, or null. Compares every token (no early exit) so timing leaks nothing. */
 export function matchToken(presented: string | undefined, tokens: Map<string, string>): string | null {
   let matched: string | null = null;
   for (const [name, token] of tokens) {

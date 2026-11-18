@@ -65,8 +65,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     await get().fetchAll();
   },
 
-  // The row changes at once so the table doesn't wait on the network; the refetch then brings
-  // the budgets and totals that moved with it (and undoes the change if the server refused).
+  // Optimistic; the refetch brings the totals that moved (or reverts).
   updateExpense: async (id, input) => {
     set({ expenses: get().expenses.map((expense) => (expense.id === id ? { ...expense, ...input } : expense)) });
     try {

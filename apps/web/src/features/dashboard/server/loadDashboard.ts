@@ -5,10 +5,7 @@ import type { HabitDto, HabitLogDto } from "@/features/habits/api/habits.api";
 import type { CategoryDto, ExpenseDto, MonthlySummary } from "@/features/finance/api/finance.api";
 import type { UserDto } from "@/features/auth/api/user.api";
 
-/**
- * Everything the dashboard renders, in parallel over the internal network. Habit logs ride along
- * so the streak dots don't each fire their own request after hydration. Null → the client fetches.
- */
+/** Dashboard data in parallel, habit logs included. Null → the client fetches. */
 export function loadDashboard(): Promise<DashboardSnapshot | null> {
   return loadOrNull(async (get) => {
     const [tasks, habits, expenses, summary, categories, user] = await Promise.all([

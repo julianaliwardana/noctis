@@ -5,14 +5,7 @@ import { apiInternalUrl } from "@/lib/apiInternalUrl";
 
 const ACCESS_COOKIE = accessCookieName(process.env.NODE_ENV === "production");
 
-/**
- * Server Components fetch from the API over the internal network with the visitor's own access
- * cookie, so the first paint can carry real data. Runtime API (cookies) — call it only inside a
- * <Suspense> boundary, which is what turns the caller into a streamed hole under PPR.
- *
- * Returns a function rather than fetching directly so a loader can read the cookie once and
- * fire several requests in parallel.
- */
+/** Server-side API fetch with the visitor's access cookie. Call inside <Suspense> (PPR). Returns a function so one cookie read serves parallel requests. */
 export async function serverApi(): Promise<(<T>(path: string) => Promise<T>) | null> {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   // No access cookie (signed out, or the proxy couldn't refresh it): let the client fetch instead.
@@ -34,11 +27,7 @@ export async function serverApi(): Promise<(<T>(path: string) => Promise<T>) | n
   };
 }
 
-/**
- * Runs a loader against the API, or returns null when there's no usable session or any request
- * fails. Null is never an error for the page: the client view falls back to fetching through the
- * browser, where the axios interceptor can refresh the session and the dialog can handle expiry.
- */
+/** Runs a loader; null on no session or any failure, and the client fetches instead. */
 export async function loadOrNull<T>(load: (get: <R>(path: string) => Promise<R>) => Promise<T>): Promise<T | null> {
   const get = await serverApi();
   if (!get) return null;

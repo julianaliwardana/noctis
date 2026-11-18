@@ -152,10 +152,7 @@ async function accountRoutes(fastify: FastifyInstance, urls: OAuthUrls): Promise
   });
 }
 
-/**
- * OAuth 2.1 authorization server for the MCP endpoint, so a client can connect by signing in
- * instead of pasting a static token. Needs API_PUBLIC_URL; without it only static tokens work.
- */
+/** OAuth 2.1 server for the MCP endpoint. Off without API_PUBLIC_URL. */
 export const oauthModule: FastifyPluginAsync = async (fastify) => {
   const urls = oauthUrls();
   if (!urls) {

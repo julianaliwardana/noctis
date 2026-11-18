@@ -1,16 +1,6 @@
 import type { VaultKeyMaterial, VaultSecret } from "@noctis/types";
 
-/**
- * Bitwarden's key model, minus the parts AES-GCM makes redundant.
- *
- * The vault key is random and is never derived from the master password — the password
- * only *unwraps* it. That is what lets the master password change without re-encrypting
- * every item, and what makes the key identical on every device rather than a per-device
- * accident of whatever salt that browser happened to generate.
- *
- * There is no separate "is this the right password?" check because there doesn't need to
- * be one: unwrapping is authenticated, so a wrong password fails the unwrap.
- */
+/** A random vault key, wrapped by a key derived from the master password. A password change re-wraps it; a wrong password fails the authenticated unwrap. */
 
 const KDF_ITERATIONS = 600_000;
 const SALT_BYTES = 16;
@@ -34,10 +24,7 @@ export class WrongMasterPasswordError extends Error {
   }
 }
 
-/**
- * Master password + server-held salt -> the key that wraps the vault key.
- * Never used on item data directly.
- */
+/** Master password + salt → the wrapping key. Never used on item data. */
 async function deriveMasterKey(
   masterPassword: string,
   salt: Uint8Array,
@@ -82,13 +69,7 @@ async function wrapVaultKey(
   };
 }
 
-/**
- * First-run setup: mint a random vault key and return it alongside the material the
- * server must store to hand it back later.
- *
- * The vault key is generated extractable because wrapping requires it; the copy that
- * comes back out of `unlockVault` is not.
- */
+/** First-run setup: a new vault key plus the material the server stores. Extractable only so it can be wrapped. */
 export async function createVault(
   masterPassword: string,
 ): Promise<{ vaultKey: CryptoKey; material: VaultKeyMaterial }> {
@@ -126,13 +107,7 @@ export async function unlockVault(
   }
 }
 
-/**
- * Re-wraps the *same* vault key under a new master password. Items are untouched — that
- * is the entire point of wrapping rather than deriving.
- *
- * Needs an extractable vault key, so it re-unwraps from `material` rather than taking the
- * unlocked (non-extractable) key the session is holding.
- */
+/** Re-wraps the same vault key under a new password; items are untouched. Re-unwraps from `material` for an extractable key. */
 export async function rotateMasterPassword(
   currentPassword: string,
   newPassword: string,

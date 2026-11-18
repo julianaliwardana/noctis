@@ -1,6 +1,5 @@
 /**
- * Self-check for name resolution — every delete/complete/log intent routes through it,
- * so a wrong match here silently destroys the wrong record.
+ * Self-check for name resolution: a wrong match deletes the wrong record.
  * Run from ai/agent: pnpm exec tsx src/tools.check.ts
  */
 import assert from "node:assert/strict";
@@ -42,8 +41,7 @@ assert.match(expectFail(resolveByName(tasks, name, "dentist", "task")), /couldn'
 assert.match(expectFail(resolveByName(tasks, name, "   ", "habit")), /Which habit did you mean\?/);
 assert.match(expectFail(resolveByName([], name, "anything", "task")), /couldn't find/);
 
-// Deletes must only ever be proposed — the client confirms them through the REST endpoints.
-// Reading the source is the cheap way to assert this without standing up a database.
+// Deletes are only proposed; the client confirms them through REST. Checked by reading the source.
 const source = readFileSync(new URL("./tools.ts", import.meta.url), "utf8");
 
 for (const fn of ["deleteTask", "deleteHabit", "deleteTransaction", "deleteCategory"]) {

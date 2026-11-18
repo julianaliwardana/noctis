@@ -8,11 +8,7 @@ export function authRedirect(signedIn: boolean, pathname: string): string | null
   return null;
 }
 
-/**
- * Where to go after signing in, from a `?next=` value. Only same-site paths: `//evil.com` and
- * `/\evil.com` are protocol-relative URLs browsers treat as another host, so they fall back to
- * the dashboard, as do the auth pages themselves.
- */
+/** Safe `?next=` target: same-site paths only (`//host` and `/\host` are other hosts), never the auth pages. */
 export function safeNext(next: string | null | undefined): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return HOME;
   const pathname = next.split(/[?#]/)[0] ?? "";

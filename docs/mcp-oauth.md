@@ -27,7 +27,7 @@ API_PUBLIC_URL=https://noctis-api.julianwardana.dev
 Without `API_PUBLIC_URL` OAuth stays off and only static tokens work. `MCP_USER_ID` must be set:
 only that account may approve a connection — any other account gets "can't connect apps".
 
-The four OAuth tables are created by the normal `prisma db push` on start.
+Create the four OAuth tables after deploy: `pnpm --filter @noctis/db exec prisma db push` in the api container.
 
 ## Rules
 

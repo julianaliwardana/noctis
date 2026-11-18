@@ -9,7 +9,7 @@ export interface YouTubeResult {
 
 export type SearchSource = "video" | "music";
 
-// --- YouTube Data API v3 -------------------------------------------------------
+// YouTube Data API v3
 
 export interface DataApiResponse {
   items?: {
@@ -18,7 +18,7 @@ export interface DataApiResponse {
   }[];
 }
 
-// --- YouTube search (WEB / InnerTube) ------------------------------------------
+// YouTube search (WEB / InnerTube)
 
 export interface VideoRenderer {
   videoId?: string;
@@ -38,7 +38,7 @@ export interface InnerTubeResponse {
   };
 }
 
-// --- YouTube Music (WEB_REMIX) -------------------------------------------------
+// YouTube Music (WEB_REMIX)
 
 export interface MusicRun {
   text?: string;
