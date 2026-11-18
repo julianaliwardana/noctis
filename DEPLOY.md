@@ -201,9 +201,10 @@ Don't run `docker image prune -a` — it deletes the images you'd roll back to. 
 
 ### Schema change
 
-Nothing to run: every api start (each Dokploy deploy) does `prisma db push` first. If a change
-would lose data, Prisma refuses, the api stays down and its log shows why. Then decide, and run
-it yourself from the api container's terminal in Dokploy:
+Nothing to run: every api start (each Dokploy deploy) does `prisma db push` first. If Prisma
+flags a change as possible data loss (dropping a column, or even adding a unique constraint), it
+refuses, logs `SCHEMA NOT SYNCED`, and the api starts anyway on the old schema. Then decide, and
+run it yourself from the agent or api container's terminal in Dokploy (same image):
 
 ```bash
 pnpm --filter @noctis/db exec prisma db push --accept-data-loss

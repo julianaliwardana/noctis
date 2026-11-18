@@ -1,6 +1,8 @@
 # Pinned, not node:22-slim: a cached floating tag kept an old 22.x around.
 # 22.23.4 fixes CVE-2026-111497 (Brotli RCE, Oct 2026 security release).
 FROM node:22.23.4-slim
+# Prisma's schema engine (used by `db push` on api start) needs OpenSSL; slim images don't ship it.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 RUN npm i -g pnpm@10.30.0
 WORKDIR /app
 

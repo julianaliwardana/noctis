@@ -37,9 +37,13 @@ services:
   api:
     <<: *app
     # Syncs the Prisma schema before every start, so a deploy with a schema change needs no manual step.
-    # `&&`: if db push refuses (a change that would lose data needs --accept-data-loss), the API stays
-    # down and the container log says why — run that push by hand from the api container's terminal.
-    command: sh -c "pnpm --filter @noctis/db exec prisma db push && pnpm --filter @noctis/api start"
+    # `;` not `&&`: if db push refuses (a change Prisma flags as possible data loss needs
+    # --accept-data-loss), the API still starts on the old schema and the log shows the refusal.
+    # Then run the push by hand from the agent or api container's terminal (same image).
+    command:
+      - sh
+      - -c
+      - pnpm --filter @noctis/db exec prisma db push || echo "SCHEMA NOT SYNCED - prisma db push refused, run it by hand (DEPLOY.md)"; pnpm --filter @noctis/api start
 
   agent:
     <<: *app
