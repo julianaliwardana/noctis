@@ -121,7 +121,7 @@ Five fields are easy to get wrong:
 | Field | Requirement |
 |---|---|
 | `DATABASE_URL` | Password must match `POSTGRES_PASSWORD` exactly; host is `postgres`, **not** `localhost` |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Must be byte-identical to `VAPID_PUBLIC_KEY` |
+| `VAPID_MAILTO` | `mailto:you@domain` (a bare address is fixed up); the browser gets the public key from the API at runtime |
 | `WEB_ORIGIN` | Exactly `https://noctis.julianwardana.dev` — no trailing slash, or CORS fails |
 | `JWT_SECRET` | At least 32 characters, or the API refuses to start |
 | `COOKIE_DOMAIN` | Only on servers that ran the old parent-domain cookies: `julianwardana.dev`, so the API can expire them. Remove after 2026-12-10. New servers leave it out |
@@ -155,10 +155,10 @@ The first build compiles Next.js on two ARM cores — expect **8–12 minutes**.
 are faster: the Dockerfile copies package manifests before source, so the dependency
 install stays cached unless a dependency actually changed.
 
-Then create the schema:
+The api container runs `prisma db push` before it starts (see its `command` in
+`docker-compose.prod.yml`), so the schema is created on first start. Check:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec api pnpm --filter @noctis/db exec prisma db push
 docker compose -f docker-compose.prod.yml ps
 ```
 
@@ -171,7 +171,7 @@ Each check exercises one more layer, so work down in order:
 1. `https://noctis.julianwardana.dev` loads over HTTPS → tunnel + web
 2. Register (with `ALLOW_REGISTRATION=true`) and log in → web → `/api` rewrite → api → postgres → JWT. Then set it back to `false` and `docker compose -f docker-compose.prod.yml up -d api`
 3. Send an AI chat message → api → agent → OmniRoute (`noctis` combo)
-4. Enable push notifications → VAPID keys match
+4. Profile → Notifications → Turn on, then Send test → VAPID keys + service worker push handler
 
 ---
 
@@ -201,8 +201,12 @@ Don't run `docker image prune -a` — it deletes the images you'd roll back to. 
 
 ### Schema change
 
+Nothing to run: every api start (each Dokploy deploy) does `prisma db push` first. If a change
+would lose data, Prisma refuses, the api stays down and its log shows why. Then decide, and run
+it yourself from the api container's terminal in Dokploy:
+
 ```bash
-docker compose -f docker-compose.prod.yml exec api pnpm --filter @noctis/db exec prisma db push
+pnpm --filter @noctis/db exec prisma db push --accept-data-loss
 ```
 
 ### Logs
@@ -277,8 +281,9 @@ and `setHours(0, 0, 0, 0)` sets day boundaries for habit streaks in
 `apps/api/src/modules/habits/`. Without `TZ=Asia/Jakarta` the 08:00 nudge arrives at 15:00
 and streaks roll over at 07:00. Nothing errors — the data is just quietly wrong.
 
-**No Prisma migration history.** The project uses `db push`, which infers changes by diffing
-— it can drop columns without warning. Run `pnpm db:migrate` locally to start a real
+**No Prisma migration history.** The project uses `db push`, which infers changes by diffing.
+It refuses changes that would lose data unless given `--accept-data-loss`, but it can't do a
+rename (it sees drop + add). Run `pnpm db:migrate` locally to start a real
 migration history before the data matters, then switch this runbook to `prisma migrate deploy`.
 
 **`bcrypt` on arm64** should resolve a prebuilt binary. If `pnpm install` fails on it during

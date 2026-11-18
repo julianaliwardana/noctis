@@ -30,7 +30,7 @@ model User {
   vaultItems       VaultItem[]
   nudges           Nudge[]
   pomodoroSessions PomodoroSession[]
-  pushSubscription PushSubscription?
+  pushSubscriptions PushSubscription[]
   conversations    Conversation[]
   budgets          Budget[]
   subscriptions    Subscription[]
@@ -222,11 +222,18 @@ model PomodoroSession {
   createdAt DateTime  @default(now())
 }
 
+/// One row per device/browser that turned notifications on. `subscription` is the browser's
+/// PushSubscription JSON; `endpoint` is its unique push-service URL.
 model PushSubscription {
-  id           String @id @default(cuid())
-  userId       String @unique
-  user         User   @relation(fields: [userId], references: [id])
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint     String   @unique
   subscription String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
 /// An app registered through OAuth dynamic client registration (Claude.ai, Claude Code, …).

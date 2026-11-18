@@ -51,10 +51,11 @@ Postgres/Redis need no changes. Things you should still set:
     endpoint works). Live-check it with `pnpm exec tsx --env-file=../../.env src/llm/omniroute.check.ts` from `ai/agent`.
   - `AI_PROVIDER=claude` + `ANTHROPIC_API_KEY` from a paid account at
     [console.anthropic.com](https://console.anthropic.com)
-- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` — optional, only needed for push
-  notifications. Generate with `npx web-push generate-vapid-keys` and also copy the
-  public key into `NEXT_PUBLIC_VAPID_PUBLIC_KEY`. Leave both blank and push is simply
-  skipped at runtime — the app won't crash.
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_MAILTO` — optional, only needed for push
+  notifications. Generate with `npx web-push generate-vapid-keys`. The browser fetches the
+  public key from `GET /notifications/push` at runtime, so `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is no
+  longer read. A bare address in `VAPID_MAILTO` gets `mailto:` added. Leave the keys blank and
+  push is skipped at runtime — the app won't crash. Turn push on per device from Profile → Notifications.
 
 ### 3. Start Postgres and Redis
 
@@ -138,8 +139,6 @@ pnpm db:studio        # Prisma Studio — browse your local data
 
 ## Known gaps
 
-- The frontend never calls `POST /notifications/subscribe`, so push notifications
-  won't fire yet even with VAPID keys configured — that UI wiring hasn't been built.
 - The passwords vault's encryption salt lives in `localStorage`, not a server-managed
   key-wrapping scheme — fine for single-device personal use, would need revisiting for
   multi-device sync.

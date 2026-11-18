@@ -28,10 +28,13 @@ RUN pnpm install --frozen-lockfile
 
 # Source changes only invalidate from here down.
 COPY . .
-# prisma.config.ts resolves DATABASE_URL from a .env that isn't (and shouldn't be) in the image.
-# `generate` never connects, so any syntactically valid URL satisfies it.
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
-    pnpm --filter @noctis/db exec prisma generate
+# prisma.config.ts requires DATABASE_URL, but no database exists at build time and neither command
+# connects, so a fake URL satisfies it. `export` lasts for this RUN only; the real URL comes from the
+# env at runtime. `version` downloads the schema engine into the image, so the api's `prisma db push`
+# on start (docker-compose.prod.yml) doesn't fetch it every time a container is recreated.
+RUN export DATABASE_URL=postgresql://build:build@localhost:5432/build && \
+    pnpm --filter @noctis/db exec prisma generate && \
+    pnpm --filter @noctis/db exec prisma version
 RUN pnpm --filter @noctis/web build
 
 ENV NODE_ENV=production
