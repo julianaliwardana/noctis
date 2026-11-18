@@ -4,10 +4,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-/*
- * Lined is the base style here. Striped / minimal / boxed (Profile → Appearance → Table) restyle the
- * same data-slots from globals.css, so no table needs to know which one is on.
- */
+/* Lined is the base; the other table styles restyle the data-slots in globals.css. */
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -57,10 +54,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   )
 }
 
-/**
- * Body rows get the hover highlight (accent tint + a lit 2px edge) from globals.css, so it works
- * the same under every table style.
- */
+/** The row hover highlight comes from globals.css, under every table style. */
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr

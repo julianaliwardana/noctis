@@ -60,7 +60,6 @@ function Digit({ place, value, height, digitStyle }: DigitProps) {
     animatedValue.set(valueRoundedToPlace);
   }, [animatedValue, valueRoundedToPlace]);
 
-  // Decimal point digit
   if (place === '.') {
     return (
       <span
@@ -92,12 +91,7 @@ interface CounterProps {
   value: number;
   fontSize?: number;
   padding?: number;
-  /**
-   * An array of place values that determines which digit positions
-   * should be displayed. For decimal places, use "." to represent
-   * the decimal point. Leave this prop empty to enable automatic
-   * detection based on the current value.
-   */
+  /** Digit positions to show ("." for the decimal point). Empty: detected from the value. */
   places?: PlaceValue[];
   gap?: number;
   borderRadius?: number;

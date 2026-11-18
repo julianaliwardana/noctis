@@ -53,7 +53,7 @@ export interface PriorTurn {
   content: string;
 }
 
-/** Only the tail is sent — enough for "delete that one too" to resolve, cheap enough for a free tier. */
+/** Only the tail: enough for follow-ups like "delete that one too". */
 function formatHistory(history: PriorTurn[]): string {
   if (history.length === 0) return "";
   const turns = history
@@ -95,10 +95,7 @@ export function chatPrompt(context: UserContext, message: string, history: Prior
   ].join("\n");
 }
 
-/**
- * System prompt for the tool loop. The schema lives in the tool specs, so this only carries the
- * data and the conventions the specs can't express.
- */
+/** Tool-loop system prompt: the data and the conventions the tool specs can't express. */
 export function toolSystemPrompt(context: UserContext): string {
   return [
     systemPrompt(),

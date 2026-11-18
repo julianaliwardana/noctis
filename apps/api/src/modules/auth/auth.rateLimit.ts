@@ -1,12 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 
-/**
- * The real visitor IP. The API sits behind Cloudflare → cloudflared → (Next rewrite), so the socket
- * address is always one of our own containers — keying on it put every visitor in one bucket, and
- * ten junk logins a minute from anywhere locked everyone out. Cloudflare overwrites
- * `CF-Connecting-IP` at its edge, so clients can't forge it as long as the API is only reachable
- * through Cloudflare. Without the header (local dev) the socket address is the client.
- */
+/** Real client IP: Cloudflare sets CF-Connecting-IP at its edge (clients can't forge it). Falls back to the socket in dev. */
 export function clientIp(request: FastifyRequest): string {
   const header = request.headers["cf-connecting-ip"];
   const value = Array.isArray(header) ? header[0] : header;

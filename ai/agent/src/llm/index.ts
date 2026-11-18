@@ -9,11 +9,7 @@ function configuredProvider(): ProviderName {
   return isProviderName(process.env.AI_PROVIDER) ? process.env.AI_PROVIDER : "ollama";
 }
 
-/**
- * The server picks the provider, never the client — chat context carries finance data, and which
- * upstream may see it is a deployment decision (AI_PROVIDER). A client may only name a model from
- * the server's own allowlist (see chatModels); anything else falls back to the default.
- */
+/** The server picks the provider (chat carries finance data); a client may only pick a model from the allowlist. */
 export function createProvider(model?: string): ToolCapableProvider {
   switch (configuredProvider()) {
     case "omniroute":

@@ -1,11 +1,4 @@
-/**
- * Appearance — the user's own layout, colour and sizing choices, kept per device in localStorage.
- *
- * Every setting is a data attribute on <html> (data-accent="violet", data-density="compact", …) and
- * all of the styling lives in globals.css. Nothing in React branches on these values, so the server
- * render never disagrees with the client and the init script below can apply them before first
- * paint. Server-safe: no hooks here, the root layout imports it.
- */
+/** Per-device appearance as data attributes on <html>, styled in globals.css. Server-safe: no hooks. */
 
 export const APPEARANCE_OPTIONS = {
   accent: ["cobalt", "violet", "emerald", "crimson", "amber", "teal", "onyx"],
@@ -72,8 +65,5 @@ export function sanitizeAppearance(raw: unknown): Appearance {
   return out;
 }
 
-/**
- * Runs in <head> before first paint. Mirrors sanitizeAppearance() + applyAppearance(): read,
- * validate against the same option lists, write one data attribute per key.
- */
+/** Runs in <head> before first paint; mirrors sanitizeAppearance() + applyAppearance(). */
 export const appearanceInitScript = `(function(){try{var o=${JSON.stringify(APPEARANCE_OPTIONS)},d=${JSON.stringify(DEFAULT_APPEARANCE)},a={};try{a=JSON.parse(localStorage.getItem("${APPEARANCE_STORAGE_KEY}")||"{}")||{}}catch(e){}var r=document.documentElement;for(var k in o){r.setAttribute("data-"+k,o[k].indexOf(a[k])>-1?a[k]:d[k])}}catch(e){}})()`;

@@ -14,7 +14,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       if (!result) return reply.code(404).send({ error: "Conversation not found" });
       return result;
     } catch (error) {
-      // Free-tier quota is a normal condition here, so it answers with the wait rather than a 500.
+      // Free-tier quota: answer with the wait, not a 500.
       if (error instanceof RateLimitError) {
         return reply
           .code(429)

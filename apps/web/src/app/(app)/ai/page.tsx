@@ -19,9 +19,7 @@ export default function AiPage() {
   const { messages, sending, send, deletingId, resolveDelete, cooldownUntil, models, model, setModel } = useChat();
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // Same contract as /pomodoro: cancel main's vertical padding and take --app-screen-h, so the
-  // composer sits on the tab bar with nothing scrolling behind it. Desktop keeps h-full, where
-  // <main> is still a bounded scroll container.
+  // Full height like /pomodoro: cancel main's padding and use --app-screen-h.
   return (
     <div className="mx-auto -mt-4 -mb-20 flex h-(--app-screen-h) min-h-0 w-full max-w-6xl gap-6 pt-4 md:mt-0 md:mb-0 md:h-full md:pt-0">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--color-border)] pr-4 md:flex">

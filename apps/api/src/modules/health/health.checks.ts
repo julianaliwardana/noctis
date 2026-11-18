@@ -1,7 +1,4 @@
-/**
- * Pure verdicts over the numbers health.service collects: no I/O, so the thresholds can be checked
- * without a server (health.checks.check.ts).
- */
+/** Pure health verdicts, no I/O (see health.checks.check.ts). */
 
 export type Level = "ok" | "warn" | "critical";
 

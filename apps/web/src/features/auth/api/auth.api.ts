@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 
-/** Tokens never reach JS any more — these endpoints answer with the user and set httpOnly cookies. */
+/** These endpoints set httpOnly cookies and return the user. */
 export interface AuthUser {
   id: string;
   email: string;

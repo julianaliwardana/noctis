@@ -4,11 +4,7 @@ export const chatDto = z.object({
   message: z.string().min(1),
   /** Absent on the first message of a chat — the server opens a conversation and returns its id. */
   conversationId: z.string().optional(),
-  /**
-   * A model id from GET /ai/models. The agent only honours ids on the server's allowlist, so a
-   * client can't route finance data anywhere else; an unknown id falls back to the default.
-   * There is no provider field — a stale client still sending one has it stripped by zod.
-   */
+  /** Must be on the server's allowlist (GET /ai/models); unknown ids fall back to the default. */
   model: z.string().max(200).optional(),
 });
 

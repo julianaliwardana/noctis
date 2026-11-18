@@ -12,10 +12,7 @@ function shortDate(date: Date): string {
   return `${shifted.getUTCDate()} ${SHORT_MONTHS[shifted.getUTCMonth()]}`;
 }
 
-/**
- * The evening nudge once payday has come with no salary logged — until it is, the old pay cycle
- * keeps running and the budgets keep counting against it. Null when nothing is due.
- */
+/** Evening nudge once payday has passed with no salary logged. Null when nothing is due. */
 export function salaryReminder(cycle: SalaryCycle, expected: number | null): NudgeDecision | null {
   if (!cycle.salaryDue) return null;
   const amount = expected === null ? "" : ` (usually ${formatCurrency(expected)})`;

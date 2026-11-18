@@ -38,8 +38,7 @@ export function startScheduler(): { queue: Queue<NudgeJobData>; worker: Worker<N
       try {
         await Promise.all(users.map((user) => analyzeUser(user.id, job.data.slot)));
       } finally {
-        // After the AI nudge, so this plain reminder can't trip its anti-spam window — and in a
-        // `finally`, so an LLM outage doesn't take the reminder down with it.
+        // After the AI nudge (avoids its anti-spam window), and in `finally` so an LLM outage can't skip it.
         if (job.data.slot === "evening") {
           await Promise.all(users.map((user) => remindPendingReviews(user.id)));
           await Promise.all(users.map((user) => remindSalaryDue(user.id)));

@@ -1,11 +1,7 @@
 import { db } from "@noctis/db";
 import { findUserByEmail } from "../auth/auth.service";
 
-/**
- * The one Noctis account the MCP endpoint serves: static tokens act as it, and only it may approve
- * an OAuth connection. Prefer MCP_USER_ID — editing your email on the profile page used to silently
- * break MCP_USER_EMAIL and with it every scheduled import.
- */
+/** The account the MCP endpoint serves. Prefer MCP_USER_ID: MCP_USER_EMAIL breaks when the email changes. */
 export function mcpUserConfig(): { userId?: string; email?: string } {
   return { userId: process.env.MCP_USER_ID?.trim() || undefined, email: process.env.MCP_USER_EMAIL?.trim() || undefined };
 }

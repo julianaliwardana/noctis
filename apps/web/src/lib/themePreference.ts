@@ -27,8 +27,7 @@ function applyTheme(preference: ThemePreference): void {
 
   root.classList.add("theme-switching");
   root.classList.toggle("dark", dark);
-  // Two frames: one for the new colours to be computed, one for them to paint, then transitions
-  // come back.
+  // Two frames: compute and paint the new colours, then re-enable transitions.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => root.classList.remove("theme-switching"));
   });

@@ -1,7 +1,7 @@
 # Noctis MCP: sign in with OAuth
 
 Connect an MCP client by signing in to Noctis instead of pasting a token. The client finds the
-sign-in page by itself; you click **Allow**. Static `MCP_TOKENS` keep working next to it.
+sign-in page by itself; you click **Allow**. This is the only way in: there are no static tokens.
 
 ```
 Claude ──POST /mcp (no token)──► 401  WWW-Authenticate: resource_metadata=…
@@ -27,7 +27,7 @@ API_PUBLIC_URL=https://noctis-api.julianwardana.dev
 Without `API_PUBLIC_URL` OAuth stays off and only static tokens work. `MCP_USER_ID` must be set:
 only that account may approve a connection — any other account gets "can't connect apps".
 
-The four OAuth tables are created by the normal `prisma db push` on start.
+Create the four OAuth tables after deploy: `pnpm --filter @noctis/db exec prisma db push` in the api container.
 
 ## Rules
 
@@ -42,7 +42,6 @@ The four OAuth tables are created by the normal `prisma db push` on start.
 | Limits | Registration 10/hour per IP, token endpoint 30/min per IP. Unknown bearer tokens on `/mcp` count toward the existing 20-per-10-minutes limit; expired ones don't (that's a client that should refresh). |
 | Revoke | Profile → **Connected apps** → Disconnect. Stops the app at once. |
 
-Static tokens don't appear under Connected apps; remove them from `MCP_TOKENS` to revoke them.
 
 ## Connect
 

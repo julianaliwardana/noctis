@@ -4,10 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { MotionConfig } from "motion/react";
 import { useAppearance } from "@/lib/appearanceStore";
 
-/**
- * The house spring. Physics, not a duration: motion carries velocity across interruptions, so a
- * highlight that is redirected mid-flight bends towards its new target instead of restarting.
- */
+/** The house spring: carries velocity across interruptions. */
 export const SPRING = { type: "spring", stiffness: 520, damping: 40, mass: 0.9 } as const;
 export const SPRING_SOFT = { type: "spring", stiffness: 260, damping: 32 } as const;
 

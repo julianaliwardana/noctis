@@ -12,10 +12,7 @@ function contents(uri: URL, value: unknown) {
   return { contents: [{ uri: uri.href, mimeType: JSON_MIME, text: JSON.stringify(value, null, 2) }] };
 }
 
-/**
- * Read-only snapshots a client can attach as context (in Claude Code: type @ and pick one).
- * Each read is fresh: the server is stateless, so nothing is cached between calls.
- */
+/** Read-only snapshots to attach as context (Claude Code: @). */
 export function registerResources(server: McpServer, userId: string): void {
   server.registerResource(
     "open-tasks",

@@ -55,19 +55,12 @@ function isUniqueViolation(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002";
 }
 
-/**
- * One server per request (the transport is stateless), already bound to the Noctis account the
- * token belongs to — no tool takes a user id, so the model can't act as anyone else.
- */
+/** Bound to one account: no tool takes a user id. */
 export interface McpDependencies {
   redis: Redis;
-  /**
-   * May the caller change data? Static tokens always can; an OAuth connection only with the
-   * noctis:write scope. Without it every tool not marked readOnlyHint is switched off, so it is
-   * neither listed nor callable.
-   */
+  /** Granted the noctis:write scope. Without it, tools not marked readOnlyHint are disabled. */
   canWrite?: boolean;
-  /** Name of the token's client (or `oauth:<grant>`), stored on reported runs. */
+  /** `oauth:<grant id>`, stored on reported runs. */
   client?: string;
 }
 

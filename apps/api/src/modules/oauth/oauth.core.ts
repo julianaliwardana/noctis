@@ -1,9 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
-/**
- * The pure parts of the OAuth server: scopes, lifetimes, PKCE, redirect-URI rules and token
- * minting. No database, no request — checked by oauth.core.check.ts.
- */
+/** Pure OAuth parts: scopes, lifetimes, PKCE, redirect rules, token minting. */
 
 export const SCOPE_READ = "noctis:read";
 export const SCOPE_WRITE = "noctis:write";
@@ -12,11 +9,7 @@ export const SUPPORTED_SCOPES = [SCOPE_READ, SCOPE_WRITE] as const;
 export const ACCESS_TOKEN_SECONDS = 60 * 60;
 export const REFRESH_TOKEN_SECONDS = 30 * 24 * 60 * 60;
 export const CODE_SECONDS = 10 * 60;
-/**
- * A refresh token presented again within this window of being rotated gets a fresh pair instead of
- * revoking the whole grant: two runs of the same app can refresh at once. Later than this, a reused
- * refresh token means it was copied, and the grant is revoked.
- */
+/** A rotated refresh token reused within this window gets a new pair (parallel refresh); later, the grant is revoked. */
 export const REFRESH_REUSE_GRACE_SECONDS = 60;
 
 export function sha256(value: string): string {
@@ -78,10 +71,7 @@ export function isValidChallenge(challenge: string): boolean {
 
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-/**
- * Where an app may receive its code: https anywhere, or plain http on this machine only (native
- * clients like Claude Code listen on a loopback port). No fragments, no credentials in the URL.
- */
+/** https anywhere, or http on loopback (native clients). No fragment, no credentials. */
 export function isAllowedRedirectUri(value: string): boolean {
   let url: URL;
   try {
@@ -94,10 +84,7 @@ export function isAllowedRedirectUri(value: string): boolean {
   return url.protocol === "http:" && LOOPBACK_HOSTS.has(url.hostname);
 }
 
-/**
- * Registered and presented redirect URIs must match exactly — except a loopback URI's port, which
- * native apps pick at run time (RFC 8252 §7.3).
- */
+/** Exact match, except a loopback port (RFC 8252 §7.3). */
 export function redirectUriMatches(registered: string[], presented: string): boolean {
   if (registered.includes(presented)) return true;
   let given: URL;

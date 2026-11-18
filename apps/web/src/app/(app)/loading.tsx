@@ -1,11 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-/**
- * Suspense boundary for every page in the app group. Several client pages read `new Date()`
- * while rendering (streaks, due dates), which Cache Components won't bake into a build-time
- * prerender; behind this boundary they render per request and this skeleton is the shell.
- * Dashboard and finance have their own, more detailed skeletons further down.
- */
+/** Suspense shell for the app group: pages that read `new Date()` render per request. */
 export default function Loading() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading">

@@ -4,10 +4,7 @@ import { deliverNudge } from "./delivery";
 
 const SHOWN = 3;
 
-/**
- * The evening reminder for transactions whose category is still a guess (a transfer to someone
- * new, an unnamed store charge). Null when nothing is waiting — no reminder then.
- */
+/** Evening reminder for transactions whose category is still a guess. Null when there are none. */
 export function reviewReminder(titles: string[], total: number): NudgeDecision | null {
   if (total === 0) return null;
   const shown = titles.slice(0, SHOWN).join(", ");

@@ -27,7 +27,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     throw new Error("JWT_SECRET must be at least 32 characters in production");
   }
 
-  // No `Authorization` header any more — `jwtVerify` reads the httpOnly access cookie instead.
+  // `jwtVerify` reads the httpOnly access cookie.
   await fastify.register(jwt, { secret, cookie: { cookieName: ACCESS_COOKIE, signed: false } });
 
   fastify.decorate(

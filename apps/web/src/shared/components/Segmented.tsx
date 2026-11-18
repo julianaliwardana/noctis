@@ -25,10 +25,7 @@ interface SegmentedProps<T extends string> {
   itemClassName?: string;
 }
 
-/**
- * A radio group whose selected chip slides between options on a spring (shared layoutId), and a
- * hover chip that follows the pointer. Neutral on purpose: it reports a setting, it isn't an action.
- */
+/** Radio group with a sliding selected chip and a hover chip. Neutral styling: a setting, not an action. */
 export function Segmented<T extends string>({
   label,
   value,

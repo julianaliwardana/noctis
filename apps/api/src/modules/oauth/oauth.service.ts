@@ -30,7 +30,7 @@ export class OAuthError extends Error {
   }
 }
 
-// ── Registration (RFC 7591) ─────────────────────────────────────────────────────────────────
+// Registration (RFC 7591)
 
 export interface RegistrationInput {
   client_name?: unknown;
@@ -83,7 +83,7 @@ export async function registerClient(input: RegistrationInput) {
   };
 }
 
-// ── Authorization request ───────────────────────────────────────────────────────────────────
+// Authorization request
 
 export interface AuthorizeParams {
   response_type?: string;
@@ -106,11 +106,7 @@ export interface ValidatedRequest {
   resource: string | null;
 }
 
-/**
- * Checks an authorization request before the consent screen shows. Every problem is an OAuthError
- * shown on the page, never a redirect: until the client and redirect URI are verified, sending the
- * browser to that URI would make Noctis an open redirector.
- */
+/** Validates an authorization request. Errors render on the page, never redirect: an unverified redirect_uri would be an open redirect. */
 export async function validateAuthorizeRequest(params: AuthorizeParams, mcpUrl: string): Promise<ValidatedRequest> {
   const client = params.client_id ? await oauthRepository.findClient(params.client_id) : null;
   if (!client) throw new OAuthError("invalid_client", "This app isn't registered with Noctis. Start the connection again from the app.");
@@ -163,7 +159,7 @@ export async function decide(
   return redirectWith(request.redirectUri, { code, state: request.state });
 }
 
-// ── Token endpoint ──────────────────────────────────────────────────────────────────────────
+// Token endpoint
 
 export interface TokenResponse {
   access_token: string;
@@ -259,8 +255,7 @@ async function refresh(params: TokenParams): Promise<TokenResponse> {
     await oauthRepository.revokeToken(token.id);
   }
 
-  // Scope lives on the grant, so a refresh can't widen it. Narrowing isn't kept per token either:
-  // the new pair carries the grant's scope, and the response says so.
+  // Scope lives on the grant, so a refresh can't widen it.
   const granted = token.grant.scope.split(" ");
   const asked = params.scope ? parseScope(params.scope) : granted;
   if (!asked || asked.some((scope) => !granted.includes(scope))) throw new OAuthError("invalid_scope", "Can't widen the scope on refresh");
@@ -275,7 +270,7 @@ export async function revoke(tokenValue: string | undefined): Promise<void> {
   if (token) await oauthRepository.revokeGrant(token.grantId);
 }
 
-// ── Checking an access token (the MCP endpoint) ─────────────────────────────────────────────
+// Access token check (MCP endpoint)
 
 export type AccessCheck =
   | { status: "valid"; userId: string; scopes: Set<string>; grantId: string }
@@ -297,7 +292,7 @@ export async function checkAccessToken(value: string | undefined): Promise<Acces
   return { status: "valid", userId: token.grant.userId, scopes: new Set(token.grant.scope.split(" ").filter(Boolean)), grantId: token.grantId };
 }
 
-// ── Connected apps (profile page) ───────────────────────────────────────────────────────────
+// Connected apps (profile page)
 
 export async function listConnections(userId: string) {
   const grants = await oauthRepository.findActiveGrants(userId);

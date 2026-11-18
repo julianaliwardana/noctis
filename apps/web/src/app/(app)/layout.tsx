@@ -62,10 +62,7 @@ const sideRow =
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
-  // Where the user just clicked, tagged with the path they clicked from. The highlight moves there
-  // at once — an urgent update, so it springs; the router's own pathname change commits inside a
-  // transition, where the layout animation would just snap. Once the pathname moves on, the tag
-  // no longer matches and the real pathname takes over again: no effect needed to clear it.
+  // The highlight follows the click at once (springs), then the real pathname takes over.
   const [pending, setPending] = useState<{ href: string; from: string } | null>(null);
   const current = pending && pending.from === pathname ? pending.href : pathname;
 
@@ -77,9 +74,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (href !== pathname) setPending({ href, from: pathname });
   }
 
-  // Mobile lets the browser scroll the document natively — momentum, address-bar auto-hide and a
-  // single scrollbar outside the UI. The header stays put because it is sticky, not because the
-  // shell traps the viewport. Desktop still locks to h-dvh so the sidebar can stay fixed.
+  // Mobile scrolls the document natively; desktop locks to h-dvh for the fixed sidebar.
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
       {/* The rail is the "30": onyx in the day theme, graphite at night. theme-inverse re-steps every

@@ -27,10 +27,7 @@ export function openTasks(tasks: Task[]): Task[] {
   return tasks.filter((task) => !task.completed).sort(byDue);
 }
 
-/**
- * Tools for working from a code editor (Claude Code, VS Code): read and close tasks, and log a
- * focus session. Adding tasks is `add_task`, registered with the server-health tools.
- */
+/** Editor tools: list and complete tasks, log focus. `add_task` lives in mcp.server. */
 export function registerDevTools(server: McpServer, userId: string): void {
   server.registerTool(
     "list_tasks",

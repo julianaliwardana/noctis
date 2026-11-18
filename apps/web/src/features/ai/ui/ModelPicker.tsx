@@ -16,10 +16,7 @@ interface ModelPickerProps {
 const chip =
   "inline-flex h-7 max-w-[11rem] items-center gap-1.5 rounded-full border border-[var(--color-border)] px-2.5 text-xs text-[var(--color-text-muted)]";
 
-/**
- * The options are the server's allowlist, never a free-text field — the server ignores anything
- * else, and the list is what keeps finance data on providers the user has vetted.
- */
+/** Only the server's allowlist, no free text. */
 export function ModelPicker({ models, value, onChange, disabled }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
   if (models.length === 0) return null;

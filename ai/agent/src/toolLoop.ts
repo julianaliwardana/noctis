@@ -5,10 +5,7 @@ import type { ToolCapableProvider } from "./llm/provider";
 import { toolSystemPrompt, type PriorTurn } from "./prompts";
 import type { ChatAction, ChatResult } from "./tools";
 
-/**
- * Enough for "add a task and log lunch" plus a correction round; small enough that a confused
- * free model can't spin through the daily quota on one message.
- */
+/** Room for a couple of actions plus a correction round; caps quota burn from a confused model. */
 export const MAX_ROUNDS = 4;
 
 const name = { type: "string", description: "Name exactly as listed in the context" };

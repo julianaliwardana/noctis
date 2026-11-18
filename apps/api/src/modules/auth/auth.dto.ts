@@ -3,10 +3,7 @@ import { z } from "zod";
 /** Lowercased before validation so `Julian@…` and `julian@…` are one account. */
 export const emailField = z.string().trim().toLowerCase().email().max(254);
 
-/**
- * bcrypt only reads the first 72 *bytes*; anything after is silently ignored. Counting characters
- * let a 72-character password with emoji or accented letters through with its tail discarded.
- */
+/** bcrypt reads only the first 72 bytes, so the limit is on bytes, not characters. */
 const newPassword = z
   .string()
   .min(8)

@@ -157,9 +157,7 @@ export function ChatWindow({
     textareaRef.current?.focus();
   });
 
-  // Keep the newest message in view as the conversation and the thinking indicator grow. While a
-  // reply is typing this fires every frame, so it jumps instantly and gives up once the user
-  // scrolls away to read something older.
+  // Follow the newest message unless the user has scrolled up.
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth", onlyIfNear = false) => {
     const element = scrollRef.current;
     if (!element) return;

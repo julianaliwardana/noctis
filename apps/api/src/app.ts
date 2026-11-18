@@ -24,17 +24,15 @@ import { oauthModule } from "./modules/oauth/oauth.module";
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
 
-  // Comma-separated allowlist; without it every origin was reflected back.
+  // Comma-separated allowlist.
   const origins = (process.env.WEB_ORIGIN ?? "http://localhost:3000").split(",").map((origin) => origin.trim());
-  // The web app reaches the API same-origin through its /api rewrite, so CORS is only a fallback for
-  // direct calls to the API host; the session cookies are host-only and never go there.
+  // Only a fallback: the web app calls the API same-origin through /api, and cookies are host-only.
   await app.register(cors, { origin: origins, credentials: true });
   await app.register(helmet);
   await app.register(cookie);
   await app.register(csrfPlugin, { allowedOrigins: origins });
 
-  // Routes validate with `zod.parse`, which throws. Unhandled, that surfaced as a 500 carrying the
-  // whole issue list; it's the client's mistake, so say 400 and keep the details short.
+  // zod.parse throws on bad input: answer 400 with short details.
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {
       return reply.code(400).send({
@@ -42,7 +40,6 @@ export async function buildApp(): Promise<FastifyInstance> {
         issues: error.issues.map(({ path, message }) => ({ path: path.join("."), message })),
       });
     }
-    // Everything else keeps Fastify's default handling (status codes, logging).
     return reply.send(error);
   });
   await app.register(dbPlugin);

@@ -5,14 +5,9 @@ import { apiInternalUrl } from "@/lib/apiInternalUrl";
 import { cookieFromSetCookie, withCookie } from "@/lib/setCookie";
 
 /**
- * Next 16 renamed middleware to proxy; it runs on the Node.js runtime.
- *
- * 1. Auth gate (UX only — the API checks the tokens on every request): signed-out visitors go to
- *    /login?next=…, signed-in ones are kept off the auth pages.
- * 2. Server-side refresh. The access cookie lives 15 minutes, so after any idle spell a page load
- *    arrives with only the refresh cookie and the Server Components would have nothing to fetch
- *    with. Refreshing here, before rendering, means the first paint carries real data; the new
- *    access cookie goes both to the browser and into this request for the render.
+ * Next 16 proxy (formerly middleware), Node runtime.
+ * 1. Auth gate, UX only: the API checks every request.
+ * 2. Server-side refresh, so the first paint has data after the 15-minute access cookie lapses.
  */
 const production = process.env.NODE_ENV === "production";
 const REFRESH_COOKIE = refreshCookieName(production);
@@ -80,13 +75,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 export const config = {
   matcher: [
     {
-      // Everything except Next's own assets, the /api proxy (the API answers 401 itself — a redirect
-      // to an HTML login page would break every fetch), and any path with a file extension (sw.js,
-      // manifest.json, icons), which signed-out visitors need too.
+      // Skip Next assets, /api (the API answers 401 itself) and files (sw.js, manifest, icons).
       source: "/((?!_next/|api/|.*\\.).*)",
-      // Link prefetches fetch only the static shell (partialPrefetching), which holds no user data,
-      // and refreshing the session for each one would burn the refresh rate limit. Next strips these
-      // headers from `request` inside proxy, so they can only be matched here.
+      // Skip prefetches: they load only the static shell, and refreshing for each would burn the rate limit.
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

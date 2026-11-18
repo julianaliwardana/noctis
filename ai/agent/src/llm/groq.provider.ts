@@ -14,7 +14,7 @@ export function createGroqProvider(): LLMProvider {
             { role: "system", content: system },
             { role: "user", content: user },
           ],
-          // Every prompt here asks for a JSON object; smaller models wrap it in fences without this.
+          // Smaller models wrap JSON in fences without this.
           response_format: { type: "json_object" },
         });
 

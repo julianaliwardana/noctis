@@ -1,7 +1,5 @@
 /**
- * Self-check for the money rules: month boundaries, what counts as spend, when a budget
- * alerts, what is recurring, and what a subscription owes. A wrong answer here is a wrong
- * number on a budget or a push that never fires.
+ * Self-check for the money rules: month boundaries, spend, budget alerts, recurring, subscriptions.
  * Run from apps/api: pnpm exec tsx src/modules/finance/finance.insights.check.ts
  */
 import assert from "node:assert/strict";
@@ -29,7 +27,7 @@ function row(title: string, amount: number, category: string, date: string, type
   return { id: `e${nextId}`, title, amount, category, type, date: new Date(date) };
 }
 
-// ── Month boundaries are Jakarta's, not the server's ──
+// Month boundaries are Jakarta's, not the server's
 // 00:30 WIB on 1 Nov is still 31 Oct in UTC. It belongs to November.
 assert.equal(monthKey(new Date("2026-10-31T17:30:00Z")), "2026-11");
 assert.equal(dayKey(new Date("2026-10-31T17:30:00Z")), "2026-11-01");
@@ -53,7 +51,7 @@ assert.equal(dayRange("2026-02-30", "2026-03-01"), null, "30 Feb is not a date")
 assert.equal(dayRange("11/02/2026", "2026-11-08"), null);
 assert.ok(dayRange("2026-11-08", "2026-11-08"), "a single day is a valid range");
 
-// ── What counts as spend ──
+// What counts as spend
 assert.equal(spendOf(row("Indomaret", 8900, "Food", "2026-11-09T03:36:24Z")), 8900);
 assert.equal(spendOf(row("GoPay top-up", 26000, "Top-up", "2026-11-08T07:41:26Z")), 0, "a wallet top-up is not spend");
 assert.equal(spendOf(row("Refund — Grab", 15200, "Transport", "2026-11-10T11:00:00Z", "income")), -15200);
@@ -99,7 +97,7 @@ assert.deepEqual(
 assert.equal(categorySpend(rows, "transport"), 9200, "case-insensitive, refund netted");
 assert.equal(categorySpend(rows, "Top-up"), 0);
 
-// ── Budget alerts: once per threshold per month ──
+// Budget alerts: once per threshold per month
 const fresh = { monthlyLimit: 1_000_000, alerted80Month: null, alerted100Month: null };
 assert.equal(alertDue(fresh, 799_999, "2026-11"), null);
 assert.equal(alertDue(fresh, 800_000, "2026-11"), 80, "exactly 80% alerts");
@@ -120,7 +118,7 @@ assert.equal(budgetStatus(1_000_000, 1_000_000).state, "warning", "exactly on th
 assert.equal(budgetStatus(1_000_000, 1_000_001).state, "over");
 assert.equal(budgetStatus(300_000, 100_000).percent, 33.3);
 
-// ── Month overview ──
+// Month overview
 const overview = monthOverview(rows, 9_000_000, 2026, 11, new Date("2026-11-11T04:00:00Z"));
 assert.equal(overview.spent, 26200);
 assert.equal(overview.remaining, 8_973_800);
@@ -130,7 +128,7 @@ assert.equal(monthOverview(rows, null, 2026, 11, new Date("2026-11-11T04:00:00Z"
 assert.equal(monthOverview(rows, 9_000_000, 2026, 10, new Date("2026-11-11T04:00:00Z")).daysLeft, 0, "a past month has no days left");
 assert.equal(monthOverview([], 9_000_000, 2026, 11, new Date("2026-11-30T16:30:00Z")).daysLeft, 1, "23:30 WIB on the last day");
 
-// ── Transfers: the person, not the remark ──
+// Transfers: the person, not the remark
 assert.equal(transferPerson("Transfer to Marzelline Churnia — laundry"), "Marzelline Churnia");
 assert.equal(transferPerson("Transfer to Marzelline Churnia"), "Marzelline Churnia");
 assert.equal(transferPerson("QRIS transfer to Leyza Zulyansyah"), "Leyza Zulyansyah");
@@ -139,7 +137,7 @@ assert.equal(transferPerson("Transfer to Anne-Marie Putri - kado"), "Anne-Marie 
 assert.equal(transferPerson("Indomaret"), null);
 assert.equal(transferPerson("TRAVL Transportasi"), null, "'transfer' must lead the title");
 
-// ── Recurring ──
+// Recurring
 const history = [
   row("Spotify", 54990, "Subscriptions", "2026-09-05T03:00:00Z"),
   row("Spotify", 54990, "Subscriptions", "2026-10-05T03:00:00Z"),
@@ -170,7 +168,7 @@ assert.deepEqual(
   "Subscriptions-category charges seen in one month are candidates; a repeat inside the month is flagged",
 );
 
-// ── Subscriptions ──
+// Subscriptions
 const youtube = { name: "YouTube Premium", expectedAmount: 46065, billingDay: 30, matchTitle: null };
 const charges = [row("YouTube Premium", 46065, "Subscriptions", "2026-10-30T01:16:59Z")];
 

@@ -1,10 +1,7 @@
 import type { CSSProperties } from "react";
 import { ListChecks, Repeat, Trash2, Undo2, Wallet, type LucideIcon } from "lucide-react";
 
-/**
- * Summaries come back as text ("Created task: Call bank"), including from stored chats, so the
- * domain is read from the words. Order matters: an outcome beats the domain it happened in.
- */
+/** The domain is read from the summary text; an outcome beats its domain. */
 const DOMAINS: { test: RegExp; color: string; Icon: LucideIcon }[] = [
   { test: /^deleted\b/i, color: "var(--color-passwords)", Icon: Trash2 },
   { test: /^kept\b/i, color: "var(--color-text-muted)", Icon: Undo2 },
@@ -17,7 +14,7 @@ function domainOf(summary: string) {
   return DOMAINS.find((domain) => domain.test.test(summary)) ?? DOMAINS[DOMAINS.length - 1]!;
 }
 
-/** One chip per thing the reply did, tinted by domain per the Signal Rule — a 14% chip, never a wash. */
+/** One chip per action, tinted by domain. */
 export function ActionChips({ actions }: { actions: string[] }) {
   if (actions.length === 0) return null;
 

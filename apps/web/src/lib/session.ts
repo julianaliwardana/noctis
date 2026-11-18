@@ -1,10 +1,6 @@
 import { create } from "zustand";
 
-/**
- * Set when a request 401s and the refresh token could not save it. The app stays on screen and
- * a dialog lets the user sign in again in place; requests that hit the dead session wait (see
- * `waitForSession`) and are replayed once they do, so the page carries on where it was.
- */
+/** Set when refresh fails: a dialog lets the user sign in again, and parked requests replay (see waitForSession). */
 interface SessionState {
   expired: boolean;
   expire: () => void;

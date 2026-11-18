@@ -122,7 +122,7 @@ export async function deleteCategory(id: string, userId: string): Promise<boolea
 }
 
 export async function getMonthlySummary(userId: string, query: SummaryQueryDto): Promise<MonthlySummary> {
-  // Jakarta months, not the server's: in UTC the first seven hours of every month landed in the previous one.
+  // Jakarta months, not UTC.
   const today = jakartaDay(new Date());
   const { start, end } = monthRange(query.year ?? today.year, query.month ?? today.month);
 
@@ -219,11 +219,7 @@ export async function currentPeriod(userId: string, now: Date = new Date()): Pro
   };
 }
 
-/**
- * Pushes once when a category's spend for the current month crosses 80% and once at 100%.
- * Call it after anything that adds spend to a category. It never throws: a failed alert must
- * not undo the transaction that caused it.
- */
+/** Pushes at 80% and 100% of a category budget. Never throws: a failed alert must not undo the transaction. */
 export async function checkBudgetAlert(
   userId: string,
   categoryName: string,
@@ -265,11 +261,7 @@ export async function checkBudgetAlert(
   }
 }
 
-/**
- * Re-checks every budget for the current month. For writers that add transactions without going
- * through this service (the in-app AI chat writes to the database directly) and so can't say
- * which category they touched.
- */
+/** Re-checks every budget, for writers that bypass this service (the AI chat). */
 export async function checkAllBudgetAlerts(userId: string): Promise<void> {
   try {
     const now = new Date();
@@ -398,10 +390,7 @@ export function setIncomeSettings(userId: string, settings: Partial<IncomeSettin
 
 const SALARY_COLOR = "#1baf7a";
 
-/**
- * Logs a salary (income in the Salary category), which opens a new pay cycle when it lands near
- * the expected payday. One per day: logging the same day twice returns the first.
- */
+/** Logs a salary; one near the payday opens a new pay cycle. One per day. */
 export async function logSalary(
   userId: string,
   amount: number,
@@ -435,12 +424,7 @@ export async function logSalary(
   }
 }
 
-/**
- * Whether a new transaction's category is a guess the user should confirm: a transfer filed
- * under "Other" to someone with no settled history. Once the user has picked a category for
- * that person (or confirmed "Other"), later transfers stop being flagged; while an earlier one
- * is still waiting, new ones wait with it.
- */
+/** True for a transfer filed under "Other" to someone with no settled category yet. */
 export async function isUnreviewedTransfer(userId: string, title: string, category: string): Promise<boolean> {
   const person = transferPerson(title);
   if (!person || category.trim().toLowerCase() !== "other") return false;
@@ -451,7 +435,7 @@ export interface UpdateTransactionInput {
   category?: string;
   title?: string;
   needsReview?: boolean;
-  /** IDR — e.g. the real debit of a foreign-currency charge that was logged at an estimated rate. */
+  /** IDR, e.g. the real debit replacing a foreign-currency estimate. */
   amount?: number;
 }
 
@@ -475,8 +459,7 @@ export async function updateTransaction(
     ...(category !== undefined ? { category } : {}),
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.amount !== undefined ? { amount: input.amount } : {}),
-    // Choosing a category is the review, and so is entering the real debit of a foreign charge.
-    // An explicit flag still wins ("keep as Other").
+    // Picking a category, or entering a foreign charge's real amount, is the review. An explicit flag wins.
     ...(input.needsReview !== undefined
       ? { needsReview: input.needsReview }
       : category !== undefined || (input.amount !== undefined && existing.originalCurrency)

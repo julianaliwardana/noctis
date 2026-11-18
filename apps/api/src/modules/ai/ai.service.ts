@@ -24,18 +24,15 @@ export async function sendMessage(userId: string, input: ChatDto): Promise<ChatR
 
   const history = existing?.messages.map((message) => ({ role: message.role, content: message.content })) ?? [];
 
-  // The model runs before anything is written: a rate-limited retry would otherwise leave a trail
-  // of empty conversations, and the client still holds the message to send again.
+  // Run the model before writing anything, so a rate-limited retry leaves no empty conversations.
   const result = await handleChat(userId, input.message, { history, model: input.model });
 
-  // The agent writes transactions straight to the database, so the budget alarm has to be
-  // checked from here rather than from the finance service.
+  // The agent writes to the database directly, so the budget alarm is checked here.
   if (result.actions?.some((action) => action.type === "ADD_TRANSACTION")) await checkAllBudgetAlerts(userId);
 
   const conversation = existing ?? (await aiRepository.createConversation(userId, titleFrom(input.message)));
   await aiRepository.appendMessage(conversation.id, "user", input.message);
-  // pendingDelete is deliberately not stored — its id would be stale by the time a chat is reopened.
-  // One line per action — the column predates multi-action replies, and the client splits it back.
+  // pendingDelete isn't stored: its id would be stale by reopen. Actions are stored one per line.
   const actionLabel = result.actions?.map((action) => action.summary).join("\n") || undefined;
   await aiRepository.appendMessage(conversation.id, "assistant", result.message, actionLabel);
   await aiRepository.touchConversation(conversation.id);
