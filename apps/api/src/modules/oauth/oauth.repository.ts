@@ -4,7 +4,13 @@ import type { OAuthClient, OAuthCode, OAuthGrant, OAuthToken, Prisma } from "@no
 export type TokenWithGrant = OAuthToken & { grant: OAuthGrant };
 export type GrantWithClient = OAuthGrant & { client: OAuthClient };
 
-export function createClient(data: { id: string; name: string; redirectUris: string[] }): Promise<OAuthClient> {
+export function createClient(data: {
+  id: string;
+  name: string;
+  redirectUris: string[];
+  authMethod: string;
+  secretHash: string | null;
+}): Promise<OAuthClient> {
   return db.oAuthClient.create({ data });
 }
 

@@ -235,6 +235,10 @@ model OAuthClient {
   id           String       @id
   name         String
   redirectUris String[]
+  /// "none" (public, PKCE only), "client_secret_post" or "client_secret_basic".
+  authMethod   String       @default("none")
+  /// SHA-256 of the client secret; null for public clients.
+  secretHash   String?
   createdAt    DateTime     @default(now())
   codes        OAuthCode[]
   grants       OAuthGrant[]
