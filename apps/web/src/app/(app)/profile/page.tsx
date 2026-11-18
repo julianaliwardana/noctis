@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/
 import SpotlightCard from "@/shared/components/SpotlightCard";
 import { AppearancePanel } from "@/features/appearance/ui/AppearancePanel";
 import { ConnectedApps } from "@/features/oauth/ui/ConnectedApps";
+import { NotificationsCard } from "@/features/notifications/ui/NotificationsCard";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { logoutAll } from "@/features/auth/api/auth.api";
 import { ApiError } from "@/lib/api";
@@ -234,6 +235,8 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <NotificationsCard />
 
       <AppearancePanel />
 

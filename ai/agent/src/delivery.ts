@@ -1,25 +1,24 @@
-import webpush from "web-push";
 import { db } from "@noctis/db";
 import type { NudgeDecision } from "@noctis/types";
+import { pathForType, sendPush } from "./push";
 
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-const pushEnabled = Boolean(vapidPublicKey && vapidPrivateKey);
-
-if (pushEnabled) {
-  webpush.setVapidDetails(process.env.VAPID_MAILTO ?? "mailto:you@example.com", vapidPublicKey!, vapidPrivateKey!);
+export interface DeliveryOptions {
+  /** In-app path to open on tap. Defaults to the page for the nudge's type. */
+  url?: string;
+  /** Replaces an earlier notification with the same tag on the device. */
+  tag?: string;
 }
 
-export async function deliverNudge(userId: string, decision: NudgeDecision): Promise<void> {
+/** Stores the nudge (in-app history) and pushes it to the user's devices. A push failure never throws. */
+export async function deliverNudge(userId: string, decision: NudgeDecision, options: DeliveryOptions = {}): Promise<void> {
   await db.nudge.create({
     data: { userId, title: decision.title, message: decision.message, type: decision.type },
   });
 
-  if (!pushEnabled) return;
-
-  const subscription = await db.pushSubscription.findUnique({ where: { userId } });
-  if (!subscription) return;
-
-  const parsedSubscription = JSON.parse(subscription.subscription) as webpush.PushSubscription;
-  await webpush.sendNotification(parsedSubscription, JSON.stringify({ title: decision.title, message: decision.message }));
+  await sendPush(userId, {
+    title: decision.title,
+    message: decision.message,
+    url: options.url ?? pathForType(decision.type),
+    tag: options.tag,
+  });
 }

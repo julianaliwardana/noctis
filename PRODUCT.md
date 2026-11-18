@@ -78,11 +78,11 @@ unwrap is the wrong-password check — there is no separate verifier. The master
 is deliberately separate from the Noctis login password, which does reach the server.
 Consequence: there is no recovery path, and search and sort are client-side.
 
-**Known gap:** the frontend never calls `POST /notifications/subscribe`, so web push
-does not fire yet even with VAPID keys configured. The nudge pipeline produces nudges;
-the delivery wiring to the browser is unbuilt.
-
-**Undecided:** whether push notification delivery gets built.
+**Push notifications:** opt-in per device from Profile → Notifications (one
+`PushSubscription` row per device). Delivered: AI nudges (08/13/21 WIB), tasks due within
+30 minutes, a morning digest of tasks due today and subscriptions billing today/tomorrow,
+an evening reminder of habits not logged yet, needs-review and salary reminders, and
+budget alarms at 80%/100%. iPhone needs Noctis opened from the Home Screen first.
 
 ## Brand Commitments
 

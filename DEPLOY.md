@@ -121,7 +121,7 @@ Five fields are easy to get wrong:
 | Field | Requirement |
 |---|---|
 | `DATABASE_URL` | Password must match `POSTGRES_PASSWORD` exactly; host is `postgres`, **not** `localhost` |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Must be byte-identical to `VAPID_PUBLIC_KEY` |
+| `VAPID_MAILTO` | `mailto:you@domain` (a bare address is fixed up); the browser gets the public key from the API at runtime |
 | `WEB_ORIGIN` | Exactly `https://noctis.julianwardana.dev` — no trailing slash, or CORS fails |
 | `JWT_SECRET` | At least 32 characters, or the API refuses to start |
 | `COOKIE_DOMAIN` | Only on servers that ran the old parent-domain cookies: `julianwardana.dev`, so the API can expire them. Remove after 2026-12-10. New servers leave it out |
@@ -171,7 +171,7 @@ Each check exercises one more layer, so work down in order:
 1. `https://noctis.julianwardana.dev` loads over HTTPS → tunnel + web
 2. Register (with `ALLOW_REGISTRATION=true`) and log in → web → `/api` rewrite → api → postgres → JWT. Then set it back to `false` and `docker compose -f docker-compose.prod.yml up -d api`
 3. Send an AI chat message → api → agent → OmniRoute (`noctis` combo)
-4. Enable push notifications → VAPID keys match
+4. Profile → Notifications → Turn on, then Send test → VAPID keys + service worker push handler
 
 ---
 

@@ -7,6 +7,7 @@ import { LayoutGroup, motion } from "motion/react";
 import { LayoutGrid, ListChecks, Flame, Timer, BarChart3, Lock, Sparkles, UserRound } from "lucide-react";
 import { CommandPalette } from "@/features/ai/ui/CommandPalette";
 import { SessionExpiredDialog } from "@/features/auth/ui/SessionExpiredDialog";
+import { PushSync } from "@/features/notifications/ui/PushSync";
 import { SignOutButton } from "@/features/auth/ui/SignOutButton";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -266,6 +267,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
       <CommandPalette />
       <SessionExpiredDialog />
+      <PushSync />
     </div>
   );
 }
