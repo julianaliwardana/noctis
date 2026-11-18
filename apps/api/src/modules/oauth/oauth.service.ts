@@ -5,6 +5,7 @@ import {
   REFRESH_REUSE_GRACE_SECONDS,
   REFRESH_TOKEN_SECONDS,
   isAllowedRedirectUri,
+  isClientAuthMethod,
   isValidChallenge,
   mintClientId,
   mintToken,
@@ -14,6 +15,7 @@ import {
   redirectUriMatches,
   redirectWith,
   resourceMatches,
+  secretMatches,
   sha256,
 } from "./oauth.core";
 
@@ -48,8 +50,12 @@ export async function registerClient(input: RegistrationInput) {
   const bad = uris.find((uri) => !isAllowedRedirectUri(uri));
   if (bad) throw new OAuthError("invalid_redirect_uri", `Not allowed as a redirect URI: ${bad}`);
 
+  // Claude.ai registers as client_secret_post; Claude Code as none. PKCE is required either way.
   const method = input.token_endpoint_auth_method ?? "none";
-  if (method !== "none") throw new OAuthError("invalid_client_metadata", "Only public clients (token_endpoint_auth_method none, with PKCE) are supported");
+  if (!isClientAuthMethod(method)) {
+    throw new OAuthError("invalid_client_metadata", "Supported token_endpoint_auth_method: none, client_secret_post, client_secret_basic");
+  }
+  const secret = method === "none" ? null : mintToken("ncs");
 
   const grantTypes = Array.isArray(input.grant_types) ? input.grant_types : ["authorization_code", "refresh_token"];
   if (!grantTypes.every((type) => type === "authorization_code" || type === "refresh_token")) {
@@ -61,6 +67,8 @@ export async function registerClient(input: RegistrationInput) {
     id: mintClientId(),
     name: (rawName || "MCP client").slice(0, 100),
     redirectUris: uris as string[],
+    authMethod: method,
+    secretHash: secret ? sha256(secret) : null,
   });
 
   return {
@@ -70,7 +78,8 @@ export async function registerClient(input: RegistrationInput) {
     redirect_uris: client.redirectUris,
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
-    token_endpoint_auth_method: "none",
+    token_endpoint_auth_method: method,
+    ...(secret ? { client_secret: secret, client_secret_expires_at: 0 } : {}),
   };
 }
 
@@ -174,6 +183,7 @@ export interface TokenParams {
   code?: string;
   redirect_uri?: string;
   client_id?: string;
+  client_secret?: string;
   code_verifier?: string;
   refresh_token?: string;
   scope?: string;
@@ -182,10 +192,21 @@ export interface TokenParams {
 
 const invalidGrant = (why: string) => new OAuthError("invalid_grant", why);
 
-export async function exchangeToken(params: TokenParams, mcpUrl: string): Promise<TokenResponse> {
-  if (!params.client_id || !(await oauthRepository.findClient(params.client_id))) {
-    throw new OAuthError("invalid_client", "Unknown client_id", 401);
+/** Credentials from the body (client_secret_post) or an `Authorization: Basic` header (client_secret_basic). */
+export interface ClientCredentials {
+  clientId?: string;
+  clientSecret?: string;
+}
+
+export async function exchangeToken(params: TokenParams, credentials: ClientCredentials, mcpUrl: string): Promise<TokenResponse> {
+  const clientId = credentials.clientId ?? params.client_id;
+  const client = clientId ? await oauthRepository.findClient(clientId) : null;
+  if (!client) throw new OAuthError("invalid_client", "Unknown client_id", 401);
+  if (client.secretHash) {
+    const secret = credentials.clientSecret ?? params.client_secret;
+    if (!secret || !secretMatches(secret, client.secretHash)) throw new OAuthError("invalid_client", "Client authentication failed", 401);
   }
+  params = { ...params, client_id: client.id };
   if (!resourceMatches(params.resource, mcpUrl)) throw new OAuthError("invalid_target", "Tokens are only issued for this server's MCP endpoint");
   if (params.grant_type === "authorization_code") return exchangeCode(params);
   if (params.grant_type === "refresh_token") return refresh(params);

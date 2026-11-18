@@ -6,6 +6,10 @@ import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import {
   isAllowedRedirectUri,
+  isClientAuthMethod,
+  parseBasicAuth,
+  secretMatches,
+  sha256,
   isValidChallenge,
   mintToken,
   normalizeScopes,
@@ -32,6 +36,22 @@ assert.equal(isValidChallenge("plain-text-challenge"), false);
 const token = mintToken("nat");
 assert.match(token, /^nat_[A-Za-z0-9_-]{43}$/);
 assert.notEqual(mintToken("nat"), token);
+
+// Client authentication (Claude.ai registers with client_secret_post).
+assert.ok(isClientAuthMethod("none"));
+assert.ok(isClientAuthMethod("client_secret_post"));
+assert.ok(isClientAuthMethod("client_secret_basic"));
+assert.ok(!isClientAuthMethod("private_key_jwt"));
+const basic = (raw: string) => `Basic ${Buffer.from(raw).toString("base64")}`;
+assert.deepEqual(parseBasicAuth(basic("noctis_abc:s3cret")), { clientId: "noctis_abc", clientSecret: "s3cret" });
+assert.deepEqual(parseBasicAuth(basic("id:a%3Ab+c")), { clientId: "id", clientSecret: "a:b c" }, "form-url-encoded parts");
+assert.equal(parseBasicAuth(basic("no-colon")), null);
+assert.equal(parseBasicAuth("Bearer abc"), null);
+assert.equal(parseBasicAuth(undefined), null);
+const secret = mintToken("ncs");
+assert.ok(secretMatches(secret, sha256(secret)));
+assert.ok(!secretMatches(`${secret}x`, sha256(secret)));
+assert.ok(!secretMatches(secret, "not-hex"));
 
 // Redirect URIs.
 assert.equal(isAllowedRedirectUri("https://claude.ai/api/mcp/auth_callback"), true);

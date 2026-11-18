@@ -17,12 +17,42 @@ export function sha256(value: string): string {
 }
 
 /** An opaque random token with a readable prefix ("nat_" access, "nrt_" refresh, "nac_" code). */
-export function mintToken(prefix: "nat" | "nrt" | "nac"): string {
+export function mintToken(prefix: "nat" | "nrt" | "nac" | "ncs"): string {
   return `${prefix}_${randomBytes(32).toString("base64url")}`;
 }
 
 export function mintClientId(): string {
   return `noctis_${randomBytes(16).toString("hex")}`;
+}
+
+/** How a client may authenticate at the token endpoint. PKCE is required for all of them. */
+export const CLIENT_AUTH_METHODS = ["none", "client_secret_post", "client_secret_basic"] as const;
+export type ClientAuthMethod = (typeof CLIENT_AUTH_METHODS)[number];
+
+export function isClientAuthMethod(value: unknown): value is ClientAuthMethod {
+  return CLIENT_AUTH_METHODS.includes(value as ClientAuthMethod);
+}
+
+/** Client id and secret from an `Authorization: Basic` header (RFC 6749 §2.3.1: both form-url-encoded). */
+export function parseBasicAuth(header: string | undefined): { clientId: string; clientSecret: string } | null {
+  const match = header?.match(/^Basic\s+([A-Za-z0-9+/=]+)\s*$/i);
+  if (!match) return null;
+  const decoded = Buffer.from(match[1] as string, "base64").toString("utf8");
+  const colon = decoded.indexOf(":");
+  if (colon < 1) return null;
+  try {
+    const decode = (part: string) => decodeURIComponent(part.replace(/\+/g, " "));
+    return { clientId: decode(decoded.slice(0, colon)), clientSecret: decode(decoded.slice(colon + 1)) };
+  } catch {
+    return null;
+  }
+}
+
+/** Constant-time check of a presented secret against its stored hash. */
+export function secretMatches(secret: string, secretHash: string): boolean {
+  const a = Buffer.from(sha256(secret), "hex");
+  const b = Buffer.from(secretHash, "hex");
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** PKCE S256: base64url(sha256(verifier)) must equal the challenge sent with the authorization request. */

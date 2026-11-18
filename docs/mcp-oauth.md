@@ -37,7 +37,7 @@ Create the four OAuth tables after deploy: `pnpm --filter @noctis/db exec prisma
 | Tokens | Access 1 hour, refresh 30 days. Every refresh returns a new refresh token and burns the old one. |
 | Theft signals | An authorization code used twice, or an old refresh token used more than 60 s after it was rotated, revokes the whole connection. (The 60 s lets two runs refresh at once.) |
 | Storage | Only SHA-256 hashes of codes and tokens are stored. |
-| Clients | Public clients only, PKCE S256 required. Redirect URIs: `https`, or `http` on localhost (any port, per RFC 8252). |
+| Clients | Public (`none`, e.g. Claude Code) or with a client secret (`client_secret_post` / `client_secret_basic`, e.g. Claude.ai). PKCE S256 is required for all. Redirect URIs: `https`, or `http` on localhost (any port, per RFC 8252). |
 | Resource | Tokens are bound to `<API_PUBLIC_URL>/mcp`; a request for any other resource is refused. |
 | Limits | Registration 10/hour per IP, token endpoint 30/min per IP. Unknown bearer tokens on `/mcp` count toward the existing 20-per-10-minutes limit; expired ones don't (that's a client that should refresh). |
 | Revoke | Profile → **Connected apps** → Disconnect. Stops the app at once. |
