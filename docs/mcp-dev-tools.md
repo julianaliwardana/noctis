@@ -27,7 +27,7 @@ MCP_TOKENS=claude-ai:<token>,mac:<token>
   out. If Redis is down the limiter lets requests through. For floods, add a Cloudflare rate-limiting
   rule on `/mcp`.
 
-## What clients get (server 1.5.0)
+## What clients get (server 1.6.0)
 
 **Tools**
 
@@ -37,6 +37,8 @@ MCP_TOKENS=claude-ai:<token>,mac:<token>
 | `complete_task` | Closes a task; a recurring one moves to its next due date instead (`rescheduled`). |
 | `log_focus` | Records a *finished* focus session of N minutes. The web timer runs in the browser and only saves finished sessions, so there is no remote start/stop. |
 | `add_task` | (from server health) adds a task, skipping an open duplicate. |
+| `report_run` | Last step of every scheduled task: Claude's estimate of context/input/output tokens. See [agent-run-usage.md](./agent-run-usage.md). |
+| `get_run_usage` | Token report per task and per day for a date range. |
 
 **Resources** — attach as context (Claude Code: type `@`)
 

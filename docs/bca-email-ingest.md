@@ -66,6 +66,9 @@ through an explicit `create_category` call.
 > 2. Noctis `find_imported` with those message ids; ignore the ones already imported.
 > 3. For each remaining email with `Status : Successful`, read:
 >    - **amount**: `Total Payment` if present, else `Pay Amount` / `Transfer Amount` / `Amount` — fees included. IDR, plain number.
+>      A charge in another currency (debit-card email `Nilai Transaksi : USD 22,2`) is **not** skipped: send
+>      `originalAmount` = 22.2 and `originalCurrency` = "USD" and leave `amount` out — Noctis converts it and
+>      flags it for review (see [agent-run-usage.md](agent-run-usage.md)).
 >    - **date**: `Transaction Date`, Jakarta time, send as ISO with `+07:00`.
 >    - **title**:
 >      - QRIS / NFC Payment → merchant from `Payment to`, cleaned to a readable brand ("IDM INDOMARET D" → "Indomaret", "MRT JAKARTA - QRIS TAP 2" → "MRT Jakarta").
@@ -82,3 +85,4 @@ through an explicit `create_category` call.
 > 7. Skip anything that isn't Successful or that you can't parse, and list it in the summary.
 > 8. End with a short summary: how many added, total IDR, any new categories, anything skipped.
 >    If nothing new, say so in one line.
+> 9. Last step, always: Noctis `report_run` with `task` = "BCA import" and your token estimates.
