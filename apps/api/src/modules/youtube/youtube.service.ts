@@ -10,7 +10,7 @@ import type {
 export type { SearchSource, YouTubeResult } from "./youtube.types";
 
 const INNERTUBE_KEY = process.env.INNERTUBE_KEY;
-const INNERTUBE_MUSIC_KEY = process.env.INNERTUBE_MUSIC_KEY ?? INNERTUBE_KEY;
+const INNERTUBE_MUSIC_KEY = process.env.INNERTUBE_MUSIC_KEY || INNERTUBE_KEY;
 const MAX_RESULTS = 20;
 
 export async function searchYouTube(

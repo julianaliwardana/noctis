@@ -58,9 +58,9 @@ function isUniqueViolation(error: unknown): boolean {
 /** Bound to one account: no tool takes a user id. */
 export interface McpDependencies {
   redis: Redis;
-  /** Static tokens can always write; OAuth needs noctis:write. Without it, tools not marked readOnlyHint are disabled. */
+  /** Granted the noctis:write scope. Without it, tools not marked readOnlyHint are disabled. */
   canWrite?: boolean;
-  /** Name of the token's client (or `oauth:<grant>`), stored on reported runs. */
+  /** `oauth:<grant id>`, stored on reported runs. */
   client?: string;
 }
 

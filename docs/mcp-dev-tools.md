@@ -1,26 +1,20 @@
 # Noctis MCP from the code editor (Claude Code, VS Code)
 
 The same MCP endpoint Claude.ai uses also serves Claude Code and any other MCP client. No extra
-server: each client connects to `https://noctis-api.julianwardana.dev/mcp` with its own token, or by
-signing in (see [mcp-oauth.md](./mcp-oauth.md)).
+server: each client connects to `https://noctis-api.julianwardana.dev/mcp` and signs in with OAuth
+(see [mcp-oauth.md](./mcp-oauth.md)).
 
 ```
 Claude Code (terminal / VS Code) ─┐
-Claude.ai + scheduled tasks      ─┼──► /mcp  (bearer token per client) ──► Noctis
+Claude.ai + scheduled tasks      ─┼──► /mcp  (OAuth access token per app) ──► Noctis
 Other MCP clients                ─┘
 ```
 
-## Tokens: one per client
+## Access
 
-```
-MCP_TOKENS=claude-ai:<token>,mac:<token>
-```
-
-- Each token at least 32 characters (`openssl rand -hex 32`). A malformed list or a short token stops
-  the api from starting, rather than leaving a weak endpoint.
-- Revoke one client by removing its entry and redeploying; the others keep working.
-- The older single `MCP_TOKEN` still works, as client `default`.
-- Every call logs `mcpClient` with the name, so the api logs show who called.
+- Every app signs in once (OAuth) and shows up under Profile → **Connected apps**, where it can be
+  disconnected. There are no static tokens.
+- Every call logs `mcpClient` as `oauth:<grant id>`.
 - Wrong tokens are rate-limited per IP (Cloudflare's `CF-Connecting-IP`): after 20 in 10 minutes the
   IP gets `429` with `Retry-After` instead of `401`, and one warning is logged. A valid token is never
   refused — Claude calls from shared cloud IPs, so blocking a whole IP would let anyone lock Claude
@@ -62,15 +56,12 @@ prompt arguments are always strings.
 ## Connect Claude Code (once per machine)
 
 ```bash
-claude mcp add --scope user --transport http noctis \
-  https://noctis-api.julianwardana.dev/mcp \
-  --header "Authorization: Bearer <this machine's token>"
+claude mcp add --scope user --transport http noctis https://noctis-api.julianwardana.dev/mcp
 ```
 
-`--scope user` makes it available in every project and keeps the token in `~/.claude.json`, out of
-any repository. The Claude Code extension in VS Code uses the same configuration. Check with `/mcp`.
-
-Or skip the token: add it without `--header` and sign in from `/mcp` (see [mcp-oauth.md](./mcp-oauth.md)).
+Then `/mcp` → noctis → Authenticate, and Allow in the browser. `--scope user` makes it available in
+every project; the tokens stay in Claude Code, out of any repository. The Claude Code extension in
+VS Code uses the same configuration.
 
 ## Checks
 

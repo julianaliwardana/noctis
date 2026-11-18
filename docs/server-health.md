@@ -4,11 +4,11 @@ A daily Claude scheduled task checks the server Noctis runs on and files a Nocti
 something is wrong.
 
 ```
-Claude scheduled task ──► Noctis MCP (bearer token) ──► server_health
+Claude scheduled task ──► Noctis MCP (OAuth) ──► server_health
                                                     └─► add_task   (only when a check fails)
 ```
 
-No new public endpoint: health is an MCP tool behind the existing MCP tokens (`MCP_TOKENS` / `MCP_TOKEN`), so nothing about the
+No new public endpoint: health is an MCP tool behind the MCP sign-in (OAuth), so nothing about the
 server is reachable without it, and the Dokploy API stays private.
 
 ## What is checked

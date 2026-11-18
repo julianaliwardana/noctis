@@ -1,6 +1,6 @@
 /**
  * Live check: gateway reachable, key accepted, each allowlisted model answers JSON and tool calls.
- * Run from ai/agent: pnpm exec tsx --env-file=../../apps/api/.env src/llm/omniroute.check.ts
+ * Run from ai/agent: pnpm exec tsx --env-file=../../.env src/llm/omniroute.check.ts
  */
 import assert from "node:assert/strict";
 import { safeParseJSON } from "@noctis/utils";

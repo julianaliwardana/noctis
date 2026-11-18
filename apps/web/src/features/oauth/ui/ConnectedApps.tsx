@@ -12,7 +12,7 @@ function ago(iso: string): string {
   return formatDistanceToNow(new Date(iso), { addSuffix: true });
 }
 
-/** Apps connected to the MCP server by signing in (OAuth). Static MCP_TOKENS don't show here. */
+/** Apps connected to the MCP server by signing in (OAuth). */
 export function ConnectedApps() {
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [error, setError] = useState<string | null>(null);

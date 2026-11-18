@@ -23,7 +23,7 @@ Budgets, subscriptions, summaries and the review flag built on top of this are d
 | `packages/db/prisma/schema.prisma` | `Expense.source`, `Expense.externalId`, unique `(userId, externalId)` |
 | `apps/api/src/modules/finance/finance.repository.ts` | `createImported`, `findByExternalId(s)`, `search` |
 
-The endpoint is **off** unless a token (`MCP_TOKENS`, or the single `MCP_TOKEN`) and `MCP_USER_ID` (or the older `MCP_USER_EMAIL`)
+The endpoint is **off** unless `API_PUBLIC_URL` (OAuth) and `MCP_USER_ID` (or the older `MCP_USER_EMAIL`)
 are set. Every tool acts as that one account; no tool takes a user id. Prefer `MCP_USER_ID`: an
 email binding breaks the moment you change your login email.
 
@@ -39,21 +39,14 @@ through an explicit `create_category` call.
    - server, after deploy: `pnpm --filter @noctis/db exec prisma db push` inside the api container
 3. Server env:
    ```
-   MCP_TOKEN=<openssl rand -hex 32>
+   API_PUBLIC_URL=https://noctis-api.julianwardana.dev
    MCP_USER_ID=<your Noctis user id — see DEPLOY.md, "MCP is bound by account id">
    ```
-4. Check it from anywhere:
-   ```sh
-   curl -s https://noctis-api.julianwardana.dev/mcp \
-     -H "Authorization: Bearer $MCP_TOKEN" \
-     -H "content-type: application/json" \
-     -H "accept: application/json, text/event-stream" \
-     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
-   ```
-   Expect a JSON result with `"serverInfo":{"name":"noctis"...}`. No token → 401.
-5. Claude → Settings → Connectors → Add custom connector:
-   - URL: `https://noctis-api.julianwardana.dev/mcp`
-   - Request header: `Authorization` = `Bearer <MCP_TOKEN>`
+4. Check it from anywhere: `curl -si -X POST https://noctis-api.julianwardana.dev/mcp` should answer
+   `401` with a `WWW-Authenticate` header that names `resource_metadata`.
+5. Claude → Customize → Connectors → Add custom connector with the URL
+   `https://noctis-api.julianwardana.dev/mcp`, no header and no client ID. Connect, tick write, Allow
+   (see [mcp-oauth.md](mcp-oauth.md)).
 6. Gmail: create the label `noctis-imported` (Claude can do this too).
 7. Create the scheduled task with the prompt below (12:00, 18:00, 23:00 WIB). The live prompt in Claude has grown since (debit-card emails, Google Play receipts, refunds, USD charges); treat the one below as the starting point.
 
