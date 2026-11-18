@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest 
 import { z } from "zod";
 import { ipRateLimit } from "../auth/auth.rateLimit";
 import { resolveMcpUserId } from "../mcp/mcp.user";
-import { SUPPORTED_SCOPES } from "./oauth.core";
+import { CLIENT_AUTH_METHODS, SUPPORTED_SCOPES, parseBasicAuth } from "./oauth.core";
 import * as oauthService from "./oauth.service";
 import { OAuthError } from "./oauth.service";
 import { metadataUrls, oauthUrls } from "./oauth.urls";
@@ -73,8 +73,8 @@ function publicRoutes(fastify: FastifyInstance, urls: OAuthUrls): void {
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code", "refresh_token"],
     code_challenge_methods_supported: ["S256"],
-    token_endpoint_auth_methods_supported: ["none"],
-    revocation_endpoint_auth_methods_supported: ["none"],
+    token_endpoint_auth_methods_supported: [...CLIENT_AUTH_METHODS],
+    revocation_endpoint_auth_methods_supported: [...CLIENT_AUTH_METHODS],
   }));
 
   fastify.post("/oauth/register", { preHandler: ipRateLimit(REGISTER_LIMIT) }, async (request, reply) => {
@@ -89,7 +89,9 @@ function publicRoutes(fastify: FastifyInstance, urls: OAuthUrls): void {
 
   fastify.post("/oauth/token", { preHandler: ipRateLimit(TOKEN_LIMIT) }, async (request, reply) => {
     try {
-      const tokens = await oauthService.exchangeToken(stringFields(request.body), urls.mcp);
+      const basic = parseBasicAuth(request.headers.authorization);
+      const credentials = basic ? { clientId: basic.clientId, clientSecret: basic.clientSecret } : {};
+      const tokens = await oauthService.exchangeToken(stringFields(request.body), credentials, urls.mcp);
       return reply.header("Cache-Control", "no-store").header("Pragma", "no-cache").send(tokens);
     } catch (error) {
       return sendOAuthError(reply, error);
